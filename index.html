@@ -1,95 +1,86 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>SikkMixx</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f0f0f;
-      color: white;
-    }
-
-    header {
-      background: #111;
-      padding: 20px;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      height: 100vh;
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
-    }
-
-    .logo {
-      font-size: 24px;
-      font-weight: bold;
-      color: #ff0055;
-    }
-
-    .btn {
-      background: #ff0055;
-      padding: 10px 15px;
-      border: none;
-      color: white;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-
-    .hero {
       text-align: center;
-      padding: 80px 20px;
+      color: white;
+
+      /* Sexy DJ gradient background */
+      background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #ff00cc);
+      background-size: 400% 400%;
+      animation: gradientMove 12s ease infinite;
     }
 
-    .hero h1 {
-      font-size: 48px;
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      padding: 40px;
+    .container {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 50px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 40px rgba(255, 0, 200, 0.4);
     }
 
-    .card {
-      background: #1a1a1a;
-      padding: 20px;
-      border-radius: 10px;
+    h1 {
+      font-size: 3em;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
     }
 
-    audio, video {
-      width: 100%;
-      margin-top: 10px;
+    p {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+      opacity: 0.9;
+    }
+
+    .upload-btn {
+      display: inline-block;
+      padding: 15px 35px;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      background: linear-gradient(90deg, #ff00cc, #3333ff);
+      transition: all 0.3s ease;
+      box-shadow: 0 0 20px rgba(255, 0, 200, 0.7);
+    }
+
+    .upload-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 35px rgba(255, 0, 200, 1);
+    }
+
+    footer {
+      position: absolute;
+      bottom: 20px;
+      font-size: 0.8em;
+      opacity: 0.6;
     }
   </style>
 </head>
+
 <body>
-
-<header>
-  <div class="logo">SikkMixx</div>
-  <button class="btn">Upload</button>
-</header>
-
-<section class="hero">
-  <h1>Drop Your Sound. Drop Your Vision.</h1>
-  <p>Upload music and videos. Build your audience.</p>
-  <button class="btn">Create Account</button>
-</section>
-
-<section class="grid">
-  <div class="card">
-    <h3>Sample Track</h3>
-    <audio controls>
-      <source src="sample.mp3" type="audio/mpeg">
-    </audio>
+  <div class="container">
+    <h1>SIKKMIXX</h1>
+    <p>Submit your heat. Drop your next anthem.</p>
+    <a class="upload-btn" href="/upload.html">🎧 Upload Your Track</a>
   </div>
 
-  <div class="card">
-    <h3>Sample Video</h3>
-    <video controls>
-      <source src="sample.mp4" type="video/mp4">
-    </video>
-  </div>
-</section>
-
-</body>
-</html>
+  <footer>
