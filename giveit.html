@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Track - SikkMixx</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #111;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: #1a1a1a;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 30px rgba(255, 0, 200, 0.3);
+      text-align: center;
+    }
+
+    input[type="file"] {
+      margin: 20px 0;
+    }
+
+    button {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 30px;
+      background: linear-gradient(90deg, #ff00cc, #3333ff);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    a {
+      color: #ff00cc;
+      text-decoration: none;
+      display: block;
+      margin-top: 20px;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h2>🎧 Upload Your MP3</h2>
+
+    <form id="uploadForm">
+      <input type="file" name="file" accept=".mp3" required>
+      <br>
+      <button type="submit">Upload Track</button>
+    </form>
+
+    <div id="status"></div>
+
+    <a href="/">← Back to Home</a>
+  </div>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const statusDiv = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+
+      statusDiv.textContent = "Uploading...";
+
+      try {
+        const response = await fetch("/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        const text = await response.text();
+
+        if (response.ok) {
+          statusDiv.textContent = "✅ Upload successful!";
+          form.reset();
+        } else {
+          statusDiv.textContent = "❌ Error: " + text;
+        }
+
+      } catch (err) {
+        statusDiv.textContent = "❌ Upload failed.";
+      }
+    });
+  </script>
+</body>
+</html>
