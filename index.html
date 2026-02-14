@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SikkMixx</title>
 
 <style>
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #0f0f0f, #1c1c1c);
+    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top, #1a1a1a, #0a0a0a);
     color: white;
     display: flex;
     justify-content: center;
@@ -17,102 +17,52 @@ body {
     height: 100vh;
 }
 
-.container {
-    background: #181818;
+.card {
+    background: #141414;
     padding: 40px;
-    border-radius: 15px;
-    width: 350px;
-    box-shadow: 0 0 40px rgba(0,0,0,0.7);
+    width: 360px;
+    border-radius: 18px;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8);
     text-align: center;
 }
 
 h1 {
-    margin-bottom: 20px;
-    font-size: 28px;
-    letter-spacing: 2px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    margin-bottom: 30px;
+    color: #ff0055;
 }
 
 input {
     width: 100%;
-    padding: 12px;
-    margin: 10px 0;
-    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 15px;
+    border-radius: 10px;
     border: none;
-    outline: none;
+    background: #222;
+    color: white;
     font-size: 14px;
 }
 
 button {
     width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border-radius: 8px;
+    padding: 14px;
+    border-radius: 10px;
     border: none;
-    cursor: pointer;
     font-weight: bold;
-    font-size: 14px;
-    transition: 0.3s;
-}
-
-.login-btn {
-    background: #ff0055;
+    background: linear-gradient(90deg, #ff0055, #ff3d7f);
     color: white;
-}
-
-.login-btn:hover {
-    background: #ff3377;
-}
-
-.upload-btn {
-    background: #00c853;
-    color: white;
-}
-
-.upload-btn:hover {
-    background: #00e676;
-}
-
-.toggle {
-    margin-top: 15px;
-    font-size: 13px;
-    color: #aaa;
     cursor: pointer;
+    transition: 0.3s ease;
 }
 
-.hidden {
-    display: none;
+button:hover {
+    opacity: 0.85;
 }
 
-.success {
-    color: #00e676;
-    margin-top: 10px;
+.message {
+    margin-top: 15px;
+    font-size: 14px;
 }
 
-.error {
-    color: #ff5252;
-    margin-top: 10px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-    <h1>SIKKMIXX</h1>
-
-    <!-- LOGIN -->
-    <div id="loginBox">
-        <input type="text" id="loginUsername" placeholder="Username">
-        <input type="password" id="loginPassword" placeholder="Password">
-        <button class="login-btn" onclick="login()">LOGIN</button>
-        <div class="toggle" onclick="showRegister()">Create Account</div>
-        <div id="loginMsg"></div>
-    </div>
-
-    <!-- REGISTER -->
-    <div id="registerBox" class="hidden">
-        <input type="text" id="regUsername" placeholder="Username">
-        <input type="password" id="regPassword" placeholder="Password">
-        <button class="login-btn" onclick="register()">REGISTER</button>
-        <div class="toggle" onclick="showLogin()">Back to Login</div>
+.success
