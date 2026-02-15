@@ -90,8 +90,8 @@ button:hover {
   <div id="tracks"></div>
 </div>
 
-
-
+<h2>Live Mixes</h2>
+<div id="publicTracks"></div>
 
 
   <!-- START SCRIPT-->
@@ -102,6 +102,8 @@ const API = "https://api.sikkmixx.com"
 const loginForm = document.getElementById("loginForm")
 const uploadSection = document.getElementById("uploadSection")
 const tracksContainer = document.getElementById("tracks")
+
+
 
 // ---------- LOGIN ----------
 loginForm.addEventListener("submit", async (e) => {
@@ -213,6 +215,34 @@ async function deleteTrack(id) {
 
   loadTracks()
 }
+
+// --------------adding 1518-----------
+
+async function loadPublicTracks() {
+  const res = await fetch(`${API}/public-tracks`)
+  const tracks = await res.json()
+
+  const container = document.getElementById("publicTracks")
+  container.innerHTML = ""
+
+  tracks.forEach(track => {
+    container.innerHTML += `
+      <div style="margin-bottom:20px;">
+        <p>${track.original_name}</p>
+        <audio controls src="${API}/file/${track.filename}"></audio>
+      </div>
+    `
+  })
+}
+
+// -------------------------------1518
+
+loadPublicTracks()
+
+
+
+
+
 
 
 // ---------- AUTO LOGIN IF TOKEN EXISTS ----------
