@@ -226,11 +226,13 @@ async function loadPublicTracks() {
   container.innerHTML = ""
 
   tracks.forEach(track => {
-    container.innerHTML += `
-      <div style="margin-bottom:20px;">
-        <p>${track.original_name}</p>
-        <audio controls src="${API}/file/${track.filename}"></audio>
-      </div>
+container.innerHTML += `
+  <div style="margin-bottom:20px;">
+    <p>${track.original_name}</p>
+    <audio controls src="${API}/file/${track.filename}"></audio>
+  </div>
+`
+
     `
   })
 }
