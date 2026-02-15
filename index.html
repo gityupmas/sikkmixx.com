@@ -67,6 +67,38 @@ button:hover {
 </head>
 <body>
 
+
+
+
+
+
+
+
+<form id="loginForm">
+  <input id="username" placeholder="Username" required />
+  <input id="password" type="password" placeholder="Password" required />
+  <button type="submit">Login</button>
+</form>
+
+<div id="uploadSection" style="display:none;">
+  <form id="uploadForm">
+    <input type="file" name="file" required />
+    <button type="submit">Upload Track</button>
+  </form>
+
+  <h3>Your Tracks</h3>
+  <div id="tracks"></div>
+</div>
+
+
+
+
+
+
+
+
+
+
 <div class="card">
 
   <!-- LOGIN VIEW -->
@@ -89,57 +121,137 @@ button:hover {
 
 </div>
 
+  <!-- START SCRIPT-->
+
 <script>
+const API = "https://api.sikkmixx.com"
 
-const API = "https://api.sikkmixx.com";
+const loginForm = document.getElementById("loginForm")
+const uploadSection = document.getElementById("uploadSection")
+const tracksContainer = document.getElementById("tracks")
 
-async function login() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+// ---------- LOGIN ----------
+loginForm.addEventListener("submit", async (e) => {
+  e.preventDefault()
 
-  const res = await fetch(API + "/login", {
+  const username = document.getElementById("username").value
+  const password = document.getElementById("password").value
+
+  const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password })
-  });
+  })
 
-  const text = await res.text();
-
-  if (res.ok) {
-    document.getElementById("loginView").classList.add("hidden");
-    document.getElementById("uploadView").classList.remove("hidden");
-  } else {
-    document.getElementById("loginMsg").innerHTML =
-      `<div class="error">${text}</div>`;
+  if (!res.ok) {
+    alert("Login failed")
+    return
   }
-}
 
-function logout() {
-  document.getElementById("uploadView").classList.add("hidden");
-  document.getElementById("loginView").classList.remove("hidden");
-}
+  const data = await res.json()
 
-async function upload() {
-  const file = document.getElementById("fileInput").files[0];
-  if (!file) return;
+  localStorage.setItem("token", data.token)
 
-  const formData = new FormData();
-  formData.append("file", file);
+  loginForm.style.display = "none"
+  uploadSection.style.display = "block"
 
-  const res = await fetch(API + "/upload", {
+  loadTracks()
+})
+
+
+// ---------- UPLOAD ----------
+document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+  e.preventDefault()
+
+  const token = localStorage.getItem("token")
+  if (!token) return alert("Not logged in")
+
+  const formData = new FormData(e.target)
+
+  const res = await fetch(`${API}/upload`, {
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
     body: formData
-  });
+  })
 
-  const text = await res.text();
+  if (!res.ok) {
+    alert("Upload failed")
+    return
+  }
 
-  document.getElementById("uploadMsg").innerHTML =
-    res.ok
-      ? `<div class="success">${text}</div>`
-      : `<div class="error">${text}</div>`;
+  alert("Upload successful")
+  e.target.reset()
+  loadTracks()
+})
+
+
+// ---------- LOAD TRACKS ----------
+async function loadTracks() {
+  const token = localStorage.getItem("token")
+  if (!token) return
+
+  const res = await fetch(`${API}/my-tracks`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+
+  if (!res.ok) {
+    console.log("Could not load tracks")
+    return
+  }
+
+  const tracks = await res.json()
+
+  tracksContainer.innerHTML = ""
+
+  tracks.forEach(track => {
+    const div = document.createElement("div")
+    div.style.marginBottom = "20px"
+
+    div.innerHTML = `
+      <p>${track.original_name}</p>
+      <audio controls src="${API}/file/${track.filename}"></audio>
+      <button onclick="deleteTrack(${track.id})">Delete</button>
+    `
+
+    tracksContainer.appendChild(div)
+  })
 }
 
+
+// ---------- DELETE ----------
+async function deleteTrack(id) {
+  const token = localStorage.getItem("token")
+
+  const res = await fetch(`${API}/delete/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+
+  if (!res.ok) {
+    alert("Delete failed")
+    return
+  }
+
+  loadTracks()
+}
+
+
+// ---------- AUTO LOGIN IF TOKEN EXISTS ----------
+if (localStorage.getItem("token")) {
+  loginForm.style.display = "none"
+  uploadSection.style.display = "block"
+  loadTracks()
+}
 </script>
+
+
+<!-- END SCRIPT-->
 
 </body>
 </html>
