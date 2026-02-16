@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SikkMixx Livezx18</title>
+  <title>SikkMixx Live01</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -165,6 +165,33 @@
       width: 100%;
       filter: invert(1);
     }
+	
+	.controls {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.controls button {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.controls button:hover {
+  border-color: #ff00cc;
+  box-shadow: 0 0 15px rgba(255,0,204,0.6);
+  transform: scale(1.1);
+}
+
 		
 	
 	.equalizer {
@@ -224,6 +251,12 @@
     <h1>LIVE SET</h1>
     <div class="track-title" id="trackTitle">Loading...</div>
     <audio id="player" controls crossorigin="anonymous"></audio>
+<div class="controls">
+  <button id="prevBtn">⏮</button>
+  <button id="playPauseBtn">⏯</button>
+  <button id="nextBtn">⏭</button>
+</div>
+
 
 	<div class="equalizer"> 
 <canvas id="visualizer"></canvas>
@@ -279,17 +312,38 @@ function playCurrentTrack() {
 
 
 player.addEventListener("ended", () => {
+document.getElementById("nextBtn").addEventListener("click", () => {
 
   if (playlist.length === 0) return
 
   currentIndex++
-
-  if (currentIndex >= playlist.length) {
-    currentIndex = 0   // loop back to start
-  }
+  if (currentIndex >= playlist.length) currentIndex = 0
 
   playCurrentTrack()
   player.play()
+})
+
+document.getElementById("prevBtn").addEventListener("click", () => {
+
+  if (playlist.length === 0) return
+
+  currentIndex--
+  if (currentIndex < 0) currentIndex = playlist.length - 1
+
+  playCurrentTrack()
+  player.play()
+})
+
+document.getElementById("playPauseBtn").addEventListener("click", () => {
+
+  if (player.paused) {
+    player.play()
+  } else {
+    player.pause()
+  }
+
+})
+
 })
 
 
