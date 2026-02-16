@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SikkMixx Livex22</title>
+  <title>SikkMixx Livex11</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -135,17 +135,16 @@
     }
 
     /* MAIN PLAYER */
-    #main {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: linear-gradient(-45deg, #000, #111, #1a1a1a);
-      background-size: 400% 400%;
-      animation: gradient 15s ease infinite;
-      opacity: 0;
-      transition: opacity 1s ease;
-    }
+#main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: transparent;   /* <-- change this */
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
 
     @keyframes gradient {
       0% { background-position: 0% 50%; }
