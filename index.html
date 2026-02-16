@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SikkMixx Live06</title>
+  <title>SikkMixx Live07</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -312,6 +312,17 @@ function playCurrentTrack() {
 
 
 player.addEventListener("ended", () => {
+
+  if (playlist.length === 0) return
+
+  currentIndex++
+  if (currentIndex >= playlist.length) currentIndex = 0
+
+  playCurrentTrack()
+  player.play()
+})
+
+
 document.getElementById("nextBtn").addEventListener("click", () => {
 
   if (playlist.length === 0) return
@@ -343,16 +354,6 @@ document.getElementById("playPauseBtn").addEventListener("click", () => {
   }
 
 })
-
-})
-
-
-
-
-
-
-
-
 
 
 
