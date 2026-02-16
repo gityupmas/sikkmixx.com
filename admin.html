@@ -63,12 +63,15 @@
   <button onclick="login()">Login</button>
 </div>
 
+<!----------------------------------------------- ADMIN SECTION -->
 <div id="adminSection" class="hidden">
 
-<button onclick="logout()" style="background:#550000;">
-  Logout
-</button>
-
+<div style="display:flex; justify-content:space-between; align-items:center;">
+  <h2 id="welcomeText">Welcome</h2>
+  <button onclick="logout()" style="background:#550000;">
+    Logout
+  </button>
+</div>
 
 
   <h2>Upload Track</h2>
@@ -79,6 +82,9 @@
   <div id="trackList"></div>
 
 </div>
+<!------------------------------------------------- END END ADMIN SECTION -->
+
+
 
 <script>
 const API = "https://api.sikkmixx.com"
