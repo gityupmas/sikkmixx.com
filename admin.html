@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SikkMixx Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 30px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    button {
+      cursor: pointer;
+      background: #222;
+      color: white;
+      border: 1px solid #444;
+    }
+
+    button:hover {
+      background: #333;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .track {
+      margin: 10px 0;
+      padding: 10px;
+      background: #1a1a1a;
+      border-radius: 6px;
+    }
+
+    .track button {
+      width: auto;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🎛 SikkMixx Admin</h1>
+
+<div id="loginSection">
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="adminSection" class="hidden">
+
+  <h2>Upload Track</h2>
+  <input type="file" id="fileInput">
+  <button onclick="upload()">Upload</button>
+
+  <h2>Tracks</h2>
+  <div id="trackList"></div>
+
+</div>
+
+<script>
+const API = "https://api.sikkmixx.com"
+let token = localStorage.getItem("token")
+
+if (token) {
+  showAdmin()
+}
+
+async function login() {
+  const username = document.getElementById("username").value
+  const password = document.getElementById("password").value
+
+  const res = await fetch(`${API}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  })
+
+  if (res.ok) {
+    const data = await res.json()
+    token = data.token
+    localStorage.setItem("token", token)
+    showAdmin()
+  } else {
+    alert("Login failed")
+  }
+}
+
+function showAdmin() {
+  document.getElementById("loginSection").classList.add("hidden")
+  document.getElementById("adminSection").classList.remove("hidden")
+  loadTracks()
+}
+
+async function loadTracks() {
+  const res = await fetch(`${API}/tracks`)
+  const tracks = await res.json()
+
+  const list = document.getElementById("trackList")
+  list.innerHTML = ""
+
+  tracks.forEach(track => {
+    const div = document.createElement("div")
+    div.className = "track"
+    div.innerHTML = `
+      ${track.filename}
+      <button onclick="deleteTrack(${track.id})">Delete</button>
+    `
+    list.appendChild(div)
+  })
+}
+
+async function upload() {
+  const file = document.getElementById("fileInput").files[0]
+  if (!file) return
+
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const res = await fetch(`${API}/upload`, {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${token}` },
+    body: formData
+  })
+
+  if (res.ok) {
+    alert("Uploaded!")
+    loadTracks()
+  } else {
+    alert("Upload failed")
+  }
+}
+
+async function deleteTrack(id) {
+  if (!confirm("Delete this track?")) return
+
+  const res = await fetch(`${API}/delete/${id}`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${token}` }
+  })
+
+  if (res.ok) {
+    loadTracks()
+  } else {
+    alert("Delete failed")
+  }
+}
+</script>
+
+</body>
+</html>
