@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SikkMixx Livezx18</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: white;
+      overflow: hidden;
+	   transition: transform 0.1s linear;
+    }
+
+
+    /* CLUB INTRO SCREEN */
+    #intro {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, #111 0%, #000 80%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 10;
+      transition: opacity 1s ease;
+    }
+
+#visualizer {
+  margin-top: 30px;
+  width: 100%;
+  height: 80px;
+}
+
+#adminBtn {
+  position: fixed;
+  top: 15px;
+  right: 20px;
+  opacity: 0.5;
+  font-size: 14px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+  z-index: 20;
+}
+
+#adminBtn:hover {
+  color: #ff00cc;
+  opacity: 1;
+  border-color: #ff00cc;
+  box-shadow: 0 0 10px #ff00cc;
+}
+
+
+#registerBtn {
+  position: fixed;
+  top: 15px;
+  left: 20px;
+    opacity: 0.5;
+  font-size: 14px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+  z-index: 20;
+}
+
+#registerBtn:hover {
+  color: #00e0ff;
+    opacity: 1;
+  border-color: #00e0ff;
+  box-shadow: 0 0 10px #00e0ff;
+}
+
+#visual-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: radial-gradient(circle at center, #fff0cc, #090);
+  transition: background 0.2s ease;
+  overflow: hidden;
+}
+
+#visual-bg::before {
+  content: "";
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: radial-gradient(circle, rgba(0,255,255,0.2), transparent 60%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+    #enterBtn {
+      padding: 20px 50px;
+      font-size: 22px;
+      letter-spacing: 3px;
+      background: transparent;
+      border: 2px solid #ff00cc;
+      color: #ff00cc;
+      cursor: pointer;
+      border-radius: 50px;
+      box-shadow: 0 0 20px #ff00cc;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 10px #ff00cc; }
+      50% { box-shadow: 0 0 40px #ff00cc; }
+      100% { box-shadow: 0 0 10px #ff00cc; }
+    }
+
+    /* MAIN PLAYER */
+#main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: transparent;   /* 🔥 important */
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 0 40px rgba(255,0,204,0.3);
+    }
+
+    h1 {
+      letter-spacing: 3px;
+      margin-bottom: 20px;
+    }
+
+    .track-title {
+      margin-bottom: 25px;
+      font-size: 20px;
+    }
+
+    audio {
+      width: 100%;
+      filter: invert(1);
+    }
+		
+	
+	.equalizer {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 6px;
+  height: 50px;
+}
+
+.equalizer span {
+  width: 6px;
+  height: 10px;
+  background: #ff00cc;
+  box-shadow: 0 0 10px #ff00cc;
+  animation: bounce 1s infinite ease-in-out;
+}
+
+/* stagger animation timing */
+.equalizer span:nth-child(1) { animation-delay: 0s; }
+.equalizer span:nth-child(2) { animation-delay: .1s; }
+.equalizer span:nth-child(3) { animation-delay: .2s; }
+.equalizer span:nth-child(4) { animation-delay: .3s; }
+.equalizer span:nth-child(5) { animation-delay: .4s; }
+.equalizer span:nth-child(6) { animation-delay: .5s; }
+.equalizer span:nth-child(7) { animation-delay: .6s; }
+.equalizer span:nth-child(8) { animation-delay: .7s; }
+
+@keyframes bounce {
+  0%, 100% { height: 10px; }
+  50% { height: 50px; }
+}
+
+  </style>
+<!---------------------------------END   STYLE -->
+
+</head>
+
+<body>
+
+<a href="/register.html" id="registerBtn">Register</a>
+<a href="/admin.html" id="adminBtn">Admin</a>
+
+<div id="visual-bg"></div>
+
+
+<!-- INTRO SCREEN -->
+<div id="intro">
+  <h1>🎧 SIKKMIXX LIVE</h1>
+  <button id="enterBtn">ENTER THE MIX</button>
+</div>
+
+<!-- MAIN PLAYER -->
+<div id="main">
+  <div class="card">
+    <h1>LIVE SET</h1>
+    <div class="track-title" id="trackTitle">Loading...</div>
+    <audio id="player" controls crossorigin="anonymous"></audio>
+
+	<div class="equalizer"> 
+<canvas id="visualizer"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "https://api.sikkmixx.com"
+let player = document.getElementById("player")
+
+let playlist = []
+let currentIndex = 0
+
+
+async function loadTrack() {
+  const res = await fetch(`${API}/tracks`)
+  playlist = await res.json()
+
+  if (playlist.length === 0) {
+    document.getElementById("trackTitle").innerText = "No live track yet"
+    return
+  }
+
+  // 🔀 Start randomly
+  currentIndex = Math.floor(Math.random() * playlist.length)
+
+  playCurrentTrack()
+}
+loadTrack()
+
+
+
+function playCurrentTrack() {
+
+  const track = playlist[currentIndex]
+  const encoded = encodeURIComponent(track.filename)
+
+  const cleanName = track.filename
+    .split("-")
+    .slice(1)
+    .join("-")
+    .replace(".mp3", "")
+    .replace(/-/g, " ")
+
+  document.getElementById("trackTitle").innerText = cleanName
+
+  player.src = `${API}/file/${encoded}`
+}
+
+
+
+
+
+player.addEventListener("ended", () => {
+
+  if (playlist.length === 0) return
+
+  currentIndex++
+
+  if (currentIndex >= playlist.length) {
+    currentIndex = 0   // loop back to start
+  }
+
+  playCurrentTrack()
+  player.play()
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ENTER BUTTON LOGIC
+document.getElementById("enterBtn").addEventListener("click", async () => {
+
+  if (!audioContext) {
+    initVisualizer()
+  }
+
+  await audioContext.resume()
+  player.play()
+
+  document.getElementById("intro").style.opacity = 0
+  setTimeout(() => {
+    document.getElementById("intro").style.display = "none"
+    document.getElementById("main").style.opacity = 1
+  }, 1000)
+})
+
+const canvas = document.getElementById("visualizer")
+const ctx = canvas.getContext("2d")
+
+canvas.width = canvas.offsetWidth
+canvas.height = canvas.offsetHeight
+
+let audioContext
+let analyser
+let source
+let dataArray
+
+
+function initVisualizer() {
+
+  audioContext = new (window.AudioContext || window.webkitAudioContext)()
+  analyser = audioContext.createAnalyser()
+
+  analyser.fftSize = 256          // better resolution
+  analyser.smoothingTimeConstant = 0.8  // smoother motion
+
+  source = audioContext.createMediaElementSource(player)
+  source.connect(analyser)
+  analyser.connect(audioContext.destination)
+
+  const bufferLength = analyser.frequencyBinCount
+  dataArray = new Uint8Array(bufferLength)
+
+  function draw() {
+    requestAnimationFrame(draw)
+
+    analyser.getByteFrequencyData(dataArray)
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    const bars = 32
+    const step = Math.floor(bufferLength / bars)
+    const barWidth = canvas.width / bars
+
+
+
+//            🎵 BASS DETECTION (first few frequency bins)
+let bassSum = 0
+for (let i = 0; i < 8; i++) {
+  bassSum += dataArray[i]
+}
+let bass = bassSum / 8
+let bassNormalized = bass / 255
+
+
+//           🔥 BACKGROUND REACTION
+const bg = document.getElementById("visual-bg")
+
+document.body.style.transform = `scale(${1 + bassNormalized * 0.02})`
+
+
+let hueShift = 280 - (bassNormalized * 80)
+let brightness = 5 + (bassNormalized * 70)
+
+bg.style.background = `
+  radial-gradient(circle at center,
+    hsl(${hueShift}, 100%, ${brightness}%),
+    #000)
+`
+
+for (let i = 0; i < bars; i++) {
+
+  let sum = 0
+  for (let j = 0; j < step; j++) {
+    sum += dataArray[i * step + j]
+  }
+
+  let value = sum / step
+
+  // normalize + compress
+  let normalized = value / 255
+  let scaled = Math.pow(normalized, 1.5) * canvas.height
+
+  const x = i * barWidth
+  const y = canvas.height - scaled
+
+  // 🎨 COLOR SHIFT BASED ON INTENSITY
+  let hue = 280 - (normalized * 200)   // purple → blue
+  let brightness = 50 + (normalized * 50)
+
+  ctx.fillStyle = `hsl(${hue}, 100%, ${brightness}%)`
+  ctx.shadowBlur = 25
+  ctx.shadowColor = `hsl(${hue}, 100%, 60%)`
+
+  ctx.fillRect(x, y, barWidth - 3, scaled)
+}
+  }
+  draw( )
+}
+
+
+</script>
+
+</body>
+</html>
