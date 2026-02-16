@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SikkMixx Live02</title>
+  <title>SikkMixx Live03</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -336,6 +336,16 @@ document.getElementById("prevBtn").addEventListener("click", () => {
 
 document.getElementById("playPauseBtn").addEventListener("click", () => {
 
+function ensureAudioReady() {
+  if (!audioContext) {
+    initVisualizer()
+  }
+  if (audioContext.state === "suspended") {
+    audioContext.resume()
+  }
+}
+
+
   if (player.paused) {
     player.play()
   } else {
@@ -345,14 +355,6 @@ document.getElementById("playPauseBtn").addEventListener("click", () => {
 })
 
 })
-
-
-
-
-
-
-
-
 
 
 
