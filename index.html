@@ -235,36 +235,74 @@
 const API = "https://api.sikkmixx.com"
 let player = document.getElementById("player")
 
+let playlist = []
+let currentIndex = 0
+
+
 async function loadTrack() {
   const res = await fetch(`${API}/tracks`)
-  const tracks = await res.json()
+  playlist = await res.json()
 
-  if (tracks.length > 0) {
-    const track = tracks[0]
-    const encoded = encodeURIComponent(track.filename)
-
-
-const cleanName = track.filename
-  .split("-")
-  .slice(1)
-  .join("-")
-  .replace(".mp3", "")
-  .replace(/-/g, " ")
-
-document.getElementById("trackTitle").innerText = cleanName
-
-      track.filename.replace(".mp3","")
-
-    player.src = `${API}/file/${encoded}`
+  if (playlist.length === 0) {
+    document.getElementById("trackTitle").innerText = "No live track yet"
+    return
   }
 
-  else {
-    document.getElementById("trackTitle").innerText =
-      "No live track yet"
-  }
+  // 🔀 Start randomly
+  currentIndex = Math.floor(Math.random() * playlist.length)
+
+  playCurrentTrack()
+}
+loadTrack()
+
+
+
+function playCurrentTrack() {
+
+  const track = playlist[currentIndex]
+  const encoded = encodeURIComponent(track.filename)
+
+  const cleanName = track.filename
+    .split("-")
+    .slice(1)
+    .join("-")
+    .replace(".mp3", "")
+    .replace(/-/g, " ")
+
+  document.getElementById("trackTitle").innerText = cleanName
+
+  player.src = `${API}/file/${encoded}`
 }
 
-loadTrack()
+
+
+
+
+player.addEventListener("ended", () => {
+
+  if (playlist.length === 0) return
+
+  currentIndex++
+
+  if (currentIndex >= playlist.length) {
+    currentIndex = 0   // loop back to start
+  }
+
+  playCurrentTrack()
+  player.play()
+})
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ENTER BUTTON LOGIC
 document.getElementById("enterBtn").addEventListener("click", async () => {
