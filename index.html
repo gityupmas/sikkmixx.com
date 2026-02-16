@@ -307,6 +307,15 @@ function playCurrentTrack() {
   player.src = `${API}/file/${encoded}`
 }
 
+function ensureAudioReady() {
+  if (!audioContext) {
+    initVisualizer()
+  }
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume()
+  }
+}
 
 
 
@@ -336,17 +345,6 @@ document.getElementById("prevBtn").addEventListener("click", () => {
 
 document.getElementById("playPauseBtn").addEventListener("click", () => {
 
-function ensureAudioReady() {
-  if (!audioContext) {
-    initVisualizer()
-  }
-  if (audioContext.state === "suspended") {
-    audioContext.resume()
-  }
-}
-
-
-
   ensureAudioReady()
 
   if (player.paused) {
@@ -354,7 +352,9 @@ function ensureAudioReady() {
   } else {
     player.pause()
   }
+
 })
+
 
 })
 
