@@ -286,7 +286,36 @@ function initVisualizer() {
     }
   }
 
-  draw()
+  draw(
+  for (let i = 0; i < bars; i++) {
+
+  let sum = 0
+  for (let j = 0; j < step; j++) {
+    sum += dataArray[i * step + j]
+  }
+
+  let value = sum / step
+
+  // normalize + compress
+  let normalized = value / 255
+  let scaled = Math.pow(normalized, 1.5) * canvas.height
+
+  const x = i * barWidth
+  const y = canvas.height - scaled
+
+  // 🎨 COLOR SHIFT BASED ON INTENSITY
+  let hue = 280 - (normalized * 200)   // purple → blue
+  let brightness = 50 + (normalized * 50)
+
+  ctx.fillStyle = `hsl(${hue}, 100%, ${brightness}%)`
+  ctx.shadowBlur = 25
+  ctx.shadowColor = `hsl(${hue}, 100%, 60%)`
+
+  ctx.fillRect(x, y, barWidth - 3, scaled)
+}
+
+  
+  )
 }
 
 
