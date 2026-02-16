@@ -170,13 +170,8 @@ async function deleteTrack(id) {
 
 function logout() {
   localStorage.removeItem("token")
-  token = null
-
-  document.getElementById("adminSection").classList.add("hidden")
-  document.getElementById("loginSection").classList.remove("hidden")
+  window.location.reload()
 }
-
-
 
 
 </script>
