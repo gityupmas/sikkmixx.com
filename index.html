@@ -1,260 +1,99 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SikkMixx</title>
+  <title>SikkMixx Live</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #0f0f0f;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(-45deg, #111, #1a1a1a, #121212, #000);
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-.card {
-  background: #1a1a1a;
-  padding: 40px;
-  width: 380px;
-  border-radius: 15px;
-  box-shadow: 0 0 40px rgba(0,0,0,0.7);
-  text-align: center;
-}
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
 
-h1 {
-  color: #ff0055;
-  letter-spacing: 2px;
-}
+    .card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    }
 
-input {
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 8px;
-  border: none;
-  background: #222;
-  color: white;
-}
+    h1 {
+      font-size: 28px;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      opacity: 0.8;
+    }
 
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: none;
-  background: #ff0055;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
+    .track-title {
+      font-size: 22px;
+      margin-bottom: 25px;
+      font-weight: 600;
+    }
 
-button:hover {
-  opacity: 0.85;
-}
+    audio {
+      width: 100%;
+      filter: invert(1);
+    }
 
-.hidden {
-  display: none;
-}
-
-.success { color: #00e676; }
-.error { color: #ff5252; }
-</style>
+    .footer {
+      margin-top: 25px;
+      font-size: 12px;
+      opacity: 0.5;
+    }
+  </style>
 </head>
+
 <body>
 
-
-
-
-
-
-
-
-<form id="loginForm">
-  <input id="username" placeholder="Username" required />
-  <input id="password" type="password" placeholder="Password" required />
-  <button type="submit">Login DO</button>
-</form>
-
-<div id="uploadSection" style="display:none;">
-  <form id="uploadForm">
-    <input type="file" name="file" required />
-    <button type="submit">Upload Track</button>
-  </form>
-
-  <h3>Your Tracks</h3>
-  <div id="tracks"></div>
+<div class="card">
+  <h1>🎧 SIKKMIX LIVE</h1>
+  <div class="track-title" id="trackTitle">Loading...</div>
+  <audio id="player" controls></audio>
+  <div class="footer">Powered by SikkMixx</div>
 </div>
-
-<h2>Live Mixes</h2>
-<div id="publicTracks"></div>
-
-
-  <!-- START SCRIPT-->
 
 <script>
 const API = "https://api.sikkmixx.com"
 
-const loginForm = document.getElementById("loginForm")
-const uploadSection = document.getElementById("uploadSection")
-const tracksContainer = document.getElementById("tracks")
-
-
-
-// ---------- LOGIN ----------
-loginForm.addEventListener("submit", async (e) => {
-  e.preventDefault()
-
-  const username = document.getElementById("username").value
-  const password = document.getElementById("password").value
-
-  const res = await fetch(`${API}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  })
-
-  if (!res.ok) {
-    alert("Login failed")
-    return
-  }
-
-  const data = await res.json()
-
-  localStorage.setItem("token", data.token)
-
-  loginForm.style.display = "none"
-  uploadSection.style.display = "block"
-
-  loadTracks()
-})
-
-
-// ---------- UPLOAD ----------
-document.getElementById("uploadForm").addEventListener("submit", async (e) => {
-  e.preventDefault()
-
-  const token = localStorage.getItem("token")
-  if (!token) return alert("Not logged in")
-
-  const formData = new FormData(e.target)
-
-  const res = await fetch(`${API}/upload`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`
-    },
-    body: formData
-  })
-
-  if (!res.ok) {
-    alert("Upload failed")
-    return
-  }
-
-  alert("Upload successful")
-  e.target.reset()
-  loadTracks()
-})
-
-
-// ---------- LOAD TRACKS ----------
 async function loadTracks() {
-  const token = localStorage.getItem("token")
-  if (!token) return
-
-  const res = await fetch(`${API}/my-tracks`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
-
-  if (!res.ok) {
-    console.log("Could not load tracks")
-    return
-  }
-
+  const res = await fetch(`${API}/tracks`)
   const tracks = await res.json()
 
-  tracksContainer.innerHTML = ""
+  if (tracks.length > 0) {
+    const track = tracks[0] // first track = live track
+    const encoded = encodeURIComponent(track.filename)
 
-  tracks.forEach(track => {
-    const div = document.createElement("div")
-    div.style.marginBottom = "20px"
+    document.getElementById("trackTitle").innerText =
+      track.filename.replace(".mp3","")
 
-    div.innerHTML = `
-      <p>${track.original_name}</p>
-      <audio controls src="${API}/file/${track.filename}"></audio>
-      <button onclick="deleteTrack(${track.id})">Delete</button>
-    `
-
-    tracksContainer.appendChild(div)
-  })
-}
-
-
-// ---------- DELETE ----------
-async function deleteTrack(id) {
-  const token = localStorage.getItem("token")
-
-  const res = await fetch(`${API}/delete/${id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
-
-  if (!res.ok) {
-    alert("Delete failed")
-    return
+    document.getElementById("player").src =
+      `${API}/file/${encoded}`
+  } else {
+    document.getElementById("trackTitle").innerText =
+      "No live track yet"
   }
-
-  loadTracks()
 }
 
-// --------------adding 1518-----------
-
-async function loadPublicTracks() {
-  const res = await fetch(`${API}/public-tracks`)
-  const tracks = await res.json()
-
-  const container = document.getElementById("publicTracks")
-  container.innerHTML = ""
-
-  tracks.forEach(track => {
-    container.innerHTML += `
-      <div style="margin-bottom:20px;">
-        <p>${track.original_name}</p>
-        <audio controls src="${API}/file/${track.filename}"></audio>
-      </div>
-    `
-  })
-}
-
-// -------------------------------1518
-
-loadPublicTracks()
-
-
-
-
-
-
-
-// ---------- AUTO LOGIN IF TOKEN EXISTS ----------
-if (localStorage.getItem("token")) {
-  loginForm.style.display = "none"
-  uploadSection.style.display = "block"
-  loadTracks()
-}
+loadTracks()
 </script>
-
-
-<!-- END SCRIPT-->
 
 </body>
 </html>
