@@ -193,7 +193,14 @@ async function loadTrack() {
     const encoded = encodeURIComponent(track.filename)
 
     document.getElementById("trackTitle").innerText =
-      track.filename.replace(".mp3","")
+const cleanName = track.filename
+  .split("-")
+  .slice(1)
+  .join("-")
+  .replace(".mp3", "")
+
+document.getElementById("trackTitle").innerText = cleanName
+
 
     player.src = `${API}/file/${encoded}`
   } else {
