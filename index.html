@@ -235,11 +235,14 @@ let analyser
 let source
 let dataArray
 
+
 function initVisualizer() {
 
   audioContext = new (window.AudioContext || window.webkitAudioContext)()
   analyser = audioContext.createAnalyser()
-  analyser.fftSize = 64
+
+  analyser.fftSize = 256          // better resolution
+  analyser.smoothingTimeConstant = 0.8  // smoother motion
 
   source = audioContext.createMediaElementSource(player)
   source.connect(analyser)
@@ -255,24 +258,37 @@ function initVisualizer() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    const barWidth = canvas.width / bufferLength
+    const bars = 32
+    const step = Math.floor(bufferLength / bars)
+    const barWidth = canvas.width / bars
 
-    for (let i = 0; i < bufferLength; i++) {
-      const barHeight = dataArray[i]
+    for (let i = 0; i < bars; i++) {
+
+      // average frequency in this band
+      let sum = 0
+      for (let j = 0; j < step; j++) {
+        sum += dataArray[i * step + j]
+      }
+
+      let value = sum / step
+
+      // compress dynamic range (so bass doesn't sit at max)
+      value = Math.pow(value / 255, 1.5) * canvas.height
 
       const x = i * barWidth
-      const y = canvas.height - barHeight / 2
+      const y = canvas.height - value
 
       ctx.fillStyle = "#ff00cc"
-      ctx.shadowBlur = 15
+      ctx.shadowBlur = 20
       ctx.shadowColor = "#ff00cc"
 
-      ctx.fillRect(x, y, barWidth - 2, barHeight / 2)
+      ctx.fillRect(x, y, barWidth - 3, value)
     }
   }
 
   draw()
 }
+
 
 
 
