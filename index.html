@@ -271,6 +271,8 @@ let player = document.getElementById("player")
 let playlist = []
 let currentIndex = 0
 
+let bassSmoothed = 0
+
 
 async function loadTrack() {
   const res = await fetch(`${API}/tracks`)
@@ -422,7 +424,11 @@ for (let i = 0; i < 8; i++) {
   bassSum += dataArray[i]
 }
 let bass = bassSum / 8
-let bassNormalized = bass / 255
+
+// smooth it
+bassSmoothed = bassSmoothed * 0.8 + bass * 0.2
+
+let bassNormalized = bassSmoothed / 255
 
 
 //           🔥 BACKGROUND REACTION
