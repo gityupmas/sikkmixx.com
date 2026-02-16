@@ -94,6 +94,20 @@ if (token) {
   showAdmin()
 }
 
+
+<!-------------------------------------------------show username-->
+function getUserFromToken(token) {
+  try {
+    const payload = JSON.parse(atob(token))
+    return payload.username
+  } catch (e) {
+    return null
+  }
+}
+
+<!-------------------------------------------------show username-->
+
+
 async function login() {
   const username = document.getElementById("username").value
   const password = document.getElementById("password").value
@@ -117,8 +131,14 @@ async function login() {
 function showAdmin() {
   document.getElementById("loginSection").classList.add("hidden")
   document.getElementById("adminSection").classList.remove("hidden")
+
+  const username = getUserFromToken(token)
+  document.getElementById("welcomeText").innerText =
+    `🎛 Welcome, ${username}`
+
   loadTracks()
 }
+
 
 async function loadTracks() {
   const res = await fetch(`${API}/tracks`)
