@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SikkMixx LiveX1</title>
+  <title>SikkMixx Live</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -262,28 +262,33 @@ function initVisualizer() {
     const step = Math.floor(bufferLength / bars)
     const barWidth = canvas.width / bars
 
-    for (let i = 0; i < bars; i++) {
+for (let i = 0; i < bars; i++) {
 
-      // average frequency in this band
-      let sum = 0
-      for (let j = 0; j < step; j++) {
-        sum += dataArray[i * step + j]
-      }
+  let sum = 0
+  for (let j = 0; j < step; j++) {
+    sum += dataArray[i * step + j]
+  }
 
-      let value = sum / step
+  let value = sum / step
 
-      // compress dynamic range (so bass doesn't sit at max)
-      value = Math.pow(value / 255, 1.5) * canvas.height
+  // normalize + compress
+  let normalized = value / 255
+  let scaled = Math.pow(normalized, 1.5) * canvas.height
 
-      const x = i * barWidth
-      const y = canvas.height - value
+  const x = i * barWidth
+  const y = canvas.height - scaled
 
-      ctx.fillStyle = "#ff00cc"
-      ctx.shadowBlur = 20
-      ctx.shadowColor = "#ff00cc"
+  // 🎨 COLOR SHIFT BASED ON INTENSITY
+  let hue = 280 - (normalized * 200)   // purple → blue
+  let brightness = 50 + (normalized * 50)
 
-      ctx.fillRect(x, y, barWidth - 3, value)
-    }
+  ctx.fillStyle = `hsl(${hue}, 100%, ${brightness}%)`
+  ctx.shadowBlur = 25
+  ctx.shadowColor = `hsl(${hue}, 100%, 60%)`
+
+  ctx.fillRect(x, y, barWidth - 3, scaled)
+}
+
   }
 
   draw(
