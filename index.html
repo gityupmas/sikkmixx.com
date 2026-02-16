@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SikkMixx Livex8</title>
+  <title>SikkMixx Livex22</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -345,6 +345,35 @@ function initVisualizer() {
     const bars = 32
     const step = Math.floor(bufferLength / bars)
     const barWidth = canvas.width / bars
+
+
+
+// 🎵 BASS DETECTION (first few frequency bins)
+let bassSum = 0
+for (let i = 0; i < 8; i++) {
+  bassSum += dataArray[i]
+}
+let bass = bassSum / 8
+let bassNormalized = bass / 255
+
+
+
+// 🔥 BACKGROUND REACTION
+const bg = document.getElementById("visual-bg")
+
+let hueShift = 280 - (bassNormalized * 180)
+let brightness = 10 + (bassNormalized * 40)
+
+bg.style.background = `
+  radial-gradient(circle at center,
+    hsl(${hueShift}, 100%, ${brightness}%),
+    #000)
+`
+
+
+
+
+
 
 for (let i = 0; i < bars; i++) {
 
