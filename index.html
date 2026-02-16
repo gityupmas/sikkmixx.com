@@ -67,13 +67,6 @@ button:hover {
 </head>
 <body>
 
-
-
-
-
-
-
-
 <form id="loginForm">
   <input id="username" placeholder="Username" required />
   <input id="password" type="password" placeholder="Password" required />
@@ -188,7 +181,7 @@ async function loadTracks() {
 
     div.innerHTML = `
       <p>${track.original_name}</p>
-      <audio controls src="${API}/file/${track.filename}"></audio>
+      <audio controls src="${API}/file/${encodeURIComponent(track.filename)}"></audio>
       <button onclick="deleteTrack(${track.id})">Delete</button>
     `
 
@@ -226,11 +219,13 @@ async function loadPublicTracks() {
   container.innerHTML = ""
 
   tracks.forEach(track => {
-    container.innerHTML += `
-      <div style="margin-bottom:20px;">
-        <p>${track.original_name}</p>
-        <audio controls src="${API}/file/${track.filename}"></audio>
-      </div>
+container.innerHTML += `
+  <div style="margin-bottom:20px;">
+    <p>${track.original_name}</p>
+    <audio controls src="${API}/file/${track.filename}"></audio>
+  </div>
+`
+
     `
   })
 }
