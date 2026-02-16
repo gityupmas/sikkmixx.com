@@ -65,6 +65,12 @@
 
 <div id="adminSection" class="hidden">
 
+<button onclick="logout()" style="background:#550000;">
+  Logout
+</button>
+
+
+
   <h2>Upload Track</h2>
   <input type="file" id="fileInput">
   <button onclick="upload()">Upload</button>
@@ -161,6 +167,18 @@ async function deleteTrack(id) {
     alert("Delete failed")
   }
 }
+
+function logout() {
+  localStorage.removeItem("token")
+  token = null
+
+  document.getElementById("adminSection").classList.add("hidden")
+  document.getElementById("loginSection").classList.remove("hidden")
+}
+
+
+
+
 </script>
 
 </body>
