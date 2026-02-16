@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SikkMixx Register</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at center, #111 0%, #000 80%);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 40px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      margin-bottom: 25px;
+      letter-spacing: 2px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border: none;
+      background: #1a1a1a;
+      color: white;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #00e0ff;
+      color: black;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #00bcd4;
+      box-shadow: 0 0 15px #00e0ff;
+    }
+
+    .error {
+      margin-top: 10px;
+      color: #ff4d4d;
+      font-size: 14px;
+    }
+
+    .success {
+      margin-top: 10px;
+      color: #00ff99;
+      font-size: 14px;
+    }
+
+    .back {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .back a {
+      color: #ff00cc;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>🎧 Join SikkMixx</h1>
+
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+
+  <button onclick="register()">Create Account</button>
+
+  <div id="message"></div>
+
+  <div class="back">
+    <a href="/">Back to Live</a>
+  </div>
+</div>
+
+<script>
+const API = "https://api.sikkmixx.com"
+
+async function register() {
+
+  const username = document.getElementById("username").value.trim()
+  const password = document.getElementById("password").value.trim()
+  const messageDiv = document.getElementById("message")
+
+  messageDiv.innerHTML = ""
+
+  if (!username || !password) {
+    messageDiv.innerHTML = "<div class='error'>All fields required</div>"
+    return
+  }
+
+  const res = await fetch(`${API}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  })
+
+  const data = await res.json()
+
+  if (res.ok) {
+    messageDiv.innerHTML = "<div class='success'>Account created! Redirecting...</div>"
+
+    setTimeout(() => {
+      window.location.href = "/admin.html"
+    }, 1500)
+
+  } else {
+    messageDiv.innerHTML = `<div class='error'>${data.error || "Registration failed"}</div>`
+  }
+}
+</script>
+
+</body>
+</html>
