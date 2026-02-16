@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SikkMixx Live</title>
+  <title>SikkMixx Live2</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -457,9 +457,10 @@ let brightness = 8 + (bassNormalized * 35)
 
 bg.style.background = `
   radial-gradient(circle at center,
-    hsl(${hueShift}, 100%, ${brightness}%),
-    #000)
+    hsla(${hueShift}, 100%, ${brightness}%, 0.6),
+    rgba(0,0,0,0.9))
 `
+
 
 for (let i = 0; i < bars; i++) {
 
