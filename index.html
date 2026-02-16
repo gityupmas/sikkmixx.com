@@ -11,6 +11,7 @@
       background: #000;
       color: white;
       overflow: hidden;
+	   transition: transform 0.1s linear;
     }
 
 
@@ -81,8 +82,6 @@
   box-shadow: 0 0 10px #00e0ff;
 }
 
-
-
 #visual-bg {
   position: fixed;
   top: 0;
@@ -90,7 +89,7 @@
   width: 100%;
   height: 100%;
   z-index: -1;
-  background: radial-gradient(circle at center, #fff0cc, #000);
+  background: radial-gradient(circle at center, #fff0cc, #090);
   transition: background 0.2s ease;
   overflow: hidden;
 }
@@ -110,10 +109,6 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-
-
-
-
 
     #enterBtn {
       padding: 20px 50px;
@@ -140,17 +135,10 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: transparent;   /* <-- change this */
+  background: transparent;   /* 🔥 important */
   opacity: 0;
   transition: opacity 1s ease;
 }
-
-
-    @keyframes gradient {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
 
     .card {
       background: rgba(255,255,255,0.05);
@@ -177,8 +165,7 @@
       width: 100%;
       filter: invert(1);
     }
-	
-	
+		
 	
 	.equalizer {
   margin-top: 30px;
@@ -212,13 +199,9 @@
   50% { height: 50px; }
 }
 
-	
-	
-	
-	
-	
-	
   </style>
+<!---------------------------------END   STYLE -->
+
 </head>
 
 <body>
@@ -244,9 +227,7 @@
 
 	<div class="equalizer"> 
 <canvas id="visualizer"></canvas>
-
-</div>
-
+    </div>
   </div>
 </div>
 
@@ -271,8 +252,6 @@ const cleanName = track.filename
   .replace(/-/g, " ")
 
 document.getElementById("trackTitle").innerText = cleanName
-
-
 
       track.filename.replace(".mp3","")
 
@@ -303,9 +282,6 @@ document.getElementById("enterBtn").addEventListener("click", async () => {
     document.getElementById("main").style.opacity = 1
   }, 1000)
 })
-
-
-
 
 const canvas = document.getElementById("visualizer")
 const ctx = canvas.getContext("2d")
@@ -347,7 +323,7 @@ function initVisualizer() {
 
 
 
-// 🎵 BASS DETECTION (first few frequency bins)
+//            🎵 BASS DETECTION (first few frequency bins)
 let bassSum = 0
 for (let i = 0; i < 8; i++) {
   bassSum += dataArray[i]
@@ -356,24 +332,20 @@ let bass = bassSum / 8
 let bassNormalized = bass / 255
 
 
-
-// 🔥 BACKGROUND REACTION
+//           🔥 BACKGROUND REACTION
 const bg = document.getElementById("visual-bg")
+
+document.body.style.transform = `scale(${1 + bassNormalized * 0.02})`
+
 
 let hueShift = 280 - (bassNormalized * 180)
 let brightness = 5 + (bassNormalized * 70)
-
 
 bg.style.background = `
   radial-gradient(circle at center,
     hsl(${hueShift}, 100%, ${brightness}%),
     #000)
 `
-
-
-
-
-
 
 for (let i = 0; i < bars; i++) {
 
