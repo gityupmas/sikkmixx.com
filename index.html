@@ -35,44 +35,10 @@
   height: 80px;
 }
 
-#adminBtn {
-  position: fixed;
-  top: 15px;
-  right: 20px;
-  opacity: 0.5;
-  font-size: 14px;
-  text-decoration: none;
-  color: rgba(255,255,255,0.6);
-  border: 1px solid rgba(255,255,255,0.3);
-  padding: 6px 12px;
-  border-radius: 20px;
-  backdrop-filter: blur(6px);
-  transition: all 0.3s ease;
-  z-index: 20;
-}
-
-#adminBtn:hover {
-  color: #ff00cc;
-  opacity: 1;
-  border-color: #ff00cc;
-  box-shadow: 0 0 10px #ff00cc;
-}
-
-
 #profileBtn {
   position: fixed;
   top: 25px;
   left: 40px; /* adjust if it overlaps */
-  opacity: 0.5;
-  font-size: 14px;
-  text-decoration: none;
-  color: rgba(255,255,255,0.6);
-  border: 1px solid rgba(255,255,255,0.3);
-  padding: 6px 12px;
-  border-radius: 20px;
-  backdrop-filter: blur(6px);
-  transition: all 0.3s ease;
-  z-index: 20;
 }
 
 #profileBtn:hover {
@@ -82,21 +48,12 @@
   box-shadow: 0 0 10px #ff00cc;
 }
 
+#loginBtn    { right: 20px; }
 
 #registerBtn {
   position: fixed;
   top: 15px;
   left: 20px;
-    opacity: 0.5;
-  font-size: 14px;
-  text-decoration: none;
-  color: rgba(255,255,255,0.6);
-  border: 1px solid rgba(255,255,255,0.3);
-  padding: 6px 12px;
-  border-radius: 20px;
-  backdrop-filter: blur(6px);
-  transition: all 0.3s ease;
-  z-index: 20;
 }
 
 #registerBtn:hover {
@@ -324,9 +281,9 @@ border: 1px solid rgba(255,255,255,0.1);
 
 <body>
 
-<a href="/register.html" id="registerBtn">Register</a>
-<a href="/login.html" id="loginBtn">Login</a>
-<a href="/profile.html" id="profileBtn" style="display:none;">@user</a>
+<a href="/register.html" id="registerBtn" class="header-btn">Register</a>
+<a href="/login.html" id="loginBtn" class="header-btn">Login</a>
+<a href="/profile.html" id="profileBtn" class="header-btn" style="display:none;">@user</a>
 
 
 <div id="bg-image"></div>
@@ -431,7 +388,7 @@ const profileBtn = document.getElementById("profileBtn");
     profileBtn.style.display = "inline-block";
 
     // Optional: hide Login when logged in
-    // document.getElementById("adminBtn").style.display = "none";
+    // document.getElementById("loginBtn").style.display = "none";
 
   } catch (e) {
     // If it fails, just don’t show the button
