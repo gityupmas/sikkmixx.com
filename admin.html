@@ -13,15 +13,12 @@
       padding: 30px;
     }
 
-    h1 {
-      margin-bottom: 20px;
-    }
-
     input, button {
       padding: 10px;
-      margin: 5px 0;
+      margin: 6px 0;
       width: 100%;
-      max-width: 300px;
+      max-width: 340px;
+      box-sizing: border-box;
     }
 
     button {
@@ -29,154 +26,198 @@
       background: #222;
       color: white;
       border: 1px solid #444;
+      border-radius: 6px;
     }
 
-    button:hover {
-      background: #333;
+    button:hover { background: #333; }
+
+    .hidden { display: none; }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      max-width: 800px;
     }
 
-    .hidden {
-      display: none;
+    .track {
+      margin: 8px 0;
+      padding: 10px 12px;
+      background: #141414;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      max-width: 800px;
     }
 
-.track {
-  margin: 6px 0;          /* tighter spacing */
-  padding: 6px 10px;      /* smaller padding */
-  background: #141414;    /* slightly darker, cleaner */
-  border-radius: 4px;     /* smaller corners */
-  font-size: 14px;        /* slightly smaller text */
-  display: flex;          /* cleaner layout */
-  justify-content: space-between;
-  align-items: center;
-}
+    .meta {
+      opacity: 0.8;
+      font-size: 12px;
+      margin-top: 4px;
+      line-height: 1.3;
+    }
 
+    .actions button {
+      padding: 6px 10px;
+      font-size: 12px;
+      width: auto;
+      margin: 0 0 0 8px;
+    }
 
-.track button {
-  padding: 4px 8px;
-  font-size: 12px;
-  margin-left: 8px;
-}
+    .btn-danger {
+      background: #3a0000;
+      border-color: #6a0000;
+    }
+    .btn-danger:hover { background: #500000; }
 
+    .btn-approve {
+      background: #003a2a;
+      border-color: #006a4a;
+    }
+    .btn-approve:hover { background: #005a40; }
 
+    #status {
+      margin-top: 10px;
+      opacity: 0.85;
+      font-size: 13px;
+      max-width: 800px;
+    }
   </style>
 </head>
 
 <body>
+  <h1>🎛 SikkMixx Admin</h1>
 
-<h1>🎛 SikkMixx Admin</h1>
+  <div id="loginSection">
+    <input id="username" placeholder="Username" autocomplete="username">
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="loginBtn">Login</button>
+    <div id="status"></div>
+  </div>
 
-<div id="loginSection">
-  <input id="username" placeholder="Username">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-</div>
+  <div id="adminSection" class="hidden">
+    <div class="row">
+      <h2 id="welcomeText">Welcome</h2>
+      <button id="logoutBtn" class="btn-danger">Logout</button>
+    </div>
 
-<!----------------------------------------------- ADMIN SECTION -->
-<div id="adminSection" class="hidden">
-
-<div style="display:flex; justify-content:space-between; align-items:center;">
-  <h2 id="welcomeText">Welcome</h2>
-  <button onclick="logout()" style="background:#550000;">
-    Logout
-  </button>
-</div>
-
-
-  <h2>Upload Track</h2>
-  <input type="file" id="fileInput">
-  <button onclick="upload()">Upload</button>
-
-  <h2>Tracks</h2>
-  <div id="trackList"></div>
-
-</div>
-<!------------------------------------------------- END END ADMIN SECTION -->
-
-
+    <h2>Pending Submissions</h2>
+    <div id="trackList"></div>
+    <div id="status2"></div>
+  </div>
 
 <script>
-const API = "https://api.sikkmixx.com"
-let token = localStorage.getItem("token")
+const API = "https://api.sikkmixx.com";
+let token = localStorage.getItem("token") || null;
 
-if (token) {
-  showAdmin()
-}
+const loginSection = document.getElementById("loginSection");
+const adminSection = document.getElementById("adminSection");
+const statusDiv = document.getElementById("status");
+const status2Div = document.getElementById("status2");
 
+document.getElementById("loginBtn").addEventListener("click", login);
+document.getElementById("logoutBtn").addEventListener("click", logout);
 
-// -------------------------------------------------show username-->
-function getUserFromToken(token) {
+if (token) showAdmin();
+
+function getUserFromToken(tok) {
   try {
-    const payload = JSON.parse(atob(token))
-    return payload.username
+    const payload = JSON.parse(atob(tok));
+    return payload.username || "admin";
   } catch (e) {
-    return null
+    return "admin";
   }
 }
 
-// -------------------------------------------------show username-->
-
+function setStatus(msg, which = 1) {
+  (which === 1 ? statusDiv : status2Div).textContent = msg;
+}
 
 async function login() {
-  const username = document.getElementById("username").value
-  const password = document.getElementById("password").value
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+
+  setStatus("Logging in...");
 
   const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password })
-  })
+  });
 
-  if (res.ok) {
-    const data = await res.json()
-    token = data.token
-    localStorage.setItem("token", token)
-    showAdmin()
-  } else {
-    alert("Login failed")
+  if (!res.ok) {
+    setStatus("❌ Login failed");
+    return;
   }
+
+  const data = await res.json();
+  token = data.token;
+  localStorage.setItem("token", token);
+  showAdmin();
 }
 
 function showAdmin() {
-  document.getElementById("loginSection").classList.add("hidden")
-  document.getElementById("adminSection").classList.remove("hidden")
+  loginSection.classList.add("hidden");
+  adminSection.classList.remove("hidden");
 
-  const username = getUserFromToken(token)
-  document.getElementById("welcomeText").innerText =
-    `🎛 Welcome, ${username}`
+  const username = getUserFromToken(token);
+  document.getElementById("welcomeText").textContent = `🎛 Welcome, ${username}`;
 
-  loadTracks()
+  loadPending();
 }
 
+async function loadPending() {
+  setStatus("Loading pending...", 2);
 
-async function loadTracks() {
   const res = await fetch(`${API}/admin/pending`, {
     headers: { "Authorization": `Bearer ${token}` }
-  })
+  });
 
   if (!res.ok) {
-    alert("Failed to load pending tracks")
-    return
+    setStatus("❌ Failed to load pending (are you admin?)", 2);
+    return;
   }
 
-  const tracks = await res.json()
-  const list = document.getElementById("trackList")
-  list.innerHTML = ""
+  const tracks = await res.json();
+  const list = document.getElementById("trackList");
+  list.innerHTML = "";
+
+  if (!tracks.length) {
+    setStatus("No pending submissions 🎉", 2);
+    return;
+  }
+
+  setStatus(`Pending: ${tracks.length}`, 2);
 
   tracks.forEach(track => {
-    const div = document.createElement("div")
-    div.className = "track"
+    const div = document.createElement("div");
+    div.className = "track";
+
+    const name = track.original_name || track.filename;
+    const genre = track.genre ? `Genre: ${track.genre}` : "";
+    const note = track.note ? `Note: ${track.note}` : "";
+
     div.innerHTML = `
-      <span>${track.original_name || track.filename}</span>
-      <span>
-        <button onclick="approveTrack(${track.id})">Approve</button>
-        <button onclick="adminDelete(${track.id})">Delete</button>
-      </span>
-    `
-    list.appendChild(div)
-  })
+      <div>
+        <div><strong>${escapeHtml(name)}</strong></div>
+        <div class="meta">${escapeHtml([genre, note].filter(Boolean).join(" • "))}</div>
+      </div>
+      <div class="actions">
+        <button class="btn-approve" onclick="approveTrack(${track.id})">Approve</button>
+        <button class="btn-danger" onclick="deleteTrack(${track.id})">Delete</button>
+      </div>
+    `;
+
+    list.appendChild(div);
+  });
 }
 
 async function approveTrack(id) {
+  setStatus("Approving...", 2);
+
   const res = await fetch(`${API}/admin/approve`, {
     method: "POST",
     headers: {
@@ -184,17 +225,21 @@ async function approveTrack(id) {
       "Authorization": `Bearer ${token}`
     },
     body: JSON.stringify({ id })
-  })
+  });
 
-  if (res.ok) {
-    loadTracks()
-  } else {
-    alert("Approve failed")
+  if (!res.ok) {
+    const t = await res.text();
+    setStatus("❌ Approve failed: " + t, 2);
+    return;
   }
+
+  await loadPending();
 }
 
-async function adminDelete(id) {
-  if (!confirm("Delete this track?")) return
+async function deleteTrack(id) {
+  if (!confirm("Delete this submission?")) return;
+
+  setStatus("Deleting...", 2);
 
   const res = await fetch(`${API}/admin/delete`, {
     method: "POST",
@@ -203,59 +248,28 @@ async function adminDelete(id) {
       "Authorization": `Bearer ${token}`
     },
     body: JSON.stringify({ id })
-  })
+  });
 
-  if (res.ok) {
-    loadTracks()
-  } else {
-    alert("Delete failed")
+  if (!res.ok) {
+    const t = await res.text();
+    setStatus("❌ Delete failed: " + t, 2);
+    return;
   }
-}
 
-
-
-async function upload() {
-  const file = document.getElementById("fileInput").files[0]
-  if (!file) return
-
-  const formData = new FormData()
-  formData.append("file", file)
-
-  const res = await fetch(`${API}/upload`, {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${token}` },
-    body: formData
-  })
-
-  if (res.ok) {
-    alert("Uploaded!")
-    loadTracks()
-  } else {
-    alert("Upload failed")
-  }
-}
-
-async function deleteTrack(id) {
-  if (!confirm("Delete this track?")) return
-
-  const res = await fetch(`${API}/delete/${id}`, {
-    method: "DELETE",
-    headers: { "Authorization": `Bearer ${token}` }
-  })
-
-  if (res.ok) {
-    loadTracks()
-  } else {
-    alert("Delete failed")
-  }
+  await loadPending();
 }
 
 function logout() {
-  localStorage.removeItem("token")
-  window.location.reload()
+  localStorage.removeItem("token");
+  token = null;
+  window.location.reload();
 }
 
-
+function escapeHtml(str) {
+  return String(str || "").replace(/[&<>"']/g, s => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[s]));
+}
 </script>
 
 </body>
