@@ -59,6 +59,30 @@
 }
 
 
+#profileBtn {
+  position: fixed;
+  top: 25px;
+  left: 40px; /* adjust if it overlaps */
+  opacity: 0.5;
+  font-size: 14px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+  z-index: 20;
+}
+
+#profileBtn:hover {
+  color: #ff00cc;
+  opacity: 1;
+  border-color: #ff00cc;
+  box-shadow: 0 0 10px #ff00cc;
+}
+
+
 #registerBtn {
   position: fixed;
   top: 15px;
@@ -84,8 +108,8 @@
 
 #myBtn {
   position: fixed;
-  top: 30px;
-  left: 20px; /* adjust if needed */
+  top: 40px;
+  right: 20px; /* adjust if needed */
   opacity: 0.5;
   font-size: 14px;
   text-decoration: none;
@@ -303,6 +327,7 @@ border: 1px solid rgba(255,255,255,0.1);
 <a href="/register.html" id="registerBtn">Register</a>
 <a href="/login.html" id="adminBtn">Login</a>
 <a href="/my.html" id="myBtn" style="display:none;">My Tracks</a>
+<a href="/profile.html" id="profileBtn" style="display:none;">@user</a>
 
 
 <div id="bg-image"></div>
@@ -340,8 +365,35 @@ let player = document.getElementById("player")
 
 let playlist = []
 let currentIndex = 0
-
 let bassSmoothed = 0
+
+const token = localStorage.getItem("token");
+const profileBtn = document.getElementById("profileBtn");
+
+(async () => {
+  if (!token) return;
+
+  try {
+    const meRes = await fetch(`${API}/me`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    if (!meRes.ok) {
+      localStorage.removeItem("token");
+      return;
+    }
+
+    const me = await meRes.json();
+    profileBtn.textContent = `@${me.username}`;
+    profileBtn.style.display = "inline-block";
+
+    // Optional: hide Login when logged in
+    // document.getElementById("adminBtn").style.display = "none";
+
+  } catch (e) {
+    // If it fails, just don’t show the button
+  }
+})();
 
 
 async function loadTrack() {
