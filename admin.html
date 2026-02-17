@@ -113,6 +113,8 @@
 const API = "https://api.sikkmixx.com";
 let token = localStorage.getItem("token") || null;
 
+     if (!token) window.location.href = "/login.html";
+
 const loginSection = document.getElementById("loginSection");
 const adminSection = document.getElementById("adminSection");
 const statusDiv = document.getElementById("status");

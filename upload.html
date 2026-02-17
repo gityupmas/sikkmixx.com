@@ -76,9 +76,12 @@
   </div>
 
   <script>
+  
     const form = document.getElementById("uploadForm");
     const statusDiv = document.getElementById("status");
 	const token = localStorage.getItem("token");
+       if (!token) window.location.href = "/login.html";
+// added above to block direct to upload	   
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
