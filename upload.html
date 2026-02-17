@@ -98,12 +98,15 @@
 
         const text = await response.text();
 
-        if (response.ok) {
-          statusDiv.textContent = "✅ Upload successful!";
-          form.reset();
-        } else {
-          statusDiv.textContent = "❌ Error: " + text;
-        }
+ if (response.ok) {
+  const data = await response.json();
+  statusDiv.textContent = "✅ Upload successful!";
+  form.reset();
+} else {
+  const text = await response.text();
+  statusDiv.textContent = "❌ Error: " + text;
+}
+
 
       } catch (err) {
         statusDiv.textContent = "❌ Upload failed.";
