@@ -1,214 +1,393 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>SikkMixx Admin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+export default {
+  async fetch(request, env) {
 
-  <style>
-    body {
-      background: #111;
-      color: white;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 30px;
+    const url = new URL(request.url)
+
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "https://sikkmixx.com",
+      "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Content-Type": "application/json"
     }
 
-    h1 {
-      margin-bottom: 20px;
+if (request.method === "OPTIONS") {
+  return new Response(null, {
+    headers: {
+      "Access-Control-Allow-Origin": "https://sikkmixx.com",
+      "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
     }
-
-    input, button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-      max-width: 300px;
-    }
-
-    button {
-      cursor: pointer;
-      background: #222;
-      color: white;
-      border: 1px solid #444;
-    }
-
-    button:hover {
-      background: #333;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-.track {
-  margin: 6px 0;          /* tighter spacing */
-  padding: 6px 10px;      /* smaller padding */
-  background: #141414;    /* slightly darker, cleaner */
-  border-radius: 4px;     /* smaller corners */
-  font-size: 14px;        /* slightly smaller text */
-  display: flex;          /* cleaner layout */
-  justify-content: space-between;
-  align-items: center;
+  })
 }
 
 
-.track button {
-  padding: 4px 8px;
-  font-size: 12px;
-  margin-left: 8px;
+    // 🔐 TOKEN PARSING HELPER (GOES HERE)
+    function getUserFromRequest(request) {
+      const auth = request.headers.get("Authorization")
+      if (!auth) return null
+
+      try {
+        const token = JSON.parse(atob(auth.replace("Bearer ", "")))
+        if (token.exp < Date.now()) return null
+        return token
+      } catch (err) {
+        return null
+      }
+    }
+	
+	// --- inserting hash
+	
+	
+	async function hashPassword(password) {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(password)
+
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("")
+
+  return hashHex
+}
+
+	
+	
+	
+	
+	
+	
+	// END-- inserting hash
+	
+	
+	
+	
+
+    // ---------------- LOGIN ----------------
+if (url.pathname === "/login" && request.method === "POST") {
+
+  const { username, password } = await request.json()
+
+  const hashed = await hashPassword(password)
+
+  const user = await env.DB.prepare(
+    "SELECT * FROM users WHERE username = ? AND password = ?"
+  ).bind(username, hashed).first()
+
+  if (!user) {
+    return new Response("Invalid credentials", { status: 401, headers: corsHeaders })
+  }
+
+  const token = btoa(JSON.stringify({
+    id: user.id,
+    username: user.username,
+    exp: Date.now() + (1000 * 60 * 60)
+  }))
+
+  return new Response(JSON.stringify({ token }), { headers: corsHeaders })
 }
 
 
-  </style>
-</head>
-
-<body>
-
-<h1>🎛 SikkMixx Admin</h1>
-
-<div id="loginSection">
-  <input id="username" placeholder="Username">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-</div>
-
-<!----------------------------------------------- ADMIN SECTION -->
-<div id="adminSection" class="hidden">
-
-<div style="display:flex; justify-content:space-between; align-items:center;">
-  <h2 id="welcomeText">Welcome</h2>
-  <button onclick="logout()" style="background:#550000;">
-    Logout
-  </button>
-</div>
-
-
-  <h2>Upload Track</h2>
-  <input type="file" id="fileInput">
-  <button onclick="upload()">Upload</button>
-
-  <h2>Tracks</h2>
-  <div id="trackList"></div>
-
-</div>
-<!------------------------------------------------- END END ADMIN SECTION -->
+	
+	//// end ---------------- LOGIN ----------------
 
 
 
-<script>
-const API = "https://api.sikkmixx.com"
-let token = localStorage.getItem("token")
+/// new hash pwd test -------- used to set a hashed password
+	
+	
+//	if (url.pathname === "/hash-test") {
+ // const hash = await hashPassword("passwordHERE")
+//  return new Response(hash)
+//}
 
-if (token) {
-  showAdmin()
+	/// new hash pwd test
+	
+	
+	
+
+    // ---------------- UPLOAD ----------------
+
+if (url.pathname === "/upload" && request.method === "POST") {
+
+  const user = getUserFromRequest(request)
+  if (!user) {
+    return new Response("Unauthorized", { status: 401, headers: corsHeaders })
+  }
+
+  const formData = await request.formData()
+  const file = formData.get("file")
+  const genre = formData.get("genre") || ""
+  const note = formData.get("note") || ""
+
+  if (!file) {
+    return new Response("No file", { status: 400, headers: corsHeaders })
+  }
+
+  // Optional: enforce size limit (20MB example)
+  if (file.size > 20 * 1024 * 1024) {
+    return new Response("File too large", { status: 400, headers: corsHeaders })
+  }
+
+  const id = crypto.randomUUID()
+  const fileName = `pending/${id}-${file.name}`
+
+  await env.MEDIA.put(fileName, await file.arrayBuffer(), {
+    httpMetadata: { contentType: file.type }
+  })
+
+  await env.DB.prepare(
+    `INSERT INTO tracks (user_id, filename, original_name, status, genre, note)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  )
+    .bind(user.id, fileName, file.name, "pending", genre, note)
+    .run()
+
+  return new Response(JSON.stringify({ success: true }), { headers: corsHeaders })
+}
+
+if (url.pathname === "/admin/pending" && request.method === "GET") {
+
+  const user = getUserFromRequest(request)
+  if (!user || !user.is_admin) {
+    return new Response("Unauthorized", { status: 401 })
+  }
+
+  const { results } = await env.DB.prepare(
+    "SELECT * FROM tracks WHERE status = 'pending'"
+  ).all()
+
+  return Response.json(results)
 }
 
 
-<!-------------------------------------------------show username-->
-function getUserFromToken(token) {
+// -----------------------------APPROVE
+
+if (url.pathname === "/admin/approve" && request.method === "POST") {
+
+  const user = getUserFromRequest(request)
+  if (!user || !user.is_admin) {
+    return new Response("Unauthorized", { status: 401 })
+  }
+
+  const { id } = await request.json()
+
+  const track = await env.DB.prepare(
+    "SELECT * FROM tracks WHERE id = ? AND status = 'pending'"
+  ).bind(id).first()
+
+  if (!track) {
+    return new Response("Not found", { status: 404 })
+  }
+
+  const newFileName = track.filename.replace("pending/", "tracks/")
+
+  const file = await env.MEDIA.get(track.filename)
+
+  await env.MEDIA.put(newFileName, file.body, {
+    httpMetadata: file.httpMetadata
+  })
+
+  await env.MEDIA.delete(track.filename)
+
+  await env.DB.prepare(
+    "UPDATE tracks SET filename = ?, status = 'approved' WHERE id = ?"
+  ).bind(newFileName, id).run()
+
+  return new Response("Approved")
+}
+
+if (url.pathname === "/admin/delete" && request.method === "POST") {
+
+  const user = getUserFromRequest(request)
+  if (!user || !user.is_admin) {
+    return new Response("Unauthorized", { status: 401 })
+  }
+
+  const { id } = await request.json()
+
+  const track = await env.DB.prepare(
+    "SELECT * FROM tracks WHERE id = ?"
+  ).bind(id).first()
+
+  if (!track) {
+    return new Response("Not found", { status: 404 })
+  }
+
+  await env.MEDIA.delete(track.filename)
+
+  await env.DB.prepare(
+    "DELETE FROM tracks WHERE id = ?"
+  ).bind(id).run()
+
+  return new Response("Deleted")
+}
+
+
+
+    // ---------------- MY TRACKS ----------------
+    if (url.pathname === "/my-tracks" && request.method === "GET") {
+
+      const user = getUserFromRequest(request)
+      if (!user) {
+        return new Response("Unauthorized", { status: 401, headers: corsHeaders })
+      }
+
+      const tracks = await env.DB.prepare(
+        "SELECT * FROM tracks WHERE user_id = ? ORDER BY uploaded_at DESC"
+      ).bind(user.id).all()
+
+      return new Response(JSON.stringify(tracks.results), { headers: corsHeaders })
+    }
+	
+	// -----END----------- MY TRACKS ----------------
+	
+	
+	
+	
+	// ---------- PUBLIC TRACK LIST ----------
+if (url.pathname === "/public-tracks" && request.method === "GET") {
+
+  const tracks = await env.DB.prepare(
+    "SELECT id, filename, original_name FROM tracks ORDER BY uploaded_at DESC"
+  ).all()
+
+  return new Response(JSON.stringify(tracks.results), {
+    headers: corsHeaders
+  })
+}
+
+		// ------END ---- PUBLIC TRACK LIST ----------
+
+// ---- ---- FILE ROUTE ----------
+
+if (url.pathname.startsWith("/file/")) {
+
+  const key = decodeURIComponent(
+    url.pathname.replace("/file/", "")
+  )
+
+  const object = await env.MEDIA.get(key)
+
+  if (!object) {
+    return new Response("Not found", { status: 404 })
+  }
+
+return new Response(object.body, {
+  headers: {
+    "Content-Type": "audio/mpeg",
+    "Access-Control-Allow-Origin": "https://sikkmixx.com"
+  }
+})
+
+}
+
+
+
+// ---------- DELETE TRACK ----------
+if (url.pathname.startsWith("/delete/") && request.method === "DELETE") {
+
+  const user = getUserFromRequest(request)
+  if (!user) {
+    return new Response("Unauthorized", { status: 401, headers: corsHeaders })
+  }
+
+  const id = url.pathname.split("/")[2]  // safer parsing
+
+  const track = await env.DB.prepare(
+    "SELECT * FROM tracks WHERE id = ? AND user_id = ?"
+  ).bind(id, user.id).first()
+
+  if (!track) {
+    return new Response("Not found", { status: 404, headers: corsHeaders })
+  }
+
+  await env.MEDIA.delete(track.filename)
+
+  await env.DB.prepare(
+    "DELETE FROM tracks WHERE id = ?"
+  ).bind(id).run()
+
+  return new Response(JSON.stringify({ success: true }), {
+    headers: corsHeaders
+  })
+}
+
+// ---------- REGISTER ----------
+
+if (url.pathname === "/register" && request.method === "POST") {
+
   try {
-    const payload = JSON.parse(atob(token))
-    return payload.username
-  } catch (e) {
-    return null
+    const { username, password } = await request.json()
+
+    if (!username || !password) {
+      return new Response(
+        JSON.stringify({ error: "Username and password required" }),
+        { status: 400, headers: corsHeaders }
+      )
+    }
+
+    if (password.length < 6) {
+      return new Response(
+        JSON.stringify({ error: "Password must be at least 6 characters" }),
+        { status: 400, headers: corsHeaders }
+      )
+    }
+
+    // Check if user already exists
+    const existing = await env.DB.prepare(
+      "SELECT id FROM users WHERE username = ?"
+    ).bind(username).first()
+
+    if (existing) {
+      return new Response(
+        JSON.stringify({ error: "Username already exists" }),
+        { status: 409, headers: corsHeaders }
+      )
+    }
+
+    const hashed = await hashPassword(password)
+
+    await env.DB.prepare(
+      "INSERT INTO users (username, password) VALUES (?, ?)"
+    ).bind(username, hashed).run()
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { headers: corsHeaders }
+    )
+
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: "Server error" }),
+      { status: 500, headers: corsHeaders }
+    )
   }
 }
 
-<!-------------------------------------------------show username-->
+
+// -------END --- REGISTER ----------
 
 
-async function login() {
-  const username = document.getElementById("username").value
-  const password = document.getElementById("password").value
+// -------BEGIN TRACKS------
+if (url.pathname === "/tracks" && request.method === "GET") {
 
-  const res = await fetch(`${API}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
+  const tracks = await env.DB.prepare(
+    "SELECT id, filename FROM tracks ORDER BY id DESC"
+  ).all()
+
+  return new Response(JSON.stringify(tracks.results), {
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "https://sikkmixx.com",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    }
   })
+}
 
-  if (res.ok) {
-    const data = await res.json()
-    token = data.token
-    localStorage.setItem("token", token)
-    showAdmin()
-  } else {
-    alert("Login failed")
+// -------END TRACKS------
+
+
+
+    return new Response("Not found", { status: 404 })
   }
 }
-
-function showAdmin() {
-  document.getElementById("loginSection").classList.add("hidden")
-  document.getElementById("adminSection").classList.remove("hidden")
-
-  const username = getUserFromToken(token)
-  document.getElementById("welcomeText").innerText =
-    `🎛 Welcome, ${username}`
-
-  loadTracks()
-}
-
-
-async function loadTracks() {
-  const res = await fetch(`${API}/tracks`)
-  const tracks = await res.json()
-
-  const list = document.getElementById("trackList")
-  list.innerHTML = ""
-
-  tracks.forEach(track => {
-    const div = document.createElement("div")
-    div.className = "track"
-    div.innerHTML = `
-      ${track.filename}
-      <button onclick="deleteTrack(${track.id})">Delete</button>
-    `
-    list.appendChild(div)
-  })
-}
-
-async function upload() {
-  const file = document.getElementById("fileInput").files[0]
-  if (!file) return
-
-  const formData = new FormData()
-  formData.append("file", file)
-
-  const res = await fetch(`${API}/upload`, {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${token}` },
-    body: formData
-  })
-
-  if (res.ok) {
-    alert("Uploaded!")
-    loadTracks()
-  } else {
-    alert("Upload failed")
-  }
-}
-
-async function deleteTrack(id) {
-  if (!confirm("Delete this track?")) return
-
-  const res = await fetch(`${API}/delete/${id}`, {
-    method: "DELETE",
-    headers: { "Authorization": `Bearer ${token}` }
-  })
-
-  if (res.ok) {
-    loadTracks()
-  } else {
-    alert("Delete failed")
-  }
-}
-
-function logout() {
-  localStorage.removeItem("token")
-  window.location.reload()
-}
-
-
-</script>
-
-</body>
-</html>
