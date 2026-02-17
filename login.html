@@ -65,4 +65,111 @@
 
     #status {
       margin-top: 15px;
-      font-size: 14
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    a {
+      display: block;
+      margin-top: 20px;
+      color: #ff00cc;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>🔐 Login to SikkMixx</h1>
+
+  <input id="username" placeholder="Username" autocomplete="username">
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+
+  <button id="loginBtn">Login</button>
+
+  <div id="status"></div>
+
+  <a href="/register.html">Need an account? Register</a>
+  <a href="/">← Back to Home</a>
+</div>
+
+<script>
+const API = "https://api.sikkmixx.com";
+const statusDiv = document.getElementById("status");
+
+document.getElementById("loginBtn").addEventListener("click", login);
+
+// Auto-redirect if already logged in
+const existingToken = localStorage.getItem("token");
+if (existingToken) {
+  checkRoleAndRedirect(existingToken);
+}
+
+async function login() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!username || !password) {
+    statusDiv.textContent = "❌ Enter username and password";
+    return;
+  }
+
+  statusDiv.textContent = "Logging in...";
+
+  try {
+    const res = await fetch(`${API}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+
+    if (!res.ok) {
+      statusDiv.textContent = "❌ Invalid credentials";
+      return;
+    }
+
+    const data = await res.json();
+    const token = data.token;
+
+    localStorage.setItem("token", token);
+
+    await checkRoleAndRedirect(token);
+
+  } catch (err) {
+    statusDiv.textContent = "❌ Login failed: " + err.message;
+  }
+}
+
+async function checkRoleAndRedirect(token) {
+  try {
+    const res = await fetch(`${API}/me`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      localStorage.removeItem("token");
+      return;
+    }
+
+    const user = await res.json();
+
+    if (user.is_admin) {
+      window.location.href = "/admin.html";
+    } else {
+      window.location.href = "/upload.html";
+    }
+
+  } catch (err) {
+    localStorage.removeItem("token");
+  }
+}
+</script>
+
+</body>
+</html>
