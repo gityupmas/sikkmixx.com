@@ -103,7 +103,7 @@ if (token) {
 }
 
 
-<!-------------------------------------------------show username-->
+// -------------------------------------------------show username-->
 function getUserFromToken(token) {
   try {
     const payload = JSON.parse(atob(token))
@@ -113,7 +113,7 @@ function getUserFromToken(token) {
   }
 }
 
-<!-------------------------------------------------show username-->
+// -------------------------------------------------show username-->
 
 
 async function login() {
@@ -149,9 +149,16 @@ function showAdmin() {
 
 
 async function loadTracks() {
-  const res = await fetch(`${API}/tracks`)
-  const tracks = await res.json()
+  const res = await fetch(`${API}/admin/pending`, {
+    headers: { "Authorization": `Bearer ${token}` }
+  })
 
+  if (!res.ok) {
+    alert("Failed to load pending tracks")
+    return
+  }
+
+  const tracks = await res.json()
   const list = document.getElementById("trackList")
   list.innerHTML = ""
 
@@ -159,12 +166,53 @@ async function loadTracks() {
     const div = document.createElement("div")
     div.className = "track"
     div.innerHTML = `
-      ${track.filename}
-      <button onclick="deleteTrack(${track.id})">Delete</button>
+      <span>${track.original_name || track.filename}</span>
+      <span>
+        <button onclick="approveTrack(${track.id})">Approve</button>
+        <button onclick="adminDelete(${track.id})">Delete</button>
+      </span>
     `
     list.appendChild(div)
   })
 }
+
+async function approveTrack(id) {
+  const res = await fetch(`${API}/admin/approve`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ id })
+  })
+
+  if (res.ok) {
+    loadTracks()
+  } else {
+    alert("Approve failed")
+  }
+}
+
+async function adminDelete(id) {
+  if (!confirm("Delete this track?")) return
+
+  const res = await fetch(`${API}/admin/delete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ id })
+  })
+
+  if (res.ok) {
+    loadTracks()
+  } else {
+    alert("Delete failed")
+  }
+}
+
+
 
 async function upload() {
   const file = document.getElementById("fileInput").files[0]
