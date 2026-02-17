@@ -325,15 +325,8 @@ border: 1px solid rgba(255,255,255,0.1);
 <body>
 
 <a href="/register.html" id="registerBtn">Register</a>
-<a href="/login.html" id="adminBtn">Login</a>
-<a href="/my.html" id="myBtn" style="display:none;">My Tracks</a>
+<a href="/login.html" id="loginBtn">Login</a>
 <a href="/profile.html" id="profileBtn" style="display:none;">@user</a>
-
-<!-- 
-<a href="/my.html" id="myBtn" >My Tracks</a>
-// <a href="/profile.html" id="profileBtn" >@user</a>
--->
-
 
 
 <div id="bg-image"></div>
@@ -368,13 +361,57 @@ border: 1px solid rgba(255,255,255,0.1);
 <script>
 const API = "https://api.sikkmixx.com"
 let player = document.getElementById("player")
-
 let playlist = []
 let currentIndex = 0
 let bassSmoothed = 0
 
+
 const token = localStorage.getItem("token");
+
+const registerBtn = document.getElementById("registerBtn");
+const loginBtn = document.getElementById("loginBtn");
 const profileBtn = document.getElementById("profileBtn");
+
+(async () => {
+
+  if (!token) return; // Not logged in → do nothing
+
+  try {
+    const meRes = await fetch(`${API}/me`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    if (!meRes.ok) {
+      localStorage.removeItem("token");
+      return;
+    }
+
+    const me = await meRes.json();
+
+    // Hide Register
+    registerBtn.style.display = "none";
+
+    // Change Login → Logout
+    loginBtn.textContent = "Logout";
+    loginBtn.href = "#";
+
+    loginBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      localStorage.removeItem("token");
+      window.location.reload();
+    });
+
+    // Show profile button with username
+    profileBtn.textContent = `@${me.username}`;
+    profileBtn.style.display = "inline-block";
+
+  } catch (e) {
+    localStorage.removeItem("token");
+  }
+
+})();
+
+
 
 (async () => {
   if (!token) return;
