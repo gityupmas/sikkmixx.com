@@ -181,8 +181,6 @@ border: 1px solid rgba(255,255,255,0.1);
   transition: opacity 0.8s ease, transform 0.8s ease;
 }
 	  
-    }
-
 
     h1 {
       letter-spacing: 3px;
@@ -321,7 +319,7 @@ let bassSmoothed = 0
 
 
 async function loadTrack() {
-  const res = await fetch(`${API}/tracks`)
+  const res = await fetch(`${API}/public-tracks`)
   playlist = await res.json()
 
   if (playlist.length === 0) {
