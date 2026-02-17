@@ -82,6 +82,30 @@
   box-shadow: 0 0 10px #00e0ff;
 }
 
+#myBtn {
+  position: fixed;
+  top: 15px;
+  left: 140px; /* adjust if needed */
+  opacity: 0.5;
+  font-size: 14px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+  z-index: 20;
+}
+
+#myBtn:hover {
+  color: #ff00cc;
+  opacity: 1;
+  border-color: #ff00cc;
+  box-shadow: 0 0 10px #ff00cc;
+}
+
+
 #visual-bg {
   position: fixed;
   top: 0;
@@ -278,6 +302,8 @@ border: 1px solid rgba(255,255,255,0.1);
 
 <a href="/register.html" id="registerBtn">Register</a>
 <a href="/login.html" id="adminBtn">Login</a>
+<a href="/my.html" id="myBtn" style="display:none;">My Tracks</a>
+
 
 <div id="bg-image"></div>
 <div id="visual-bg"></div>
