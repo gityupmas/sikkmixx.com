@@ -96,28 +96,37 @@
 }
 
 .base {
-  font-weight: 800;
-  font-size: clamp(22px, 4vw, 40px);
-  color: rgba(255,255,255,.85);
-}
-
-.rim {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  font-weight: 800;
+  font-size: clamp(28px, 5.5vw, 52px); /* bigger */
+  letter-spacing: 1px;
+  color: rgba(255,255,255,.9);
+  text-shadow: 0 0 14px rgba(255,255,255,.18);
+}
+
+/* Move base words closer to the hot letters */
+.disc.left .base  { transform: translate(-50%, -50%) translateX(25%); }
+.disc.right .base { transform: translate(-50%, -50%) translateX(-25%); }
+
+/* Big rim letters */
+.rim {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   font-weight: 900;
-  font-size: clamp(60px, 10vw, 120px);
+  font-size: clamp(70px, 12vw, 140px); /* slightly bigger */
   background: linear-gradient(90deg, #ff00cc, #3333ff);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 0 12px rgba(255,0,204,.6);
+  text-shadow: 0 0 14px rgba(255,0,204,.7);
 }
 
-.disc.left .rim  { transform: translate(-50%, -50%) translateX(55%); }
-.disc.right .rim { transform: translate(-50%, -50%) translateX(-55%); }
-
+.disc.left .rim  { transform: translate(-50%, -50%) translateX(58%); }
+.disc.right .rim { transform: translate(-50%, -50%) translateX(-58%); }
 
 #visualizer {
   margin-top: 30px;
