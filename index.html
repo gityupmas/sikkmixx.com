@@ -445,7 +445,8 @@ function playCurrentTrack() {
   const track = playlist[currentIndex]
   const encoded = encodeURIComponent(track.filename)
 
-  const cleanName = track.original_name;
+  const cleanName = track.original_name
+     .replace(".mp3", "")
 
   document.getElementById("trackTitle").innerText = cleanName
 
