@@ -716,6 +716,29 @@ document.getElementById("introLogo").innerHTML = `
 `;
 </script>
 
+<script>
+let logoPlaying = true;
+const SPEED = 44;
+const spinLeft  = () => document.getElementById("spinLeft");
+const spinRight = () => document.getElementById("spinRight");
+
+const t0 = performance.now();
+
+function tick(now){
+  if(!logoPlaying) return;
+
+  const dt = (now - t0)/1000;
+  const aRight = dt * SPEED;
+  const aLeft  = -dt * SPEED;
+
+  if(spinRight()) spinRight().style.transform = `rotate(${aRight}deg)`;
+  if(spinLeft())  spinLeft().style.transform  = `rotate(${aLeft}deg)`;
+
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+
 
 </body>
 </html>
