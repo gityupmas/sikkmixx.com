@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>siKKmiXX spinning overlap logo</title>
+  <title>siKKmiXX scratch overlap logo</title>
   <style>
     :root{
       --bg:#000;
@@ -40,7 +40,6 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      /* MORE overlap so KK/XX can collide in the middle */
       gap: 0;
     }
 
@@ -58,10 +57,11 @@
       box-shadow: 0 0 45px rgba(255,0,204,.16);
       display:grid;
       place-items:center;
-      overflow: visible; /* IMPORTANT: let KK/XX spill outside the disc */
+      overflow: visible; /* allow KK/XX outside */
+      transform-origin: 50% 50%;
+      will-change: transform;
     }
 
-    /* grooves */
     .disc::before{
       content:"";
       position:absolute;
@@ -76,7 +76,6 @@
       filter: blur(.2px);
     }
 
-    /* label dot */
     .disc::after{
       content:"";
       position:absolute;
@@ -88,7 +87,7 @@
       pointer-events:none;
     }
 
-    /* Pull discs INTO each other */
+    /* Discs overlap */
     .disc.left  { transform: translateX(14%); z-index: 2; }
     .disc.right { transform: translateX(-14%); z-index: 1; }
 
@@ -101,11 +100,9 @@
       will-change: transform;
       display:grid;
       place-items:center;
-      z-index: 5;
       pointer-events:none;
     }
 
-    /* Base (si / mi) stays centered on the disc and rotates with it */
     .base{
       font-weight: 800;
       letter-spacing: 1px;
@@ -116,7 +113,6 @@
       filter: drop-shadow(0 0 10px rgba(0,0,0,.6));
     }
 
-    /* The big “rim letters” KK / XX that spill OUTSIDE the record */
     .rim{
       position:absolute;
       top: 50%;
@@ -124,7 +120,7 @@
       transform: translate(-50%, -50%);
       font-weight: 900;
       letter-spacing: 1px;
-      font-size: clamp(56px, 10.5vw, 118px); /* BIG */
+      font-size: clamp(56px, 10.5vw, 118px);
       line-height: 1;
       background: linear-gradient(90deg, var(--pink), var(--blue));
       -webkit-background-clip: text;
@@ -135,27 +131,42 @@
       will-change: transform, filter;
     }
 
-    /*
-      Place them on the inner rim toward the overlap.
-      - left disc’s KK sits on RIGHT rim (positive x)
-      - right disc’s XX sits on LEFT rim (negative x)
-      Also “spill” outward by going beyond radius.
-    */
     .disc.left .rim  { transform: translate(-50%, -50%) translateX(55%) translateY(-2%); }
     .disc.right .rim { transform: translate(-50%, -50%) translateX(-55%) translateY(-2%); }
 
-    /* Flash when alignment happens */
-    .flash{
-      animation: flashPop 220ms ease-out 1;
+    /* ---------- SCRATCH HIT ANIMATIONS ---------- */
+
+    /* record “scratch”: tiny forward/back rotation + micro shove */
+    .scratchRecord{
+      animation: scratchRecord 260ms ease-out 1;
     }
 
-    @keyframes flashPop{
-      0%   { filter: drop-shadow(0 0 0 rgba(255,0,204,0)); transform: scale(1); }
-      35%  { filter: drop-shadow(0 0 26px rgba(0,224,255,.85)) drop-shadow(0 0 18px rgba(255,0,204,.85)); transform: scale(1.08); }
-      100% { filter: drop-shadow(0 0 0 rgba(255,0,204,0)); transform: scale(1); }
+    @keyframes scratchRecord{
+      0%   { filter: none; }
+      10%  { transform: translateX(var(--tx)) rotate(6deg); filter: brightness(1.05) saturate(1.1); }
+      25%  { transform: translateX(var(--tx)) rotate(-7deg); }
+      45%  { transform: translateX(var(--tx)) rotate(5deg); }
+      70%  { transform: translateX(var(--tx)) rotate(-3deg); }
+      100% { transform: translateX(var(--tx)) rotate(0deg); }
     }
 
-    /* center overlap spark */
+    /* letters “vibrate” like scratch chatter */
+    .scratchLetters{
+      animation: scratchLetters 260ms linear 1;
+    }
+
+    @keyframes scratchLetters{
+      0%   { transform: translate(var(--baseX), var(--baseY)) scale(1); }
+      10%  { transform: translate(calc(var(--baseX) + 2px), calc(var(--baseY) - 1px)) scale(1.03); }
+      20%  { transform: translate(calc(var(--baseX) - 3px), calc(var(--baseY) + 2px)) scale(0.99); }
+      30%  { transform: translate(calc(var(--baseX) + 3px), calc(var(--baseY) - 2px)) scale(1.02); }
+      40%  { transform: translate(calc(var(--baseX) - 2px), calc(var(--baseY) + 1px)) scale(1.00); }
+      55%  { transform: translate(calc(var(--baseX) + 2px), calc(var(--baseY) + 0px)) scale(1.01); }
+      70%  { transform: translate(calc(var(--baseX) - 1px), calc(var(--baseY) - 1px)) scale(1.00); }
+      100% { transform: translate(var(--baseX), var(--baseY)) scale(1); }
+    }
+
+    /* optional center spark can stay subtle */
     .spark{
       position:absolute;
       left:50%;
@@ -164,7 +175,7 @@
       aspect-ratio:1/1;
       transform: translate(-50%, -50%);
       border-radius:999px;
-      background: radial-gradient(circle, rgba(255,0,204,.95), rgba(0,224,255,.40), transparent 70%);
+      background: radial-gradient(circle, rgba(255,0,204,.8), rgba(0,224,255,.25), transparent 70%);
       opacity:0;
       pointer-events:none;
       z-index: 50;
@@ -176,14 +187,14 @@
     }
 
     @keyframes spark{
-      0%   { transform: translate(-50%, -50%) scale(.70); opacity:0; }
-      35%  { transform: translate(-50%, -50%) scale(1.05); opacity:1; }
+      0%   { transform: translate(-50%, -50%) scale(.85); opacity:0; }
+      35%  { transform: translate(-50%, -50%) scale(1.1); opacity:1; }
       100% { transform: translate(-50%, -50%) scale(1.55); opacity:0; }
     }
 
-    /* Reduced motion */
     @media (prefers-reduced-motion: reduce){
       .spin{ transform:none !important; }
+      .scratchRecord, .scratchLetters { animation: none !important; }
     }
   </style>
 </head>
@@ -192,14 +203,14 @@
 
 <div id="sikkmixx-logo" aria-label="siKKmiXX logo">
   <div class="deck">
-    <div class="disc left">
+    <div class="disc left" id="discLeft">
       <div class="spin" id="spinLeft">
         <div class="base">si</div>
         <div class="rim" id="rimKK">KK</div>
       </div>
     </div>
 
-    <div class="disc right">
+    <div class="disc right" id="discRight">
       <div class="spin" id="spinRight">
         <div class="base">mi</div>
         <div class="rim" id="rimXX">XX</div>
@@ -212,21 +223,33 @@
 
 <script>
   // --- Tunables ---
-  const SPEED_DEG_PER_SEC = 44;     // spin speed
-  const FLASH_THRESHOLD_DEG = 6;    // how close the match must be
-  const FLASH_COOLDOWN_MS = 260;    // avoids constant flashing
+  const SPEED_DEG_PER_SEC = 44;     // base spin speed
+  const FLASH_THRESHOLD_DEG = 6;    // match sensitivity
+  const HIT_COOLDOWN_MS = 320;      // scratch cooldown
 
-  // later: hook this to your audio element play/pause
   let isPlaying = true;
 
   const spinLeft  = document.getElementById("spinLeft");
   const spinRight = document.getElementById("spinRight");
+  const discLeft  = document.getElementById("discLeft");
+  const discRight = document.getElementById("discRight");
+
   const rimKK = document.getElementById("rimKK");
   const rimXX = document.getElementById("rimXX");
   const spark = document.getElementById("spark");
   const logo  = document.getElementById("sikkmixx-logo");
 
-  let lastFlashAt = 0;
+  // Precompute the base translate values for the letters so the vibration keyframes can reuse them
+  rimKK.style.setProperty("--baseX", "calc(-50% + 55%)");
+  rimKK.style.setProperty("--baseY", "calc(-50% - 2%)");
+  rimXX.style.setProperty("--baseX", "calc(-50% - 55%)");
+  rimXX.style.setProperty("--baseY", "calc(-50% - 2%)");
+
+  // Also set record translate for scratch animation (keep their overlap position)
+  discLeft.style.setProperty("--tx", "14%");
+  discRight.style.setProperty("--tx", "-14%");
+
+  let lastHitAt = 0;
   const t0 = performance.now();
 
   function normDeg(d){
@@ -239,36 +262,43 @@
     return diff > 180 ? 360 - diff : diff;
   }
 
-  function triggerFlash(){
-    rimKK.classList.add("flash");
-    rimXX.classList.add("flash");
+  function triggerScratch(){
+    // record scratch hit (both discs)
+    discLeft.classList.add("scratchRecord");
+    discRight.classList.add("scratchRecord");
+
+    // letter vibration (just the hot letters)
+    rimKK.classList.add("scratchLetters");
+    rimXX.classList.add("scratchLetters");
+
+    // optional subtle spark
     spark.classList.add("sparkOn");
 
     setTimeout(() => {
-      rimKK.classList.remove("flash");
-      rimXX.classList.remove("flash");
+      discLeft.classList.remove("scratchRecord");
+      discRight.classList.remove("scratchRecord");
+      rimKK.classList.remove("scratchLetters");
+      rimXX.classList.remove("scratchLetters");
       spark.classList.remove("sparkOn");
-    }, 240);
+    }, 280);
   }
 
   function tick(now){
     const dt = (now - t0) / 1000;
 
     if (isPlaying && !matchMedia("(prefers-reduced-motion: reduce)").matches){
-      // right disc clockwise, left disc counterclockwise
       const aRight = normDeg(dt * SPEED_DEG_PER_SEC);
       const aLeft  = normDeg(-dt * SPEED_DEG_PER_SEC);
 
       spinRight.style.transform = `rotate(${aRight}deg)`;
       spinLeft.style.transform  = `rotate(${aLeft}deg)`;
 
-      // “Match up” moment: relative angle near 0°
       const relative = shortestAngleDiff(aRight, aLeft);
-
       const nowMs = performance.now();
-      if (relative <= FLASH_THRESHOLD_DEG && (nowMs - lastFlashAt) > FLASH_COOLDOWN_MS) {
-        lastFlashAt = nowMs;
-        triggerFlash();
+
+      if (relative <= FLASH_THRESHOLD_DEG && (nowMs - lastHitAt) > HIT_COOLDOWN_MS) {
+        lastHitAt = nowMs;
+        triggerScratch();
       }
     }
 
