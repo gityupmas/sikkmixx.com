@@ -182,7 +182,7 @@ right: 15px; }
   top: -10%;
   left: -10%;
   background: radial-gradient(circle, rgba(0,255,255,0.2), transparent 80%);
-  animation: rotate 20s linear infinite;
+  animation: rotate 30s linear infinite;
 }
 
 @keyframes rotate {
@@ -473,7 +473,11 @@ function playCurrentTrack() {
   currentTrack = track;
 
   const encoded = encodeURIComponent(track.filename);
-  document.getElementById("trackTitle").innerText = track.original_name || "Untitled";
+const cleanName = (track.original_name || "")
+  .replace(/\.mp3$/i, "");   // removes .mp3 case-insensitive
+
+document.getElementById("trackTitle").innerText = cleanName;
+
 
   player.src = `${API}/file/${encoded}`;
 }
