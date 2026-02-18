@@ -475,8 +475,10 @@ function playCurrentTrack() {
   const encoded = encodeURIComponent(track.filename);
 const cleanName = (track.original_name || "")
   .replace(/\.mp3$/i, "");   // removes .mp3 case-insensitive
+const artist = (track.artist || "").trim();
 
-document.getElementById("trackTitle").innerText = cleanName;
+document.getElementById("trackTitle").innerText = 
+   artist ? `${artist} — ${title}` : title;
 
 
   player.src = `${API}/file/${encoded}`;
