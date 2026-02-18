@@ -49,6 +49,14 @@
   color: rgba(255,200,200,1);
 }
 	
+	
+	.approvebtn:hover {
+  border-color: rgba(0, 255, 140, 0.55);
+  box-shadow: 0 0 14px rgba(0, 255, 140, 0.20);
+  color: rgba(170, 255, 220, 1);
+}
+
+
 
     .wrap {
       max-width: 900px;
@@ -300,11 +308,14 @@
           return;
         }
 
-        const me = await meRes.json();
-        handleEl.textContent = `@${me.username}`;
-        roleLineEl.textContent = me.is_admin
-          ? "Role: Admin (you can also submit tracks)"
-          : "Role: Listener / Submitter";
+const me = await meRes.json();
+window.__isAdmin = !!me.is_admin;
+
+handleEl.textContent = `@${me.username}`;
+roleLineEl.textContent = me.is_admin
+  ? "Role: Admin (you can also submit tracks)"
+  : "Role: Listener / Submitter";
+
 
         await loadMyTracks();
 
@@ -336,6 +347,31 @@
   // refresh stats + list
   await loadMyTracks();
 }
+
+async function approveTrack(id) {
+  if (!confirm("Approve this track and publish it?")) return;
+
+  statusEl.textContent = "Approving…";
+
+  const res = await fetch(`${API}/admin/approve`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ id })
+  });
+
+  if (!res.ok) {
+    const t = await res.text();
+    statusEl.textContent = "❌ Approve failed: " + t;
+    return;
+  }
+
+  await loadMyTracks();
+}
+
+
     async function loadMyTracks() {
       statusEl.textContent = "Loading your submissions…";
       recentList.innerHTML = "";
@@ -389,10 +425,22 @@
     <div class="name">${escapeHtml(track.original_name || track.filename)}</div>
     <div class="meta">${metaParts.join(" • ")}</div>
   </div>
+const canApprove = window.__isAdmin && status === "pending";
+
+div.innerHTML = `
+  <div>
+    <div class="name">${escapeHtml(track.original_name || track.filename)}</div>
+    <div class="meta">${metaParts.join(" • ")}</div>
+  </div>
   <div class="actions">
     <span class="badge ${badgeClass}">${escapeHtml(status)}</span>
+
+    ${canApprove ? `<button class="smallbtn approvebtn" onclick="approveTrack(${track.id})">Approve</button>` : ""}
+
     <button class="smallbtn" onclick="deleteMyTrack(${track.id})">Delete</button>
   </div>
+`;
+
 `;
        recentList.appendChild(div);
       });

@@ -198,7 +198,7 @@ async function loadPending() {
     const div = document.createElement("div");
     div.className = "track";
 
-    const name = track.original_name || track.filename;
+    const name = track.original_name;
     const genre = track.genre ? `Genre: ${track.genre}` : "";
     const note = track.note ? `Note: ${track.note}` : "";
 
