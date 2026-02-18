@@ -51,6 +51,73 @@
   box-shadow: 0 0 10px #ff00cc;
 }
 
+/* ---------- INTRO LOGO ---------- */
+
+#introLogo {
+  width: min(600px, 90vw);
+  margin-bottom: 40px;
+}
+
+#sikkmixx-logo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 1.35;
+}
+
+.deck {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.disc {
+  position: relative;
+  width: 46%;
+  aspect-ratio: 1/1;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.14), transparent 52%),
+              rgba(20,20,20,.6);
+  display: grid;
+  place-items: center;
+  overflow: visible;
+}
+
+.disc.left  { transform: translateX(14%); z-index:2; }
+.disc.right { transform: translateX(-14%); }
+
+.spin {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+}
+
+.base {
+  font-weight: 800;
+  font-size: clamp(22px, 4vw, 40px);
+  color: rgba(255,255,255,.85);
+}
+
+.rim {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: 900;
+  font-size: clamp(60px, 10vw, 120px);
+  background: linear-gradient(90deg, #ff00cc, #3333ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 12px rgba(255,0,204,.6);
+}
+
+.disc.left .rim  { transform: translate(-50%, -50%) translateX(55%); }
+.disc.right .rim { transform: translate(-50%, -50%) translateX(-55%); }
+
 
 #visualizer {
   margin-top: 30px;
@@ -315,9 +382,10 @@ border: 1px solid rgba(255,255,255,0.1);
 
 <!-- INTRO SCREEN -->
 <div id="intro">
-  <h1>🎧 SIKKMIXX LIVE</h1>
+  <div id="introLogo"></div>
   <button id="enterBtn">ENTER THE MIX</button>
 </div>
+
 
 <!-- MAIN PLAYER -->
 <div id="main">
@@ -619,11 +687,35 @@ for (let i = 0; i < bars; i++) {
   }
   draw( )
 }
-
-
 </script>
   
 </a>
+
+
+<script>
+document.getElementById("introLogo").innerHTML = `
+  <div id="sikkmixx-logo">
+    <div class="deck">
+      <div class="disc left" id="discLeft">
+        <div class="spin" id="spinLeft">
+          <div class="base">si</div>
+          <div class="rim" id="rimKK">KK</div>
+        </div>
+      </div>
+
+      <div class="disc right" id="discRight">
+        <div class="spin" id="spinRight">
+          <div class="base">mi</div>
+          <div class="rim" id="rimXX">XX</div>
+        </div>
+      </div>
+
+      <div class="spark" id="spark"></div>
+    </div>
+  </div>
+`;
+</script>
+
 
 </body>
 </html>
