@@ -312,7 +312,30 @@
         statusEl.textContent = "❌ Error: " + e.message;
       }
     }
+	
+	async function deleteMyTrack(id) {
+  if (!confirm("Delete this submission?")) return;
 
+  statusEl.textContent = "Deleting…";
+
+  const res = await fetch(`${API}/my-tracks/delete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ id })
+  });
+
+  if (!res.ok) {
+    const t = await res.text();
+    statusEl.textContent = "❌ Delete failed: " + t;
+    return;
+  }
+
+  // refresh stats + list
+  await loadMyTracks();
+}
     async function loadMyTracks() {
       statusEl.textContent = "Loading your submissions…";
       recentList.innerHTML = "";
@@ -361,17 +384,17 @@
         if (track.note) metaParts.push(`Note: ${escapeHtml(track.note)}`);
         if (prettyTime) metaParts.push(`Uploaded: ${escapeHtml(prettyTime)}`);
 
-        div.innerHTML = `
-          <div>
-            <div class="name">${escapeHtml(track.original_name || track.filename)}</div>
-            <div class="meta">${metaParts.join(" • ")}</div>
-          </div>
-          <div>
-            <span class="badge ${badgeClass}">${escapeHtml(status)}</span>
-          </div>
-        `;
-
-        recentList.appendChild(div);
+  div.innerHTML = `
+  <div>
+    <div class="name">${escapeHtml(track.original_name || track.filename)}</div>
+    <div class="meta">${metaParts.join(" • ")}</div>
+  </div>
+  <div class="actions">
+    <span class="badge ${badgeClass}">${escapeHtml(status)}</span>
+    <button class="smallbtn" onclick="deleteMyTrack(${track.id})">Delete</button>
+  </div>
+`;
+       recentList.appendChild(div);
       });
     }
 
