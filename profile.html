@@ -337,7 +337,48 @@ const adminPendingList = document.getElementById("adminPendingList");
 	
 	
 	
-	
+	adminPendingList.addEventListener("click", async (e) => {
+  const appr = e.target?.getAttribute?.("data-admin-approve");
+  const del = e.target?.getAttribute?.("data-admin-delete");
+
+  if (appr) {
+    if (!confirm("Approve this track and publish it?")) return;
+    statusEl.textContent = "Approving…";
+
+    const r = await api("/admin/approve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: Number(appr) })
+    });
+
+    if (!r.ok) {
+      statusEl.textContent = "❌ Approve failed: " + await r.text();
+      return;
+    }
+
+    // Refresh both sections
+    await loadMyTracks();
+    await loadAdminPending();
+  }
+
+  if (del) {
+    if (!confirm("Delete this pending track?")) return;
+    statusEl.textContent = "Deleting…";
+
+    const r = await api("/admin/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: Number(del) })
+    });
+
+    if (!r.ok) {
+      statusEl.textContent = "❌ Delete failed: " + await r.text();
+      return;
+    }
+
+    await loadAdminPending();
+  }
+});
 	
 	
 	
