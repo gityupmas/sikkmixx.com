@@ -6,115 +6,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #000;
-      color: white;
-      min-height: 100vh;
+    body { margin:0; font-family:'Segoe UI',sans-serif; background:#000; color:#fff; min-height:100vh; }
+    #bg{ position:fixed; inset:0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,0,204,0.18), transparent 55%),
+                  radial-gradient(circle at 70% 60%, rgba(0,200,255,0.14), transparent 60%),
+                  linear-gradient(#000, #050505);
+      z-index:-1;
     }
+    .wrap{ max-width:900px; margin:0 auto; padding:24px 16px 50px; }
+    .topbar{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+    .title{ font-size:22px; letter-spacing:1px; margin:0; }
+    .pill{ display:inline-flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
 
-    #bg {
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(circle at 30% 20%, rgba(255,0,204,0.18), transparent 55%),
-        radial-gradient(circle at 70% 60%, rgba(0,200,255,0.14), transparent 60%),
-        linear-gradient(#000, #050505);
-      z-index: -1;
-    }
-	
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.smallbtn {
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.9);
-  padding: 6px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: 0.2s;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.smallbtn:hover {
-  border-color: rgba(255,60,60,0.8);
-  box-shadow: 0 0 14px rgba(255,60,60,0.25);
-  color: rgba(255,200,200,1);
-}
-	
-	
-	.approvebtn:hover {
-  border-color: rgba(0, 255, 140, 0.55);
-  box-shadow: 0 0 14px rgba(0, 255, 140, 0.20);
-  color: rgba(170, 255, 220, 1);
-}
-
-
-
-    .wrap {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px 16px 50px;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-
-    .title {
-      font-size: 22px;
-      letter-spacing: 1px;
-      margin: 0;
-    }
-
-    .pill {
-      display: inline-flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .btn {
-      border: 1px solid rgba(255,255,255,0.18);
+    .btn{
+      border:1px solid rgba(255,255,255,0.18);
       background: rgba(255,255,255,0.06);
       color: rgba(255,255,255,0.9);
-      padding: 8px 12px;
-      border-radius: 999px;
-      cursor: pointer;
+      padding:8px 12px;
+      border-radius:999px;
+      cursor:pointer;
       backdrop-filter: blur(10px);
-      transition: 0.2s;
-      text-decoration: none;
-      font-size: 13px;
-      white-space: nowrap;
+      transition:0.2s;
+      text-decoration:none;
+      font-size:13px;
+      white-space:nowrap;
     }
-
-    .btn:hover {
+    .btn:hover{
       border-color: rgba(255,0,204,0.6);
       box-shadow: 0 0 14px rgba(255,0,204,0.25);
-      color: #ff00cc;
+      color:#ff00cc;
       transform: translateY(-1px);
     }
-
-    .btn-danger:hover {
+    .btn-danger:hover{
       border-color: rgba(255,60,60,0.8);
       box-shadow: 0 0 14px rgba(255,60,60,0.25);
       color: rgba(255,200,200,1);
     }
 
-    .card {
-      background: rgba(30, 30, 30, 0.55);
+    .card{
+      background: rgba(30,30,30,0.55);
       backdrop-filter: blur(18px);
       border: 1px solid rgba(255,255,255,0.10);
       border-radius: 18px;
@@ -122,100 +52,54 @@
       box-shadow: 0 0 40px rgba(255,0,204,0.16);
     }
 
-    .row {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 12px;
+    .row{ display:grid; grid-template-columns: 1.2fr 1fr; gap:12px; }
+    @media(max-width:760px){ .row{ grid-template-columns:1fr; } }
+
+    .big{ font-size:26px; margin:0; letter-spacing:0.5px; }
+    .muted{ opacity:0.8; margin-top:6px; font-size:13px; line-height:1.4; }
+
+    .stats{ display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-top:14px; }
+    .stat{ padding:12px; border-radius:14px; background: rgba(0,0,0,0.28); border:1px solid rgba(255,255,255,0.08); text-align:center; }
+    .stat .n{ font-size:18px; font-weight:700; margin-bottom:4px; }
+    .stat .k{ font-size:12px; opacity:0.8; }
+
+    #status{ margin-top:10px; font-size:13px; opacity:0.85; }
+
+    .list{ margin-top:14px; display:grid; gap:10px; }
+    .item{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding:12px; border-radius:14px; background: rgba(0,0,0,0.28); border:1px solid rgba(255,255,255,0.08); }
+    .name{ font-weight:600; }
+    .meta{ margin-top:6px; font-size:12px; opacity:0.85; line-height:1.35; }
+
+    .actions{ display:flex; align-items:center; gap:8px; }
+    .badge{
+      display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px;
+      font-size:12px; border:1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.06);
+      opacity:0.95; text-transform:lowercase;
     }
+    .badge.pending{ border-color: rgba(255,170,0,0.5); color: rgba(255,210,130,1); }
+    .badge.approved{ border-color: rgba(0,255,140,0.45); color: rgba(170,255,220,1); }
 
-    @media (max-width: 760px) {
-      .row { grid-template-columns: 1fr; }
-    }
-
-    .big {
-      font-size: 26px;
-      margin: 0;
-      letter-spacing: 0.5px;
-    }
-
-    .muted {
-      opacity: 0.8;
-      margin-top: 6px;
-      font-size: 13px;
-      line-height: 1.4;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .stat {
-      padding: 12px;
-      border-radius: 14px;
-      background: rgba(0,0,0,0.28);
-      border: 1px solid rgba(255,255,255,0.08);
-      text-align: center;
-    }
-
-    .stat .n {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .stat .k {
-      font-size: 12px;
-      opacity: 0.8;
-    }
-
-    .list {
-      margin-top: 14px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .item {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 12px 12px;
-      border-radius: 14px;
-      background: rgba(0,0,0,0.28);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .name { font-weight: 600; }
-
-    .meta {
-      margin-top: 6px;
-      font-size: 12px;
-      opacity: 0.85;
-      line-height: 1.35;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      border: 1px solid rgba(255,255,255,0.16);
+    .smallbtn{
+      border:1px solid rgba(255,255,255,0.18);
       background: rgba(255,255,255,0.06);
-      opacity: 0.95;
-      text-transform: lowercase;
+      color: rgba(255,255,255,0.9);
+      padding:6px 10px;
+      border-radius:999px;
+      cursor:pointer;
+      backdrop-filter: blur(10px);
+      transition:0.2s;
+      font-size:12px;
+      white-space:nowrap;
     }
-
-    .badge.pending { border-color: rgba(255, 170, 0, 0.5); color: rgba(255, 210, 130, 1); }
-    .badge.approved { border-color: rgba(0, 255, 140, 0.45); color: rgba(170, 255, 220, 1); }
-
-    #status {
-      margin-top: 10px;
-      font-size: 13px;
-      opacity: 0.85;
+    .smallbtn:hover{
+      border-color: rgba(255,60,60,0.8);
+      box-shadow: 0 0 14px rgba(255,60,60,0.25);
+      color: rgba(255,200,200,1);
+    }
+    .approvebtn:hover{
+      border-color: rgba(0,255,140,0.55);
+      box-shadow: 0 0 14px rgba(0,255,140,0.20);
+      color: rgba(170,255,220,1);
     }
   </style>
 </head>
@@ -230,7 +114,7 @@
         <a class="btn" href="/">Home</a>
         <a class="btn" href="/upload.html">Submit</a>
         <a class="btn" href="/my.html">My Submissions</a>
-       <button class="btn btn-danger" id="logoutBtn" type="button">Logout</button>
+        <button class="btn btn-danger" id="logoutBtn" type="button">Logout</button>
       </div>
     </div>
 
@@ -241,18 +125,9 @@
           <div class="muted" id="roleLine">Checking account…</div>
 
           <div class="stats">
-            <div class="stat">
-              <div class="n" id="statTotal">—</div>
-              <div class="k">total</div>
-            </div>
-            <div class="stat">
-              <div class="n" id="statPending">—</div>
-              <div class="k">pending</div>
-            </div>
-            <div class="stat">
-              <div class="n" id="statApproved">—</div>
-              <div class="k">approved</div>
-            </div>
+            <div class="stat"><div class="n" id="statTotal">—</div><div class="k">total</div></div>
+            <div class="stat"><div class="n" id="statPending">—</div><div class="k">pending</div></div>
+            <div class="stat"><div class="n" id="statApproved">—</div><div class="k">approved</div></div>
           </div>
 
           <div id="status">Loading…</div>
@@ -274,289 +149,165 @@
     </div>
   </div>
 
+  <script>
+  (() => {
+    const API = "https://api.sikkmixx.com";
+    const token = localStorage.getItem("token");
 
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Profile - SikkMixx</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    const handleEl = document.getElementById("handle");
+    const roleLineEl = document.getElementById("roleLine");
+    const statusEl = document.getElementById("status");
+    const totalEl = document.getElementById("statTotal");
+    const pendingEl = document.getElementById("statPending");
+    const approvedEl = document.getElementById("statApproved");
+    const recentList = document.getElementById("recentList");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #000;
-      color: white;
-      min-height: 100vh;
+    // Debug: if you don't see this change, the script isn't running at all
+    statusEl.textContent = "Script loaded…";
+
+    // Logout always works
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("token");
+      window.location.assign("/login.html");
+    });
+
+    if (!token) {
+      window.location.assign("/login.html");
+      return;
     }
 
-    #bg {
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(circle at 30% 20%, rgba(255,0,204,0.18), transparent 55%),
-        radial-gradient(circle at 70% 60%, rgba(0,200,255,0.14), transparent 60%),
-        linear-gradient(#000, #050505);
-      z-index: -1;
-    }
-	
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.smallbtn {
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.9);
-  padding: 6px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: 0.2s;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.smallbtn:hover {
-  border-color: rgba(255,60,60,0.8);
-  box-shadow: 0 0 14px rgba(255,60,60,0.25);
-  color: rgba(255,200,200,1);
-}
-	
-	
-	.approvebtn:hover {
-  border-color: rgba(0, 255, 140, 0.55);
-  box-shadow: 0 0 14px rgba(0, 255, 140, 0.20);
-  color: rgba(170, 255, 220, 1);
-}
-
-
-
-    .wrap {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px 16px 50px;
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, s => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+      }[s]));
     }
 
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
+    async function api(path, opts = {}) {
+      return fetch(`${API}${path}`, {
+        ...opts,
+        headers: {
+          ...(opts.headers || {}),
+          "Authorization": `Bearer ${token}`
+        }
+      });
     }
 
-    .title {
-      font-size: 22px;
-      letter-spacing: 1px;
-      margin: 0;
+    function displayTitle(track){
+      const title = (track.original_name || "").replace(/\.mp3$/i, "");
+      const artist = (track.artist || "").trim();
+      return artist ? `${title} by ${artist}` : title;
     }
 
-    .pill {
-      display: inline-flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: flex-end;
+    async function init() {
+      try {
+        statusEl.textContent = "Checking account…";
+
+        const meRes = await api("/me");
+        if (!meRes.ok) {
+          statusEl.textContent = "Session expired. Redirecting to login…";
+          localStorage.removeItem("token");
+          setTimeout(() => window.location.assign("/login.html"), 400);
+          return;
+        }
+
+        const me = await meRes.json();
+        window.__isAdmin = !!me.is_admin;
+
+        handleEl.textContent = `@${me.username}`;
+        roleLineEl.textContent = me.is_admin
+          ? "Role: Admin (you can also submit tracks)"
+          : "Role: Listener / Submitter";
+
+        await loadMyTracks();
+      } catch (err) {
+        statusEl.textContent = "❌ Profile init error: " + err.message;
+        console.error(err);
+      }
     }
 
-    .btn {
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.9);
-      padding: 8px 12px;
-      border-radius: 999px;
-      cursor: pointer;
-      backdrop-filter: blur(10px);
-      transition: 0.2s;
-      text-decoration: none;
-      font-size: 13px;
-      white-space: nowrap;
-    }
+    async function loadMyTracks() {
+      statusEl.textContent = "Loading your submissions…";
+      recentList.innerHTML = "";
 
-    .btn:hover {
-      border-color: rgba(255,0,204,0.6);
-      box-shadow: 0 0 14px rgba(255,0,204,0.25);
-      color: #ff00cc;
-      transform: translateY(-1px);
-    }
+      const res = await api("/my-tracks");
+      if (!res.ok) {
+        statusEl.textContent = "❌ Failed to load submissions: " + await res.text();
+        return;
+      }
 
-    .btn-danger:hover {
-      border-color: rgba(255,60,60,0.8);
-      box-shadow: 0 0 14px rgba(255,60,60,0.25);
-      color: rgba(255,200,200,1);
-    }
+      const tracks = await res.json();
 
-    .card {
-      background: rgba(30, 30, 30, 0.55);
-      backdrop-filter: blur(18px);
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 18px;
-      padding: 16px;
-      box-shadow: 0 0 40px rgba(255,0,204,0.16);
-    }
+      totalEl.textContent = tracks.length;
+      pendingEl.textContent = tracks.filter(t => (t.status || "pending").toLowerCase() === "pending").length;
+      approvedEl.textContent = tracks.filter(t => (t.status || "pending").toLowerCase() === "approved").length;
 
-    .row {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 12px;
-    }
+      if (!tracks.length) {
+        statusEl.textContent = "No submissions yet. Hit Submit to upload your first track.";
+        return;
+      }
 
-    @media (max-width: 760px) {
-      .row { grid-template-columns: 1fr; }
-    }
+      statusEl.textContent = "Recent submissions:";
 
-    .big {
-      font-size: 26px;
-      margin: 0;
-      letter-spacing: 0.5px;
-    }
+      tracks.slice(0, 5).forEach(track => {
+        const status = (track.status || "pending").toLowerCase();
+        const badgeClass = status === "approved" ? "approved" : "pending";
+        const canApprove = window.__isAdmin && status === "pending";
 
-    .muted {
-      opacity: 0.8;
-      margin-top: 6px;
-      font-size: 13px;
-      line-height: 1.4;
-    }
+        const metaParts = [];
+        if (track.genre) metaParts.push(`Genre: ${escapeHtml(track.genre)}`);
+        if (track.note) metaParts.push(`Note: ${escapeHtml(track.note)}`);
+        if (track.uploaded_at) metaParts.push(`Uploaded: ${escapeHtml(new Date(track.uploaded_at).toLocaleString())}`);
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .stat {
-      padding: 12px;
-      border-radius: 14px;
-      background: rgba(0,0,0,0.28);
-      border: 1px solid rgba(255,255,255,0.08);
-      text-align: center;
-    }
-
-    .stat .n {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .stat .k {
-      font-size: 12px;
-      opacity: 0.8;
-    }
-
-    .list {
-      margin-top: 14px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .item {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 12px 12px;
-      border-radius: 14px;
-      background: rgba(0,0,0,0.28);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .name { font-weight: 600; }
-
-    .meta {
-      margin-top: 6px;
-      font-size: 12px;
-      opacity: 0.85;
-      line-height: 1.35;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      border: 1px solid rgba(255,255,255,0.16);
-      background: rgba(255,255,255,0.06);
-      opacity: 0.95;
-      text-transform: lowercase;
-    }
-
-    .badge.pending { border-color: rgba(255, 170, 0, 0.5); color: rgba(255, 210, 130, 1); }
-    .badge.approved { border-color: rgba(0, 255, 140, 0.45); color: rgba(170, 255, 220, 1); }
-
-    #status {
-      margin-top: 10px;
-      font-size: 13px;
-      opacity: 0.85;
-    }
-  </style>
-</head>
-
-<body>
-  <div id="bg"></div>
-
-  <div class="wrap">
-    <div class="topbar">
-      <h1 class="title">👤 Profile</h1>
-      <div class="pill">
-        <a class="btn" href="/">Home</a>
-        <a class="btn" href="/upload.html">Submit</a>
-        <a class="btn" href="/my.html">My Submissions</a>
-       <button class="btn btn-danger" id="logoutBtn" type="button">Logout</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="row">
-        <div>
-          <p class="big" id="handle">@loading</p>
-          <div class="muted" id="roleLine">Checking account…</div>
-
-          <div class="stats">
-            <div class="stat">
-              <div class="n" id="statTotal">—</div>
-              <div class="k">total</div>
-            </div>
-            <div class="stat">
-              <div class="n" id="statPending">—</div>
-              <div class="k">pending</div>
-            </div>
-            <div class="stat">
-              <div class="n" id="statApproved">—</div>
-              <div class="k">approved</div>
-            </div>
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div>
+            <div class="name">${escapeHtml(displayTitle(track))}</div>
+            <div class="meta">${metaParts.join(" • ")}</div>
           </div>
-
-          <div id="status">Loading…</div>
-        </div>
-
-        <div>
-          <div class="muted">
-            Quick links:
-            <div style="margin-top:10px; display:grid; gap:10px;">
-              <a class="btn" href="/upload.html">+ Submit a track</a>
-              <a class="btn" href="/my.html">View all submissions</a>
-              <a class="btn" href="/login.html">Switch account</a>
-            </div>
+          <div class="actions">
+            <span class="badge ${badgeClass}">${escapeHtml(status)}</span>
+            ${canApprove ? `<button class="smallbtn approvebtn" data-approve="${track.id}">Approve</button>` : ""}
+            <button class="smallbtn" data-delete="${track.id}">Delete</button>
           </div>
-        </div>
-      </div>
+        `;
+        recentList.appendChild(div);
+      });
+    }
 
-      <div class="list" id="recentList"></div>
-    </div>
-  </div>
+    // Single click handler (no duplicate binding)
+    recentList.addEventListener("click", async (e) => {
+      const del = e.target?.getAttribute?.("data-delete");
+      const appr = e.target?.getAttribute?.("data-approve");
 
+      if (del) {
+        if (!confirm("Delete this submission?")) return;
+        statusEl.textContent = "Deleting…";
+        const r = await api("/my-tracks/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: Number(del) })
+        });
+        if (!r.ok) statusEl.textContent = "❌ Delete failed: " + await r.text();
+        else await loadMyTracks();
+      }
 
-  
-</body>
-</html>
+      if (appr) {
+        if (!confirm("Approve this track and publish it?")) return;
+        statusEl.textContent = "Approving…";
+        const r = await api("/admin/approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: Number(appr) })
+        });
+        if (!r.ok) statusEl.textContent = "❌ Approve failed: " + await r.text();
+        else await loadMyTracks();
+      }
+    });
 
-
-
+    init();
+  })();
+  </script>
 </body>
 </html>
