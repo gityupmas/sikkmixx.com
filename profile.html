@@ -165,6 +165,8 @@
     const pendingEl = document.getElementById("statPending");
     const approvedEl = document.getElementById("statApproved");
     const recentList = document.getElementById("recentList");
+	const adminPendingWrap = document.getElementById("adminPendingWrap");
+const adminPendingList = document.getElementById("adminPendingList");
     const logoutBtn = document.getElementById("logoutBtn");
 
     // Debug: if you don't see this change, the script isn't running at all
@@ -224,6 +226,10 @@
           : "Role: Listener / Submitter";
 
         await loadMyTracks();
+		if (window.__isAdmin) {
+           adminPendingWrap.style.display = "grid";
+        await loadAdminPending();
+}
       } catch (err) {
         statusEl.textContent = "❌ Profile init error: " + err.message;
         console.error(err);
@@ -279,6 +285,65 @@
         recentList.appendChild(div);
       });
     }
+	
+	
+	
+	async function loadAdminPending() {
+  adminPendingList.innerHTML = "";
+  statusEl.textContent = "Loading admin inbox…";
+
+  const res = await api("/admin/pending");
+  if (!res.ok) {
+    statusEl.textContent = "❌ Failed to load admin pending: " + await res.text();
+    return;
+  }
+
+  const tracks = await res.json();
+
+  if (!tracks.length) {
+    statusEl.textContent = "No pending tracks right now.";
+    return;
+  }
+
+  statusEl.textContent = "Admin inbox loaded.";
+
+  tracks.forEach(track => {
+    const title = (track.original_name || "").replace(/\.mp3$/i, "");
+    const artist = (track.artist || "").trim();
+    const display = artist ? `${title} by ${artist}` : title;
+
+    const metaParts = [];
+    if (track.genre) metaParts.push(`Genre: ${escapeHtml(track.genre)}`);
+    if (track.note) metaParts.push(`Note: ${escapeHtml(track.note)}`);
+    if (track.uploaded_at) metaParts.push(`Uploaded: ${escapeHtml(new Date(track.uploaded_at).toLocaleString())}`);
+    if (track.user_id != null) metaParts.push(`User ID: ${escapeHtml(track.user_id)}`);
+
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <div>
+        <div class="name">${escapeHtml(display)}</div>
+        <div class="meta">${metaParts.join(" • ")}</div>
+      </div>
+      <div class="actions">
+        <span class="badge pending">pending</span>
+        <button class="smallbtn approvebtn" data-admin-approve="${track.id}">Approve</button>
+        <button class="smallbtn" data-admin-delete="${track.id}">Delete</button>
+      </div>
+    `;
+    adminPendingList.appendChild(div);
+  });
+}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
     // Single click handler (no duplicate binding)
     recentList.addEventListener("click", async (e) => {
@@ -309,6 +374,7 @@
         else await loadMyTracks();
       }
     });
+
 
     init();
   })();
