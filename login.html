@@ -160,9 +160,9 @@ async function checkRoleAndRedirect(token) {
     const user = await res.json();
 
     if (user.is_admin) {
-      window.location.href = "/admin.html";
+      window.location.href = "/profile.html";
     } else {
-      window.location.href = "/upload.html";
+      window.location.href = "/profile.html";
     }
 
   } catch (err) {
