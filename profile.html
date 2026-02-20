@@ -551,6 +551,282 @@
     </div>
   </div>
 
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Profile - SikkMixx</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: white;
+      min-height: 100vh;
+    }
+
+    #bg {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,0,204,0.18), transparent 55%),
+        radial-gradient(circle at 70% 60%, rgba(0,200,255,0.14), transparent 60%),
+        linear-gradient(#000, #050505);
+      z-index: -1;
+    }
+	
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.smallbtn {
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.9);
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: 0.2s;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.smallbtn:hover {
+  border-color: rgba(255,60,60,0.8);
+  box-shadow: 0 0 14px rgba(255,60,60,0.25);
+  color: rgba(255,200,200,1);
+}
+	
+	
+	.approvebtn:hover {
+  border-color: rgba(0, 255, 140, 0.55);
+  box-shadow: 0 0 14px rgba(0, 255, 140, 0.20);
+  color: rgba(170, 255, 220, 1);
+}
+
+
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 16px 50px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      font-size: 22px;
+      letter-spacing: 1px;
+      margin: 0;
+    }
+
+    .pill {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.9);
+      padding: 8px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: 0.2s;
+      text-decoration: none;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      border-color: rgba(255,0,204,0.6);
+      box-shadow: 0 0 14px rgba(255,0,204,0.25);
+      color: #ff00cc;
+      transform: translateY(-1px);
+    }
+
+    .btn-danger:hover {
+      border-color: rgba(255,60,60,0.8);
+      box-shadow: 0 0 14px rgba(255,60,60,0.25);
+      color: rgba(255,200,200,1);
+    }
+
+    .card {
+      background: rgba(30, 30, 30, 0.55);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 0 40px rgba(255,0,204,0.16);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 760px) {
+      .row { grid-template-columns: 1fr; }
+    }
+
+    .big {
+      font-size: 26px;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+
+    .muted {
+      opacity: 0.8;
+      margin-top: 6px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.28);
+      border: 1px solid rgba(255,255,255,0.08);
+      text-align: center;
+    }
+
+    .stat .n {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat .k {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .list {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.28);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .name { font-weight: 600; }
+
+    .meta {
+      margin-top: 6px;
+      font-size: 12px;
+      opacity: 0.85;
+      line-height: 1.35;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      opacity: 0.95;
+      text-transform: lowercase;
+    }
+
+    .badge.pending { border-color: rgba(255, 170, 0, 0.5); color: rgba(255, 210, 130, 1); }
+    .badge.approved { border-color: rgba(0, 255, 140, 0.45); color: rgba(170, 255, 220, 1); }
+
+    #status {
+      margin-top: 10px;
+      font-size: 13px;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="bg"></div>
+
+  <div class="wrap">
+    <div class="topbar">
+      <h1 class="title">👤 Profile</h1>
+      <div class="pill">
+        <a class="btn" href="/">Home</a>
+        <a class="btn" href="/upload.html">Submit</a>
+        <a class="btn" href="/my.html">My Submissions</a>
+       <button class="btn btn-danger" id="logoutBtn" type="button">Logout</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div>
+          <p class="big" id="handle">@loading</p>
+          <div class="muted" id="roleLine">Checking account…</div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="n" id="statTotal">—</div>
+              <div class="k">total</div>
+            </div>
+            <div class="stat">
+              <div class="n" id="statPending">—</div>
+              <div class="k">pending</div>
+            </div>
+            <div class="stat">
+              <div class="n" id="statApproved">—</div>
+              <div class="k">approved</div>
+            </div>
+          </div>
+
+          <div id="status">Loading…</div>
+        </div>
+
+        <div>
+          <div class="muted">
+            Quick links:
+            <div style="margin-top:10px; display:grid; gap:10px;">
+              <a class="btn" href="/upload.html">+ Submit a track</a>
+              <a class="btn" href="/my.html">View all submissions</a>
+              <a class="btn" href="/login.html">Switch account</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="list" id="recentList"></div>
+    </div>
+  </div>
+
   <script>
     const API = "https://api.sikkmixx.com";
     const token = localStorage.getItem("token");
@@ -749,6 +1025,10 @@ div.innerHTML = `
   });
 })();
 </script>
+  
+</body>
+</html>
+
   
 </body>
 </html>
