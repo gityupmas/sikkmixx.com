@@ -329,6 +329,21 @@ ORDER BY uploaded_at DESC`
       return json(results);
     }
 	
+// ---------------- TOP SUBMITTERS ----------------
+if (url.pathname === "/top-submitters" && request.method === "GET") {
+  const { results } = await env.DB.prepare(`
+    SELECT u.username, COUNT(*) as track_count
+    FROM tracks t
+    JOIN users u ON t.user_id = u.id
+    WHERE t.status = 'approved'
+    GROUP BY t.user_id, u.username
+    ORDER BY track_count DESC
+    LIMIT 5
+  `).all();
+
+  return json(results);
+}
+
 // ---------------- LISTENING HEARTBEAT ----------------
 if (url.pathname === "/listening" && request.method === "POST") {
   try {

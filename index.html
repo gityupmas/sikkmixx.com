@@ -405,7 +405,7 @@ border: 1px solid rgba(255,255,255,0.1);
   margin-bottom: 12px;
 }
 
-#right-panel .section-divider {
+.section-divider {
   margin: 14px 0 12px;
   border: none;
   border-top: 1px solid rgba(255,255,255,0.08);
@@ -580,6 +580,9 @@ border: 1px solid rgba(255,255,255,0.1);
 <div id="recent-panel">
   <div class="recent-header">Recent Drops</div>
   <div id="recent-list"></div>
+  <hr class="section-divider">
+  <div class="recent-header">Top Submitters</div>
+  <div id="submitters-list"></div>
 </div>
 
 <div id="right-panel">
@@ -853,6 +856,27 @@ function buildRankedList(containerId, sortKey) {
   });
 }
 
+async function buildSubmitters() {
+  try {
+    const res = await fetch(`${API}/top-submitters`);
+    if (!res.ok) return;
+    const submitters = await res.json();
+    const container = document.getElementById("submitters-list");
+
+    if (submitters.length === 0) {
+      container.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.25);padding:4px 0;">None yet</div>`;
+      return;
+    }
+
+    container.innerHTML = submitters.map(s => `
+      <div class="recent-item" style="cursor:default;">
+        <div class="recent-title">@${s.username}</div>
+        <div class="recent-meta">🎵 ${s.track_count} track${s.track_count !== 1 ? "s" : ""}</div>
+      </div>
+    `).join("");
+  } catch {}
+}
+
 function buildRecentPanel() {
   const list = document.getElementById("recent-list");
   const recent = playlist.slice(0, 5);
@@ -903,6 +927,7 @@ async function loadTrack() {
 
   buildRecentPanel()
   buildRightPanel()
+  buildSubmitters()
   playCurrentTrack()
 }
 loadTrack()
