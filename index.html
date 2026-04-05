@@ -415,6 +415,24 @@ border: 1px solid rgba(255,255,255,0.1);
   #right-panel { display: none; }
 }
 
+#up-next {
+  display: none;
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.5px;
+  animation: soft-pulse 2.5s infinite ease-in-out;
+}
+
+#up-next span {
+  color: rgba(255,255,255,0.85);
+}
+
+@keyframes soft-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
 #vote-btn {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.4);
@@ -537,6 +555,7 @@ border: 1px solid rgba(255,255,255,0.1);
   <div class="card">
     <h1>LIVE SET</h1>
     <div class="track-title" id="trackTitle">Loading...</div>
+    <div id="up-next">Up next: <span id="up-next-title"></span></div>
     <button id="vote-btn" disabled>♥ <span id="vote-count">0</span></button>
     <audio id="player" controls crossorigin="anonymous"></audio>
 <div class="controls">
@@ -903,12 +922,32 @@ document.getElementById("trackTitle").innerText =
 
 
   player.src = `${API}/file/${encoded}`;
+  document.getElementById("up-next").style.display = "none";
   sendHeartbeat();
   updateVoteBtn();
   updateRecentActive();
 }
 
 
+
+player.addEventListener("timeupdate", () => {
+  if (!player.duration || playlist.length < 2) return;
+
+  const remaining = player.duration - player.currentTime;
+  const upNextEl = document.getElementById("up-next");
+  const upNextTitle = document.getElementById("up-next-title");
+
+  if (remaining <= 60 && remaining > 0) {
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    const next = playlist[nextIndex];
+    const title = (next.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
+    const artist = (next.artist || "").trim();
+    upNextTitle.textContent = artist ? `${artist} — ${title}` : title;
+    upNextEl.style.display = "block";
+  } else {
+    upNextEl.style.display = "none";
+  }
+});
 
 player.addEventListener("ended", async () => {
   if (playlist.length === 0) return;
