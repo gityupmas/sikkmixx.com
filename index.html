@@ -657,7 +657,7 @@ document.getElementById("vote-btn").addEventListener("click", async () => {
 
 function getTrackLabel(track) {
   if (!track) return "";
-  const title = (track.original_name || "").replace(/\.mp3$/i, "");
+  const title = (track.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
   const artist = (track.artist || "").trim();
   return artist ? `${artist} — ${title}` : title;
 }
@@ -811,7 +811,7 @@ function buildRankedList(containerId, sortKey) {
   }
 
   container.innerHTML = ranked.map(({ track, i }) => {
-    const title = (track.original_name || "").replace(/\.mp3$/i, "");
+    const title = (track.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
     const artist = (track.artist || "").trim();
     const label = artist ? `${artist} — ${title}` : title;
     const val = track[sortKey] || 0;
@@ -838,7 +838,7 @@ function buildRecentPanel() {
   const recent = playlist.slice(0, 5);
 
   list.innerHTML = recent.map((track, i) => {
-    const title = (track.original_name || "").replace(/\.mp3$/i, "");
+    const title = (track.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
     const artist = (track.artist || "").trim();
     const label = artist ? `${artist} — ${title}` : title;
     const votes = track.vote_count || 0;
@@ -894,7 +894,7 @@ function playCurrentTrack() {
   currentTrack = track;
 
   const encoded = encodeURIComponent(track.filename);
-const title = (track.original_name || "").replace(/\.mp3$/i, "");
+const title = (track.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
 const artist = (track.artist || "").trim();
 
 document.getElementById("trackTitle").innerText =
