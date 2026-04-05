@@ -1,2 +1,9 @@
 admin161029.txt
 admin161946.html
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example

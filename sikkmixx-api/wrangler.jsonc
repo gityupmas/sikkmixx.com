@@ -1,0 +1,41 @@
+{
+  "name": "sikkmixx-api",
+  "main": "src/worker.js",
+  "workers_dev": true,
+  "preview_urls": false,
+  "compatibility_date": "2026-02-14",
+  "routes": [
+    {
+      "pattern": "api.sikkmixx.com",
+      "zone_name": "sikkmixx.com",
+      "custom_domain": true
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1
+    }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_id": "dc436a12-851b-4f0e-a5d2-ce582351db18"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "sikkmixx-media"
+    }
+  ]
+}
