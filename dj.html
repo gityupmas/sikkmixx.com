@@ -107,9 +107,30 @@
     }
 
     .deck-visualizer {
-      width: 100%; height: 52px; flex-shrink: 0; border-radius: 6px;
+      width: 100%; height: 36px; flex-shrink: 0; border-radius: 6px;
       display: block;
     }
+
+    /* ── Waveform ── */
+    .deck-waveform {
+      width: 100%; height: 52px; flex-shrink: 0; border-radius: 6px;
+      display: block; cursor: crosshair;
+    }
+    .deck-a .deck-waveform { border: 1px solid rgba(255,0,204,0.12); }
+    .deck-b .deck-waveform { border: 1px solid rgba(0,224,255,0.12); }
+
+    /* ── BPM ── */
+    .deck-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .deck-bpm {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      transition: color 0.3s;
+    }
+    .deck-a .deck-bpm { color: rgba(255,0,204,0.5); }
+    .deck-b .deck-bpm { color: rgba(0,224,255,0.5); }
+    .deck-a .deck-bpm.beat { color: #ff00cc; text-shadow: 0 0 8px rgba(255,0,204,0.8); }
+    .deck-b .deck-bpm.beat { color: #00e0ff; text-shadow: 0 0 8px rgba(0,224,255,0.8); }
 
     .deck-controls {
       display: flex; align-items: center; gap: 6px;
@@ -333,8 +354,12 @@
 
     <!-- DECK A -->
     <div class="deck-panel deck-a">
-      <div class="deck-label">Deck A</div>
+      <div class="deck-header-row">
+        <div class="deck-label">Deck A</div>
+        <span class="deck-bpm" id="bpm-a">-- BPM</span>
+      </div>
       <div class="deck-track-title" id="title-a">No track loaded</div>
+      <canvas class="deck-waveform" id="wave-a"></canvas>
       <canvas class="deck-visualizer" id="vis-a"></canvas>
       <div class="deck-controls">
         <button class="ctrl-btn" id="prev-a" title="Previous">⏮</button>
@@ -373,8 +398,12 @@
 
     <!-- DECK B -->
     <div class="deck-panel deck-b">
-      <div class="deck-label">Deck B</div>
+      <div class="deck-header-row">
+        <div class="deck-label">Deck B</div>
+        <span class="deck-bpm" id="bpm-b">-- BPM</span>
+      </div>
       <div class="deck-track-title" id="title-b">No track loaded</div>
+      <canvas class="deck-waveform" id="wave-b"></canvas>
       <canvas class="deck-visualizer" id="vis-b"></canvas>
       <div class="deck-controls">
         <button class="ctrl-btn" id="prev-b" title="Previous">⏮</button>
@@ -600,6 +629,27 @@ function startVisualizerLoop() {
     const hue = 280 - combined * 90
     const bright = 6 + combined * 28
     bg.style.background = `radial-gradient(circle at center, hsla(${hue},100%,${bright}%,0.5), rgba(0,0,0,0.85))`
+
+    // Waveforms
+    drawWaveform('a')
+    drawWaveform('b')
+
+    // BPM detection
+    for (const id of ['a', 'b']) {
+      const deck = DECKS[id]
+      if (!deck.dataArray || !deck.beatDetector) continue
+      deck.analyser.getByteFrequencyData(deck.dataArray)
+      const beat = deck.beatDetector.process(deck.dataArray)
+      const bpmEl = document.getElementById(`bpm-${id}`)
+      if (deck.beatDetector.bpm > 0) {
+        bpmEl.textContent = `${deck.beatDetector.bpm} BPM`
+      }
+      if (beat) {
+        bpmEl.classList.add('beat')
+        clearTimeout(deck.beatDetector.beatFlashTimeout)
+        deck.beatDetector.beatFlashTimeout = setTimeout(() => bpmEl.classList.remove('beat'), 120)
+      }
+    }
   }
   frame()
 }
@@ -619,11 +669,25 @@ function loadTrackToDeck(deckId, trackIndex) {
   deck.currentIndex = trackIndex
   deck.currentTrack = track
   deck.playCountedId = null
-  deck.el.src = `${API}/file/${encodeURIComponent(track.filename)}`
+  deck.waveOffscreen = null  // clear old waveform
+
+  // Reset BPM for new track
+  if (deck.beatDetector) {
+    deck.beatDetector.intervals = []
+    deck.beatDetector.bpm = 0
+    deck.beatDetector.lastBeatTime = 0
+    document.getElementById(`bpm-${deckId}`).textContent = '-- BPM'
+  }
+
+  const url = `${API}/file/${encodeURIComponent(track.filename)}`
+  deck.el.src = url
   document.getElementById(`title-${deckId}`).textContent = getTrackLabel(track)
   updateVoteBtn(deckId)
   buildLibrary(document.getElementById('library-search').value)
   sendHeartbeat()
+
+  // Decode waveform in background
+  decodeAndRenderWaveform(deckId, url)
 }
 
 function playDeck(deckId) {
@@ -847,6 +911,177 @@ function startPresence() {
   heartbeatInterval = setInterval(sendHeartbeat, 15000)
   pollInterval = setInterval(pollListeners, 15000)
 }
+
+// ── BPM Detection ────────────────────────────────────────────────
+class BeatDetector {
+  constructor() {
+    this.lastBeatTime = 0
+    this.intervals = []
+    this.energyHistory = new Array(60).fill(0)  // ~1.4s rolling window
+    this.bpm = 0
+    this.beatFlashTimeout = null
+  }
+
+  process(dataArray) {
+    // Sum energy of bass bins (first 12)
+    let energy = 0
+    for (let i = 0; i < 12; i++) energy += dataArray[i] ** 2
+    energy = Math.sqrt(energy / 12)
+
+    this.energyHistory.push(energy)
+    this.energyHistory.shift()
+    const avg = this.energyHistory.reduce((a, b) => a + b) / this.energyHistory.length
+
+    const now = performance.now()
+    const gap = now - this.lastBeatTime
+
+    // Beat = energy spike above average, min 280ms apart (max ~215 BPM)
+    if (energy > avg * 1.4 && gap > 280) {
+      if (this.lastBeatTime > 0 && gap < 2000) {
+        this.intervals.push(gap)
+        if (this.intervals.length > 10) this.intervals.shift()
+        const avgGap = this.intervals.reduce((a, b) => a + b) / this.intervals.length
+        this.bpm = Math.round(60000 / avgGap)
+      }
+      this.lastBeatTime = now
+      return true  // beat detected this frame
+    }
+    return false
+  }
+}
+
+// One detector per deck, stored on the deck object
+DECKS.a.beatDetector = new BeatDetector()
+DECKS.b.beatDetector = new BeatDetector()
+
+// ── Waveform ──────────────────────────────────────────────────────
+// Each deck stores an offscreen canvas with the static waveform drawn once
+async function decodeAndRenderWaveform(deckId, url) {
+  const deck = DECKS[deckId]
+  const canvas = document.getElementById(`wave-${deckId}`)
+  const accentColor = deckId === 'a' ? '#ff00cc' : '#00e0ff'
+  const dimColor   = deckId === 'a' ? 'rgba(255,0,204,0.25)' : 'rgba(0,224,255,0.25)'
+
+  // Clear to loading state
+  const ctx = canvas.getContext('2d')
+  canvas.width = canvas.offsetWidth || 400
+  canvas.height = canvas.offsetHeight || 52
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.fillStyle = 'rgba(255,255,255,0.08)'
+  ctx.font = '10px Segoe UI'
+  ctx.textAlign = 'center'
+  ctx.fillText('loading waveform...', canvas.width / 2, canvas.height / 2 + 4)
+
+  try {
+    const response = await fetch(url)
+    const arrayBuffer = await response.arrayBuffer()
+    // Use a temp AudioContext for decoding if main one not ready yet
+    const ctx2 = audioContext || new (window.AudioContext || window.webkitAudioContext)()
+    const audioBuffer = await ctx2.decodeAudioData(arrayBuffer)
+
+    // Build offscreen canvas
+    const offscreen = document.createElement('canvas')
+    offscreen.width  = canvas.offsetWidth  || 400
+    offscreen.height = canvas.offsetHeight || 52
+    const oc = offscreen.getContext('2d')
+    const data = audioBuffer.getChannelData(0)
+    const w = offscreen.width, h = offscreen.height
+    const mid = h / 2
+    const step = Math.ceil(data.length / w)
+
+    oc.clearRect(0, 0, w, h)
+
+    // Draw waveform bars (dim by default, bright played portion drawn each frame)
+    for (let x = 0; x < w; x++) {
+      let min = 0, max = 0
+      for (let i = 0; i < step; i++) {
+        const s = data[x * step + i] || 0
+        if (s < min) min = s
+        if (s > max) max = s
+      }
+      oc.fillStyle = dimColor
+      oc.fillRect(x, mid + min * mid * 0.95, 1, Math.max(1, (max - min) * mid * 0.95))
+    }
+
+    deck.waveOffscreen = offscreen
+    deck.waveColor = accentColor
+    deck.waveDim = dimColor
+  } catch (e) {
+    // Waveform failed — draw placeholder
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    deck.waveOffscreen = null
+  }
+}
+
+function drawWaveform(deckId) {
+  const deck = DECKS[deckId]
+  const canvas = document.getElementById(`wave-${deckId}`)
+  const ctx = canvas.getContext('2d')
+  const w = canvas.width, h = canvas.height
+
+  if (canvas.offsetWidth > 0 && canvas.width !== canvas.offsetWidth) {
+    canvas.width = canvas.offsetWidth
+    canvas.height = canvas.offsetHeight
+  }
+
+  ctx.clearRect(0, 0, w, h)
+
+  if (!deck.waveOffscreen) return
+
+  // Draw dim full waveform
+  ctx.drawImage(deck.waveOffscreen, 0, 0, w, h)
+
+  const el = deck.el
+  if (!el || !el.duration) return
+
+  const progress = el.currentTime / el.duration
+  const playedX = Math.floor(progress * w)
+
+  // Tint played region with accent color
+  ctx.save()
+  ctx.globalCompositeOperation = 'source-atop'
+  ctx.fillStyle = deck.id === 'a' ? 'rgba(255,0,204,0.5)' : 'rgba(0,224,255,0.5)'
+  ctx.fillRect(0, 0, playedX, h)
+  ctx.restore()
+
+  // Playhead line
+  ctx.fillStyle = deck.id === 'a' ? '#ff00cc' : '#00e0ff'
+  ctx.shadowBlur = 8
+  ctx.shadowColor = deck.id === 'a' ? '#ff00cc' : '#00e0ff'
+  ctx.fillRect(playedX - 1, 0, 2, h)
+  ctx.shadowBlur = 0
+
+  // Time remaining label
+  const remaining = el.duration - el.currentTime
+  const mins = Math.floor(remaining / 60)
+  const secs = Math.floor(remaining % 60).toString().padStart(2, '0')
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'
+  ctx.font = '9px Segoe UI'
+  ctx.textAlign = 'right'
+  ctx.fillText(`-${mins}:${secs}`, w - 4, h - 3)
+}
+
+// Seeking by click or drag on waveform
+;['a', 'b'].forEach(id => {
+  const canvas = document.getElementById(`wave-${id}`)
+  let seeking = false
+
+  function seekTo(e) {
+    const deck = DECKS[id]
+    if (!deck.el || !deck.el.duration) return
+    const rect = canvas.getBoundingClientRect()
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left
+    deck.el.currentTime = Math.max(0, Math.min(1, x / rect.width)) * deck.el.duration
+  }
+
+  canvas.addEventListener('mousedown',  e => { seeking = true; seekTo(e) })
+  canvas.addEventListener('mousemove',  e => { if (seeking) seekTo(e) })
+  canvas.addEventListener('mouseup',    () => { seeking = false })
+  canvas.addEventListener('mouseleave', () => { seeking = false })
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); seekTo(e) }, { passive: false })
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); seekTo(e) }, { passive: false })
+})
 
 // ── Bootstrap ─────────────────────────────────────────────────────
 async function init() {
