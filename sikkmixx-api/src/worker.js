@@ -453,19 +453,37 @@ if (url.pathname === "/track-played" && request.method === "POST") {
     // ---------------- FILE SERVE ----------------
     if (url.pathname.startsWith("/file/") && request.method === "GET") {
       const key = decodeURIComponent(url.pathname.replace("/file/", ""));
-      const obj = await env.MEDIA.get(key);
+
+      // Pass Range header to R2 for native range request support
+      const obj = await env.MEDIA.get(key, { range: request.headers });
 
       if (!obj) return text("Not found", 404);
 
-      const contentType =
-        obj.httpMetadata?.contentType || "application/octet-stream";
+      let contentType = obj.httpMetadata?.contentType || "application/octet-stream";
 
-      return new Response(obj.body, {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": contentType,
-        },
-      });
+      // Normalize M4A — browsers store as audio/x-m4a but iOS needs audio/mp4
+      if (key.endsWith(".m4a") || contentType === "audio/x-m4a") {
+        contentType = "audio/mp4";
+      }
+
+      const headers = {
+        ...corsHeaders,
+        "Content-Type": contentType,
+        "Accept-Ranges": "bytes",
+      };
+
+      if (obj.range) {
+        const { offset, length } = obj.range;
+        headers["Content-Range"] = `bytes ${offset}-${offset + length - 1}/${obj.size}`;
+        headers["Content-Length"] = String(length);
+        return new Response(obj.body, { status: 206, headers });
+      }
+
+      if (obj.size !== undefined) {
+        headers["Content-Length"] = String(obj.size);
+      }
+
+      return new Response(obj.body, { status: 200, headers });
     }
 
     return text("Not found", 404);
