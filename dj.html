@@ -385,8 +385,44 @@
     }
     #auth-gate a:hover { box-shadow: 0 0 30px rgba(255,0,204,0.7); }
 
+    /* ── Disc layout ── */
+    .deck-body {
+      display: flex;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .disc-col {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .disc-canvas {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      cursor: grab;
+      flex-shrink: 0;
+      display: block;
+    }
+    .disc-canvas:active { cursor: grabbing; }
+    .disc-canvas.scratching { cursor: grabbing; }
+
+    .controls-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+      min-height: 0;
+    }
+
     @media (max-width: 700px) {
       .decks-row { flex-direction: column; }
+      .disc-canvas { width: 110px; height: 110px; }
     }
   </style>
 </head>
@@ -422,39 +458,46 @@
         <span class="deck-bpm" id="bpm-a">-- BPM</span>
       </div>
       <div class="deck-track-title" id="title-a">No track loaded</div>
-      <canvas class="deck-waveform" id="wave-a"></canvas>
-      <canvas class="deck-visualizer" id="vis-a"></canvas>
-      <div class="deck-controls">
-        <button class="ctrl-btn skip-btn" id="prev-a" title="Previous">⏮</button>
-        <button class="ctrl-btn play-btn" id="play-a" title="Play / Pause">▶</button>
-        <button class="ctrl-btn skip-btn" id="next-a" title="Next">⏭</button>
-        <button class="vote-btn" id="vote-a" disabled>♥ <span id="vcount-a">0</span></button>
-      </div>
-      <div class="slider-section">
-        <div class="slider-row">
-          <span class="slider-label">Tempo</span>
-          <input type="range" id="tempo-a" min="50" max="150" value="100" step="1">
-          <span class="slider-val" id="tempo-val-a">0%</span>
+      <div class="deck-body">
+        <div class="disc-col">
+          <canvas class="disc-canvas" id="disc-a" width="150" height="150"></canvas>
         </div>
-        <div class="slider-row">
-          <span class="slider-label">Volume</span>
-          <input type="range" id="vol-a" min="0" max="100" value="80" step="1">
-          <span class="slider-val" id="vol-val-a">80%</span>
-        </div>
-        <div class="slider-row">
-          <span class="slider-label">Bass</span>
-          <input type="range" id="bass-a" min="-12" max="12" value="0" step="0.5">
-          <span class="slider-val" id="bass-val-a">0 dB</span>
-        </div>
-        <div class="slider-row">
-          <span class="slider-label">Mid</span>
-          <input type="range" id="mid-a" min="-12" max="12" value="0" step="0.5">
-          <span class="slider-val" id="mid-val-a">0 dB</span>
-        </div>
-        <div class="slider-row">
-          <span class="slider-label">Treble</span>
-          <input type="range" id="treble-a" min="-12" max="12" value="0" step="0.5">
-          <span class="slider-val" id="treble-val-a">0 dB</span>
+        <div class="controls-col">
+          <canvas class="deck-waveform" id="wave-a"></canvas>
+          <canvas class="deck-visualizer" id="vis-a"></canvas>
+          <div class="deck-controls">
+            <button class="ctrl-btn skip-btn" id="prev-a" title="Previous">⏮</button>
+            <button class="ctrl-btn play-btn" id="play-a" title="Play / Pause">▶</button>
+            <button class="ctrl-btn skip-btn" id="next-a" title="Next">⏭</button>
+            <button class="vote-btn" id="vote-a" disabled>♥ <span id="vcount-a">0</span></button>
+          </div>
+          <div class="slider-section">
+            <div class="slider-row">
+              <span class="slider-label">Tempo</span>
+              <input type="range" id="tempo-a" min="50" max="150" value="100" step="1">
+              <span class="slider-val" id="tempo-val-a">0%</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Volume</span>
+              <input type="range" id="vol-a" min="0" max="100" value="80" step="1">
+              <span class="slider-val" id="vol-val-a">80%</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Bass</span>
+              <input type="range" id="bass-a" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="bass-val-a">0 dB</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Mid</span>
+              <input type="range" id="mid-a" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="mid-val-a">0 dB</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Treble</span>
+              <input type="range" id="treble-a" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="treble-val-a">0 dB</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -466,39 +509,46 @@
         <span class="deck-bpm" id="bpm-b">-- BPM</span>
       </div>
       <div class="deck-track-title" id="title-b">No track loaded</div>
-      <canvas class="deck-waveform" id="wave-b"></canvas>
-      <canvas class="deck-visualizer" id="vis-b"></canvas>
-      <div class="deck-controls">
-        <button class="ctrl-btn skip-btn" id="prev-b" title="Previous">⏮</button>
-        <button class="ctrl-btn play-btn" id="play-b" title="Play / Pause">▶</button>
-        <button class="ctrl-btn skip-btn" id="next-b" title="Next">⏭</button>
-        <button class="vote-btn" id="vote-b" disabled>♥ <span id="vcount-b">0</span></button>
-      </div>
-      <div class="slider-section">
-        <div class="slider-row">
-          <span class="slider-label">Tempo</span>
-          <input type="range" id="tempo-b" min="50" max="150" value="100" step="1">
-          <span class="slider-val" id="tempo-val-b">0%</span>
+      <div class="deck-body">
+        <div class="disc-col">
+          <canvas class="disc-canvas" id="disc-b" width="150" height="150"></canvas>
         </div>
-        <div class="slider-row">
-          <span class="slider-label">Volume</span>
-          <input type="range" id="vol-b" min="0" max="100" value="80" step="1">
-          <span class="slider-val" id="vol-val-b">80%</span>
-        </div>
-        <div class="slider-row">
-          <span class="slider-label">Bass</span>
-          <input type="range" id="bass-b" min="-12" max="12" value="0" step="0.5">
-          <span class="slider-val" id="bass-val-b">0 dB</span>
-        </div>
-        <div class="slider-row">
-          <span class="slider-label">Mid</span>
-          <input type="range" id="mid-b" min="-12" max="12" value="0" step="0.5">
-          <span class="slider-val" id="mid-val-b">0 dB</span>
-        </div>
-        <div class="slider-row">
-          <span class="slider-label">Treble</span>
-          <input type="range" id="treble-b" min="-12" max="12" value="0" step="0.5">
-          <span class="slider-val" id="treble-val-b">0 dB</span>
+        <div class="controls-col">
+          <canvas class="deck-waveform" id="wave-b"></canvas>
+          <canvas class="deck-visualizer" id="vis-b"></canvas>
+          <div class="deck-controls">
+            <button class="ctrl-btn skip-btn" id="prev-b" title="Previous">⏮</button>
+            <button class="ctrl-btn play-btn" id="play-b" title="Play / Pause">▶</button>
+            <button class="ctrl-btn skip-btn" id="next-b" title="Next">⏭</button>
+            <button class="vote-btn" id="vote-b" disabled>♥ <span id="vcount-b">0</span></button>
+          </div>
+          <div class="slider-section">
+            <div class="slider-row">
+              <span class="slider-label">Tempo</span>
+              <input type="range" id="tempo-b" min="50" max="150" value="100" step="1">
+              <span class="slider-val" id="tempo-val-b">0%</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Volume</span>
+              <input type="range" id="vol-b" min="0" max="100" value="80" step="1">
+              <span class="slider-val" id="vol-val-b">80%</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Bass</span>
+              <input type="range" id="bass-b" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="bass-val-b">0 dB</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Mid</span>
+              <input type="range" id="mid-b" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="mid-val-b">0 dB</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Treble</span>
+              <input type="range" id="treble-b" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="treble-val-b">0 dB</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -540,13 +590,15 @@ const DECKS = {
     id: 'a', el: null,
     source: null, bassFilter: null, midFilter: null, trebleFilter: null,
     gainVol: null, gainXfade: null, analyser: null, dataArray: null, canvasCtx: null,
-    currentIndex: -1, currentTrack: null, playCountedId: null, bassSmoothed: 0
+    currentIndex: -1, currentTrack: null, playCountedId: null, bassSmoothed: 0,
+    discAngle: 0, scratching: false, scratchLastAngle: 0, scratchWasPlaying: false
   },
   b: {
     id: 'b', el: null,
     source: null, bassFilter: null, midFilter: null, trebleFilter: null,
     gainVol: null, gainXfade: null, analyser: null, dataArray: null, canvasCtx: null,
-    currentIndex: -1, currentTrack: null, playCountedId: null, bassSmoothed: 0
+    currentIndex: -1, currentTrack: null, playCountedId: null, bassSmoothed: 0,
+    discAngle: 0, scratching: false, scratchLastAngle: 0, scratchWasPlaying: false
   }
 }
 
@@ -683,8 +735,24 @@ function drawDeck(deck, accentHue) {
 
 function startVisualizerLoop() {
   const bg = document.getElementById('visual-bg')
-  function frame() {
+  const RPM = 33.33
+  const RAD_PER_SEC = (RPM / 60) * 2 * Math.PI  // ~3.49 rad/s
+  let lastFrameTime = performance.now()
+
+  function frame(now) {
     requestAnimationFrame(frame)
+    const dt = Math.min(now - lastFrameTime, 100) // cap at 100ms to avoid jumps
+    lastFrameTime = now
+
+    // Advance disc rotation for non-scratching, playing decks
+    for (const id of ['a', 'b']) {
+      const deck = DECKS[id]
+      if (!deck.scratching && deck.el && !deck.el.paused) {
+        deck.discAngle += RAD_PER_SEC * (deck.el.playbackRate || 1) * (dt / 1000)
+      }
+      drawDisc(id)
+    }
+
     const bA = drawDeck(DECKS.a, 300)
     const bB = drawDeck(DECKS.b, 185)
     const combined = Math.max(bA, bB)
@@ -1148,6 +1216,167 @@ function drawWaveform(deckId) {
   canvas.addEventListener('mouseleave', () => { seeking = false })
   canvas.addEventListener('touchstart', e => { e.preventDefault(); seekTo(e) }, { passive: false })
   canvas.addEventListener('touchmove',  e => { e.preventDefault(); seekTo(e) }, { passive: false })
+})
+
+// ── Disc drawing ─────────────────────────────────────────────────
+function drawDisc(deckId) {
+  const deck = DECKS[deckId]
+  const canvas = document.getElementById(`disc-${deckId}`)
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  const w = canvas.width, h = canvas.height
+  const cx = w / 2, cy = h / 2
+  const r = Math.min(w, h) / 2 - 2
+  const accent = deckId === 'a' ? '#ff00cc' : '#00e0ff'
+  const accentDim = deckId === 'a' ? 'rgba(255,0,204,0.35)' : 'rgba(0,224,255,0.35)'
+
+  ctx.clearRect(0, 0, w, h)
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate(deck.discAngle)
+
+  // Vinyl body
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fillStyle = '#0e0e0e'
+  ctx.fill()
+
+  // Grooves
+  for (let i = 4; i <= 22; i++) {
+    const gr = r * (0.32 + i * 0.031)
+    if (gr >= r) break
+    ctx.beginPath()
+    ctx.arc(0, 0, gr, 0, Math.PI * 2)
+    ctx.strokeStyle = `rgba(255,255,255,${0.025 + i * 0.004})`
+    ctx.lineWidth = 0.6
+    ctx.stroke()
+  }
+
+  // Sheen highlight (stays relative to canvas, not rotation — but for simplicity rotate with disc)
+  const sheen = ctx.createRadialGradient(-r * 0.25, -r * 0.25, 0, 0, 0, r)
+  sheen.addColorStop(0,   'rgba(255,255,255,0.09)')
+  sheen.addColorStop(0.4, 'rgba(255,255,255,0.02)')
+  sheen.addColorStop(1,   'rgba(0,0,0,0.35)')
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fillStyle = sheen
+  ctx.fill()
+
+  // Center label
+  const lr = r * 0.30
+  ctx.beginPath()
+  ctx.arc(0, 0, lr, 0, Math.PI * 2)
+  ctx.fillStyle = accent
+  ctx.fill()
+
+  // Label inner gradient
+  const lg = ctx.createRadialGradient(-lr * 0.3, -lr * 0.3, 0, 0, 0, lr)
+  lg.addColorStop(0, 'rgba(255,255,255,0.25)')
+  lg.addColorStop(1, 'rgba(0,0,0,0.4)')
+  ctx.beginPath()
+  ctx.arc(0, 0, lr, 0, Math.PI * 2)
+  ctx.fillStyle = lg
+  ctx.fill()
+
+  // Label text
+  ctx.fillStyle = 'rgba(0,0,0,0.75)'
+  ctx.font = `bold ${Math.round(lr * 0.32)}px Segoe UI`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('SIKKMIXX', 0, 0)
+
+  // Center hole
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.038, 0, Math.PI * 2)
+  ctx.fillStyle = '#000'
+  ctx.fill()
+
+  ctx.restore()
+
+  // Outer ring glow when scratching
+  if (deck.scratching) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(cx, cy, r + 1, 0, Math.PI * 2)
+    ctx.strokeStyle = accent
+    ctx.lineWidth = 2
+    ctx.shadowBlur = 14
+    ctx.shadowColor = accent
+    ctx.stroke()
+    ctx.restore()
+  }
+
+  // Tonearm indicator (static, not rotating) — small dot at 4 o'clock
+  ctx.save()
+  ctx.translate(cx, cy)
+  const taDist = r * 0.72
+  const taAngle = Math.PI * 0.22
+  ctx.beginPath()
+  ctx.arc(Math.cos(taAngle) * taDist, Math.sin(taAngle) * taDist, 3, 0, Math.PI * 2)
+  ctx.fillStyle = accentDim
+  ctx.fill()
+  ctx.restore()
+}
+
+// ── Scratch ────────────────────────────────────────────────────────
+function getScratchAngle(e, canvas) {
+  const rect = canvas.getBoundingClientRect()
+  const cx = rect.left + rect.width  / 2
+  const cy = rect.top  + rect.height / 2
+  const src = e.touches ? e.touches[0] : e
+  return Math.atan2(src.clientY - cy, src.clientX - cx)
+}
+
+;['a', 'b'].forEach(id => {
+  const canvas = document.getElementById(`disc-${id}`)
+  const deck   = DECKS[id]
+
+  function startScratch(e) {
+    e.preventDefault()
+    if (!audioContext) initAudio()
+    deck.scratching = true
+    deck.scratchWasPlaying = !deck.el.paused
+    deck.scratchLastAngle = getScratchAngle(e, canvas)
+    deck.el.pause()
+    canvas.classList.add('scratching')
+  }
+
+  function moveScratch(e) {
+    if (!deck.scratching) return
+    e.preventDefault()
+    const angle = getScratchAngle(e, canvas)
+    let delta = angle - deck.scratchLastAngle
+    // Normalise to [-π, π] to handle the ±180° boundary
+    if (delta >  Math.PI) delta -= 2 * Math.PI
+    if (delta < -Math.PI) delta += 2 * Math.PI
+    deck.scratchLastAngle = angle
+
+    // Rotate disc manually while scratching
+    deck.discAngle += delta
+
+    // Map rotation to time: 1 full revolution = 1.8 seconds of audio
+    if (deck.el && deck.el.duration) {
+      deck.el.currentTime = Math.max(0, Math.min(
+        deck.el.duration,
+        deck.el.currentTime + (delta / (2 * Math.PI)) * 1.8
+      ))
+    }
+  }
+
+  function endScratch() {
+    if (!deck.scratching) return
+    deck.scratching = false
+    canvas.classList.remove('scratching')
+    if (deck.scratchWasPlaying) playDeck(id)
+  }
+
+  canvas.addEventListener('mousedown',  startScratch)
+  canvas.addEventListener('mousemove',  moveScratch)
+  canvas.addEventListener('mouseup',    endScratch)
+  canvas.addEventListener('mouseleave', endScratch)
+  canvas.addEventListener('touchstart', startScratch, { passive: false })
+  canvas.addEventListener('touchmove',  moveScratch,  { passive: false })
+  canvas.addEventListener('touchend',   endScratch)
 })
 
 // ── Bootstrap ─────────────────────────────────────────────────────
