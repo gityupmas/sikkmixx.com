@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SiKKMiXX — DJ Booth</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: white;
+      overflow: hidden;
+      height: 100vh;
+      transition: transform 0.1s linear;
+    }
+
+    /* ── Header buttons ── */
+    .header-btn {
+      position: fixed;
+      top: 10px;
+      opacity: 0.5;
+      font-size: 14px;
+      text-decoration: none;
+      color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 6px 12px;
+      border-radius: 20px;
+      backdrop-filter: blur(6px);
+      transition: all 0.3s ease;
+      z-index: 20;
+    }
+    .header-btn:hover {
+      color: #ff00cc;
+      opacity: 1;
+      border-color: #ff00cc;
+      box-shadow: 0 0 10px #ff00cc;
+    }
+    #backBtn  { left: 15px; }
+    #backBtn:hover { color: #00e0ff; border-color: #00e0ff; box-shadow: 0 0 10px #00e0ff; }
+    #profileBtn { left: 100px; }
+    #logoutBtn  { right: 15px; color: rgba(255,150,150,0.8); border-color: rgba(255,80,80,0.4); }
+    #logoutBtn:hover { color: #ff6060; border-color: #ff6060; box-shadow: 0 0 10px rgba(255,80,80,0.5); }
+
+    /* ── Backgrounds ── */
+    #bg-image {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: url("omnia.webp") center center / cover no-repeat;
+      z-index: -2; filter: brightness(0.5) contrast(1.4);
+    }
+    #visual-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1;
+      background: radial-gradient(circle at center, #111 0%, #000 80%);
+      transition: background 0.2s ease;
+    }
+
+    /* ── Main layout ── */
+    #main {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 46px 10px 8px;
+      gap: 6px;
+    }
+
+    /* ── Decks row ── */
+    .decks-row {
+      display: flex;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .deck-panel {
+      flex: 1;
+      background: rgba(18, 18, 18, 0.6);
+      backdrop-filter: blur(20px);
+      border-radius: 14px;
+      padding: 11px 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+    .deck-panel.deck-a {
+      border: 1px solid rgba(255, 0, 204, 0.35);
+      box-shadow: 0 0 24px rgba(255,0,204,0.08);
+    }
+    .deck-panel.deck-b {
+      border: 1px solid rgba(0, 224, 255, 0.35);
+      box-shadow: 0 0 24px rgba(0,224,255,0.08);
+    }
+
+    .deck-label {
+      font-size: 9px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700;
+    }
+    .deck-a .deck-label { color: #ff00cc; text-shadow: 0 0 8px rgba(255,0,204,0.7); }
+    .deck-b .deck-label { color: #00e0ff; text-shadow: 0 0 8px rgba(0,224,255,0.7); }
+
+    .deck-track-title {
+      font-size: 12px;
+      color: rgba(255,255,255,0.85);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-height: 16px;
+    }
+
+    .deck-visualizer {
+      width: 100%; height: 52px; flex-shrink: 0; border-radius: 6px;
+      display: block;
+    }
+
+    .deck-controls {
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .ctrl-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(8px);
+      color: white; font-size: 13px; cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; padding: 0;
+    }
+    .deck-a .ctrl-btn:hover { border-color: #ff00cc; box-shadow: 0 0 10px rgba(255,0,204,0.5); transform: scale(1.1); }
+    .deck-b .ctrl-btn:hover { border-color: #00e0ff; box-shadow: 0 0 10px rgba(0,224,255,0.5); transform: scale(1.1); }
+
+    .vote-btn {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.6);
+      border-radius: 14px; padding: 3px 10px;
+      font-size: 11px; cursor: pointer; transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .deck-a .vote-btn:hover, .deck-a .vote-btn.voted {
+      border-color: #ff00cc; color: #ff00cc; box-shadow: 0 0 8px rgba(255,0,204,0.4);
+    }
+    .deck-b .vote-btn:hover, .deck-b .vote-btn.voted {
+      border-color: #00e0ff; color: #00e0ff; box-shadow: 0 0 8px rgba(0,224,255,0.4);
+    }
+    .vote-btn:disabled { cursor: default; opacity: 0.5; }
+
+    /* ── Sliders ── */
+    .slider-section {
+      display: flex; flex-direction: column; gap: 3px;
+      flex: 1; min-height: 0; justify-content: center;
+    }
+    .slider-row {
+      display: flex; align-items: center; gap: 7px;
+    }
+    .slider-label {
+      font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+      color: rgba(255,255,255,0.3); width: 40px; flex-shrink: 0; text-align: right;
+    }
+    .slider-val {
+      font-size: 9px; color: rgba(255,255,255,0.35);
+      width: 36px; flex-shrink: 0; text-align: left;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      flex: 1; height: 3px; border-radius: 2px;
+      background: rgba(255,255,255,0.12);
+      outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px; height: 13px; border-radius: 50%;
+      cursor: pointer; transition: box-shadow 0.2s ease;
+    }
+    .deck-a input[type="range"]::-webkit-slider-thumb {
+      background: #ff00cc; box-shadow: 0 0 6px rgba(255,0,204,0.7);
+    }
+    .deck-b input[type="range"]::-webkit-slider-thumb {
+      background: #00e0ff; box-shadow: 0 0 6px rgba(0,224,255,0.7);
+    }
+
+    /* ── Crossfader ── */
+    .crossfader-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 5px 14px;
+      background: rgba(15,15,15,0.5);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .xf-label {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      font-weight: 700; flex-shrink: 0;
+    }
+    .xf-label.a { color: rgba(255,0,204,0.8); }
+    .xf-label.b { color: rgba(0,224,255,0.8); }
+    .xf-label.center {
+      font-size: 8px; letter-spacing: 1px;
+      color: rgba(255,255,255,0.2);
+    }
+    #crossfader {
+      flex: 1;
+      background: linear-gradient(to right, rgba(255,0,204,0.3), rgba(255,255,255,0.1) 50%, rgba(0,224,255,0.3));
+    }
+    #crossfader::-webkit-slider-thumb {
+      background: white;
+      box-shadow: 0 0 10px rgba(255,255,255,0.8);
+      width: 16px; height: 16px;
+    }
+
+    /* ── Library ── */
+    .library-row {
+      background: rgba(12,12,12,0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 7px 12px;
+      flex-shrink: 0;
+      height: 130px;
+      display: flex;
+      flex-direction: column;
+    }
+    .library-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 5px; flex-shrink: 0;
+    }
+    .library-title {
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(255,255,255,0.25); flex-shrink: 0;
+    }
+    #library-search {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: white; font-size: 11px;
+      padding: 3px 8px; outline: none;
+      width: 160px;
+    }
+    #library-search::placeholder { color: rgba(255,255,255,0.2); }
+    #library-search:focus { border-color: rgba(255,0,204,0.4); }
+
+    #listeners-compact {
+      font-size: 11px; color: rgba(255,255,255,0.3);
+      margin-left: auto; white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; max-width: 260px;
+    }
+    .live-dot {
+      display: inline-block; width: 6px; height: 6px;
+      background: #ff00cc; border-radius: 50%; margin-right: 5px;
+      box-shadow: 0 0 6px #ff00cc; animation: blink-dot 1.5s infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+    #library-list { overflow-y: auto; flex: 1; }
+    #library-list::-webkit-scrollbar { width: 3px; }
+    #library-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+    .lib-track {
+      display: flex; align-items: center; gap: 8px;
+      padding: 3px 2px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+    .lib-track:hover { background: rgba(255,255,255,0.03); border-radius: 4px; }
+    .lib-track-name {
+      flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: 12px; color: rgba(255,255,255,0.7);
+    }
+    .lib-track-meta {
+      font-size: 10px; color: rgba(255,255,255,0.25); flex-shrink: 0;
+    }
+    .lib-btn {
+      font-size: 10px; padding: 2px 8px; border-radius: 7px; cursor: pointer;
+      border: 1px solid; background: transparent; letter-spacing: 0.5px;
+      transition: all 0.15s ease; flex-shrink: 0;
+    }
+    .lib-btn.load-a { border-color: rgba(255,0,204,0.35); color: rgba(255,0,204,0.6); }
+    .lib-btn.load-a:hover { border-color: #ff00cc; color: #ff00cc; box-shadow: 0 0 6px rgba(255,0,204,0.4); }
+    .lib-btn.load-b { border-color: rgba(0,224,255,0.35); color: rgba(0,224,255,0.6); }
+    .lib-btn.load-b:hover { border-color: #00e0ff; color: #00e0ff; box-shadow: 0 0 6px rgba(0,224,255,0.4); }
+    .lib-btn.active-a { border-color: #ff00cc; color: #ff00cc; }
+    .lib-btn.active-b { border-color: #00e0ff; color: #00e0ff; }
+
+    /* ── Auth overlay ── */
+    #auth-gate {
+      position: fixed; inset: 0;
+      background: #000;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 20px;
+      z-index: 100;
+    }
+    #auth-gate p { color: rgba(255,255,255,0.5); font-size: 16px; letter-spacing: 1px; }
+    #auth-gate a {
+      padding: 12px 36px; font-size: 16px; letter-spacing: 2px;
+      background: transparent; border: 2px solid #ff00cc; color: #ff00cc;
+      cursor: pointer; border-radius: 40px; text-decoration: none;
+      box-shadow: 0 0 16px rgba(255,0,204,0.4); transition: box-shadow 0.2s;
+    }
+    #auth-gate a:hover { box-shadow: 0 0 30px rgba(255,0,204,0.7); }
+
+    @media (max-width: 700px) {
+      .decks-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Auth gate (shown until verified) -->
+<div id="auth-gate">
+  <p>DJ Booth is members only</p>
+  <a href="/login.html">Login to Enter</a>
+</div>
+
+<div id="bg-image"></div>
+<div id="visual-bg"></div>
+
+<!-- Header -->
+<a href="/" id="backBtn" class="header-btn">← Back</a>
+<a href="/profile.html" id="profileBtn" class="header-btn" style="display:none;">@user</a>
+<a href="#" id="logoutBtn" class="header-btn" style="display:none;">Logout</a>
+
+<!-- Hidden audio elements -->
+<audio id="player-a" crossorigin="anonymous" preload="none"></audio>
+<audio id="player-b" crossorigin="anonymous" preload="none"></audio>
+
+<!-- DJ Layout -->
+<div id="main">
+
+  <div class="decks-row">
+
+    <!-- DECK A -->
+    <div class="deck-panel deck-a">
+      <div class="deck-label">Deck A</div>
+      <div class="deck-track-title" id="title-a">No track loaded</div>
+      <canvas class="deck-visualizer" id="vis-a"></canvas>
+      <div class="deck-controls">
+        <button class="ctrl-btn" id="prev-a" title="Previous">⏮</button>
+        <button class="ctrl-btn" id="play-a" title="Play / Pause">▶</button>
+        <button class="ctrl-btn" id="next-a" title="Next">⏭</button>
+        <button class="vote-btn" id="vote-a" disabled>♥ <span id="vcount-a">0</span></button>
+      </div>
+      <div class="slider-section">
+        <div class="slider-row">
+          <span class="slider-label">Tempo</span>
+          <input type="range" id="tempo-a" min="50" max="150" value="100" step="1">
+          <span class="slider-val" id="tempo-val-a">0%</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Volume</span>
+          <input type="range" id="vol-a" min="0" max="100" value="80" step="1">
+          <span class="slider-val" id="vol-val-a">80%</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Bass</span>
+          <input type="range" id="bass-a" min="-12" max="12" value="0" step="0.5">
+          <span class="slider-val" id="bass-val-a">0 dB</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Mid</span>
+          <input type="range" id="mid-a" min="-12" max="12" value="0" step="0.5">
+          <span class="slider-val" id="mid-val-a">0 dB</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Treble</span>
+          <input type="range" id="treble-a" min="-12" max="12" value="0" step="0.5">
+          <span class="slider-val" id="treble-val-a">0 dB</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DECK B -->
+    <div class="deck-panel deck-b">
+      <div class="deck-label">Deck B</div>
+      <div class="deck-track-title" id="title-b">No track loaded</div>
+      <canvas class="deck-visualizer" id="vis-b"></canvas>
+      <div class="deck-controls">
+        <button class="ctrl-btn" id="prev-b" title="Previous">⏮</button>
+        <button class="ctrl-btn" id="play-b" title="Play / Pause">▶</button>
+        <button class="ctrl-btn" id="next-b" title="Next">⏭</button>
+        <button class="vote-btn" id="vote-b" disabled>♥ <span id="vcount-b">0</span></button>
+      </div>
+      <div class="slider-section">
+        <div class="slider-row">
+          <span class="slider-label">Tempo</span>
+          <input type="range" id="tempo-b" min="50" max="150" value="100" step="1">
+          <span class="slider-val" id="tempo-val-b">0%</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Volume</span>
+          <input type="range" id="vol-b" min="0" max="100" value="80" step="1">
+          <span class="slider-val" id="vol-val-b">80%</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Bass</span>
+          <input type="range" id="bass-b" min="-12" max="12" value="0" step="0.5">
+          <span class="slider-val" id="bass-val-b">0 dB</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Mid</span>
+          <input type="range" id="mid-b" min="-12" max="12" value="0" step="0.5">
+          <span class="slider-val" id="mid-val-b">0 dB</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Treble</span>
+          <input type="range" id="treble-b" min="-12" max="12" value="0" step="0.5">
+          <span class="slider-val" id="treble-val-b">0 dB</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.decks-row -->
+
+  <!-- Crossfader -->
+  <div class="crossfader-row">
+    <span class="xf-label a">A</span>
+    <input type="range" id="crossfader" min="0" max="100" value="50" step="1">
+    <span class="xf-label b">B</span>
+  </div>
+
+  <!-- Track Library -->
+  <div class="library-row">
+    <div class="library-header">
+      <span class="library-title">Track Library</span>
+      <input type="text" id="library-search" placeholder="Search...">
+      <span id="listeners-compact"></span>
+    </div>
+    <div id="library-list"></div>
+  </div>
+
+</div><!-- /#main -->
+
+<script>
+const API = "https://api.sikkmixx.com"
+const token = localStorage.getItem("token")
+let playlist = []
+let audioContext = null
+let currentUser = null
+let myVotes = new Set()
+let heartbeatInterval = null
+let pollInterval = null
+
+// Per-deck state
+const DECKS = {
+  a: {
+    id: 'a', el: null,
+    source: null, bassFilter: null, midFilter: null, trebleFilter: null,
+    gainVol: null, gainXfade: null, analyser: null, dataArray: null, canvasCtx: null,
+    currentIndex: -1, currentTrack: null, playCountedId: null, bassSmoothed: 0
+  },
+  b: {
+    id: 'b', el: null,
+    source: null, bassFilter: null, midFilter: null, trebleFilter: null,
+    gainVol: null, gainXfade: null, analyser: null, dataArray: null, canvasCtx: null,
+    currentIndex: -1, currentTrack: null, playCountedId: null, bassSmoothed: 0
+  }
+}
+
+// Wire up audio elements immediately so src can be set before context is created
+DECKS.a.el = document.getElementById('player-a')
+DECKS.b.el = document.getElementById('player-b')
+
+// ── Auth check ──────────────────────────────────────────────────
+async function checkAuth() {
+  if (!token) { window.location.href = '/login.html'; return false }
+  try {
+    const res = await fetch(`${API}/me`, { headers: { "Authorization": `Bearer ${token}` } })
+    if (!res.ok) { localStorage.removeItem("token"); window.location.href = '/login.html'; return false }
+    const me = await res.json()
+    currentUser = me
+    document.getElementById("profileBtn").textContent = `@${me.username}`
+    document.getElementById("profileBtn").style.display = "inline-block"
+    document.getElementById("logoutBtn").style.display = "inline-block"
+    document.getElementById("auth-gate").style.display = "none"
+    fetchMyVotes()
+    return true
+  } catch {
+    window.location.href = '/login.html'
+    return false
+  }
+}
+
+document.getElementById("logoutBtn").addEventListener("click", e => {
+  e.preventDefault()
+  localStorage.removeItem("token")
+  window.location.href = '/'
+})
+
+// ── Audio init ───────────────────────────────────────────────────
+function initAudio() {
+  if (audioContext) return
+  audioContext = new (window.AudioContext || window.webkitAudioContext)()
+
+  for (const deck of Object.values(DECKS)) {
+    deck.source = audioContext.createMediaElementSource(deck.el)
+
+    deck.bassFilter = audioContext.createBiquadFilter()
+    deck.bassFilter.type = 'lowshelf'
+    deck.bassFilter.frequency.value = 100
+    deck.bassFilter.gain.value = 0
+
+    deck.midFilter = audioContext.createBiquadFilter()
+    deck.midFilter.type = 'peaking'
+    deck.midFilter.frequency.value = 1000
+    deck.midFilter.Q.value = 1
+    deck.midFilter.gain.value = 0
+
+    deck.trebleFilter = audioContext.createBiquadFilter()
+    deck.trebleFilter.type = 'highshelf'
+    deck.trebleFilter.frequency.value = 8000
+    deck.trebleFilter.gain.value = 0
+
+    deck.gainVol = audioContext.createGain()
+    deck.gainVol.gain.value = 0.8
+
+    deck.gainXfade = audioContext.createGain()
+    deck.gainXfade.gain.value = 1.0
+
+    deck.analyser = audioContext.createAnalyser()
+    deck.analyser.fftSize = 256
+    deck.analyser.smoothingTimeConstant = 0.8
+
+    deck.source
+      .connect(deck.bassFilter)
+      .connect(deck.midFilter)
+      .connect(deck.trebleFilter)
+      .connect(deck.gainVol)
+      .connect(deck.gainXfade)
+      .connect(deck.analyser)
+      .connect(audioContext.destination)
+
+    deck.dataArray = new Uint8Array(deck.analyser.frequencyBinCount)
+
+    const canvas = document.getElementById(`vis-${deck.id}`)
+    canvas.width = canvas.offsetWidth || 300
+    canvas.height = canvas.offsetHeight || 52
+    deck.canvasCtx = canvas.getContext('2d')
+  }
+
+  updateCrossfader(50)
+  startVisualizerLoop()
+}
+
+// ── Crossfader ───────────────────────────────────────────────────
+function updateCrossfader(pos) {
+  const angle = (pos / 100) * Math.PI / 2
+  if (DECKS.a.gainXfade) DECKS.a.gainXfade.gain.setTargetAtTime(Math.cos(angle), audioContext.currentTime, 0.05)
+  if (DECKS.b.gainXfade) DECKS.b.gainXfade.gain.setTargetAtTime(Math.sin(angle), audioContext.currentTime, 0.05)
+}
+
+document.getElementById('crossfader').addEventListener('input', e => {
+  if (audioContext) updateCrossfader(parseInt(e.target.value))
+})
+
+// ── Visualizer ───────────────────────────────────────────────────
+function drawDeck(deck, accentHue) {
+  const canvas = document.getElementById(`vis-${deck.id}`)
+  if (!deck.canvasCtx) return 0
+  if (canvas.offsetWidth > 0 && canvas.width !== canvas.offsetWidth) {
+    canvas.width = canvas.offsetWidth
+    canvas.height = canvas.offsetHeight
+  }
+  deck.analyser.getByteFrequencyData(deck.dataArray)
+  const ctx = deck.canvasCtx
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  const bars = 32
+  const step = Math.floor(deck.dataArray.length / bars)
+  const barWidth = canvas.width / bars
+
+  let bassSum = 0
+  for (let i = 0; i < 8; i++) bassSum += deck.dataArray[i]
+  deck.bassSmoothed = deck.bassSmoothed * 0.8 + (bassSum / 8) * 0.2
+
+  for (let i = 0; i < bars; i++) {
+    let sum = 0
+    for (let j = 0; j < step; j++) sum += deck.dataArray[i * step + j]
+    const norm = (sum / step) / 255
+    const scaled = Math.pow(norm, 1.5) * canvas.height
+    const hue = accentHue - norm * 60
+    const bright = 50 + norm * 50
+    ctx.fillStyle = `hsl(${hue}, 100%, ${bright}%)`
+    ctx.shadowBlur = 14
+    ctx.shadowColor = `hsl(${hue}, 100%, 65%)`
+    ctx.fillRect(i * barWidth, canvas.height - scaled, barWidth - 2, scaled)
+  }
+  return deck.bassSmoothed / 255
+}
+
+function startVisualizerLoop() {
+  const bg = document.getElementById('visual-bg')
+  function frame() {
+    requestAnimationFrame(frame)
+    const bA = drawDeck(DECKS.a, 300)
+    const bB = drawDeck(DECKS.b, 185)
+    const combined = Math.max(bA, bB)
+    document.body.style.transform = `scale(${1 + combined * 0.015})`
+    const hue = 280 - combined * 90
+    const bright = 6 + combined * 28
+    bg.style.background = `radial-gradient(circle at center, hsla(${hue},100%,${bright}%,0.5), rgba(0,0,0,0.85))`
+  }
+  frame()
+}
+
+// ── Track loading & playback ─────────────────────────────────────
+function getTrackLabel(track) {
+  if (!track) return ""
+  const title = (track.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "")
+  const artist = (track.artist || "").trim()
+  return artist ? `${artist} — ${title}` : title
+}
+
+function loadTrackToDeck(deckId, trackIndex) {
+  const deck = DECKS[deckId]
+  const track = playlist[trackIndex]
+  if (!track || !deck.el) return
+  deck.currentIndex = trackIndex
+  deck.currentTrack = track
+  deck.playCountedId = null
+  deck.el.src = `${API}/file/${encodeURIComponent(track.filename)}`
+  document.getElementById(`title-${deckId}`).textContent = getTrackLabel(track)
+  updateVoteBtn(deckId)
+  buildLibrary(document.getElementById('library-search').value)
+  sendHeartbeat()
+}
+
+function playDeck(deckId) {
+  const deck = DECKS[deckId]
+  if (!deck.el) return
+  if (audioContext && audioContext.state === 'suspended') audioContext.resume()
+  deck.el.play().catch(() => {})
+}
+
+function pauseDeck(deckId) { DECKS[deckId].el?.pause() }
+
+function toggleDeck(deckId) {
+  const el = DECKS[deckId].el
+  if (!el) return
+  // Init audio on first interaction
+  if (!audioContext) initAudio()
+  if (el.paused) playDeck(deckId)
+  else pauseDeck(deckId)
+}
+
+function nextTrack(deckId) {
+  const deck = DECKS[deckId]
+  if (!playlist.length) return
+  loadTrackToDeck(deckId, (deck.currentIndex + 1) % playlist.length)
+  playDeck(deckId)
+}
+
+function prevTrack(deckId) {
+  const deck = DECKS[deckId]
+  if (!playlist.length) return
+  const idx = deck.currentIndex <= 0 ? playlist.length - 1 : deck.currentIndex - 1
+  loadTrackToDeck(deckId, idx)
+  playDeck(deckId)
+}
+
+function updatePlayBtn(deckId) {
+  const btn = document.getElementById(`play-${deckId}`)
+  btn.textContent = DECKS[deckId].el?.paused === false ? '⏸' : '▶'
+}
+
+// ── Transport event listeners ─────────────────────────────────────
+;['a', 'b'].forEach(id => {
+  document.getElementById(`prev-${id}`).addEventListener('click', () => prevTrack(id))
+  document.getElementById(`play-${id}`).addEventListener('click', () => toggleDeck(id))
+  document.getElementById(`next-${id}`).addEventListener('click', () => nextTrack(id))
+
+  const el = DECKS[id].el
+  el.addEventListener('play',  () => updatePlayBtn(id))
+  el.addEventListener('pause', () => updatePlayBtn(id))
+  el.addEventListener('ended', () => nextTrack(id))
+
+  el.addEventListener('timeupdate', () => {
+    const deck = DECKS[id]
+    if (!el.duration || !deck.currentTrack) return
+    if ((el.duration - el.currentTime) <= 60 && deck.playCountedId !== deck.currentTrack.id) {
+      deck.playCountedId = deck.currentTrack.id
+      fetch(`${API}/track-played`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: deck.currentTrack.id })
+      }).catch(() => {})
+    }
+  })
+})
+
+// ── Sliders ───────────────────────────────────────────────────────
+function setupSliders(id) {
+  const deck = DECKS[id]
+
+  const tempo = document.getElementById(`tempo-${id}`)
+  const tempoVal = document.getElementById(`tempo-val-${id}`)
+  tempo.addEventListener('input', () => {
+    const pct = parseInt(tempo.value) - 100
+    tempoVal.textContent = `${pct > 0 ? '+' : ''}${pct}%`
+    if (deck.el) deck.el.playbackRate = parseInt(tempo.value) / 100
+  })
+
+  const vol = document.getElementById(`vol-${id}`)
+  const volVal = document.getElementById(`vol-val-${id}`)
+  vol.addEventListener('input', () => {
+    const v = parseInt(vol.value)
+    volVal.textContent = `${v}%`
+    if (deck.gainVol) deck.gainVol.gain.setTargetAtTime(v / 100, audioContext.currentTime, 0.02)
+  })
+
+  const bass = document.getElementById(`bass-${id}`)
+  const bassVal = document.getElementById(`bass-val-${id}`)
+  bass.addEventListener('input', () => {
+    const db = parseFloat(bass.value)
+    bassVal.textContent = `${db > 0 ? '+' : ''}${db} dB`
+    if (deck.bassFilter) deck.bassFilter.gain.setTargetAtTime(db, audioContext.currentTime, 0.02)
+  })
+
+  const mid = document.getElementById(`mid-${id}`)
+  const midVal = document.getElementById(`mid-val-${id}`)
+  mid.addEventListener('input', () => {
+    const db = parseFloat(mid.value)
+    midVal.textContent = `${db > 0 ? '+' : ''}${db} dB`
+    if (deck.midFilter) deck.midFilter.gain.setTargetAtTime(db, audioContext.currentTime, 0.02)
+  })
+
+  const treble = document.getElementById(`treble-${id}`)
+  const trebleVal = document.getElementById(`treble-val-${id}`)
+  treble.addEventListener('input', () => {
+    const db = parseFloat(treble.value)
+    trebleVal.textContent = `${db > 0 ? '+' : ''}${db} dB`
+    if (deck.trebleFilter) deck.trebleFilter.gain.setTargetAtTime(db, audioContext.currentTime, 0.02)
+  })
+}
+
+setupSliders('a')
+setupSliders('b')
+
+// ── Votes ─────────────────────────────────────────────────────────
+async function fetchMyVotes() {
+  if (!token) return
+  try {
+    const res = await fetch(`${API}/my-votes`, { headers: { "Authorization": `Bearer ${token}` } })
+    if (res.ok) { myVotes = new Set(await res.json()); updateVoteBtn('a'); updateVoteBtn('b') }
+  } catch {}
+}
+
+function updateVoteBtn(deckId) {
+  const deck = DECKS[deckId]
+  const btn = document.getElementById(`vote-${deckId}`)
+  const countEl = document.getElementById(`vcount-${deckId}`)
+  if (!deck.currentTrack) return
+  countEl.textContent = deck.currentTrack.vote_count || 0
+  if (!currentUser) { btn.disabled = true; btn.classList.remove('voted'); return }
+  btn.disabled = false
+  btn.classList.toggle('voted', myVotes.has(deck.currentTrack.id))
+}
+
+async function voteDeck(deckId) {
+  const deck = DECKS[deckId]
+  if (!deck.currentTrack || !currentUser) return
+  try {
+    const res = await fetch(`${API}/vote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ track_id: deck.currentTrack.id })
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    if (data.voted) { myVotes.add(deck.currentTrack.id); deck.currentTrack.vote_count = (deck.currentTrack.vote_count || 0) + 1 }
+    else { myVotes.delete(deck.currentTrack.id); deck.currentTrack.vote_count = Math.max(0, (deck.currentTrack.vote_count || 0) - 1) }
+    updateVoteBtn(deckId)
+    buildLibrary(document.getElementById('library-search').value)
+  } catch {}
+}
+
+document.getElementById('vote-a').addEventListener('click', () => voteDeck('a'))
+document.getElementById('vote-b').addEventListener('click', () => voteDeck('b'))
+
+// ── Library ───────────────────────────────────────────────────────
+function buildLibrary(filter = '') {
+  const q = filter.toLowerCase()
+  const tracks = q ? playlist.filter(t => getTrackLabel(t).toLowerCase().includes(q)) : playlist
+
+  document.getElementById('library-list').innerHTML = tracks.map(track => {
+    const idx = playlist.indexOf(track)
+    const label = getTrackLabel(track)
+    const onA = DECKS.a.currentIndex === idx
+    const onB = DECKS.b.currentIndex === idx
+    const nameColor = onA ? 'color:#ff00cc;' : onB ? 'color:#00e0ff;' : ''
+    return `
+      <div class="lib-track">
+        <span class="lib-track-name" style="${nameColor}">${label}</span>
+        <span class="lib-track-meta">♥${track.vote_count||0} ▶${track.play_count||0}</span>
+        <button class="lib-btn load-a${onA?' active-a':''}" data-index="${idx}">▶ A</button>
+        <button class="lib-btn load-b${onB?' active-b':''}" data-index="${idx}">▶ B</button>
+      </div>`
+  }).join('')
+
+  document.getElementById('library-list').querySelectorAll('.load-a').forEach(btn =>
+    btn.addEventListener('click', () => loadTrackToDeck('a', parseInt(btn.dataset.index)))
+  )
+  document.getElementById('library-list').querySelectorAll('.load-b').forEach(btn =>
+    btn.addEventListener('click', () => loadTrackToDeck('b', parseInt(btn.dataset.index)))
+  )
+}
+
+document.getElementById('library-search').addEventListener('input', e => buildLibrary(e.target.value))
+
+// ── Presence ──────────────────────────────────────────────────────
+let sessionId = sessionStorage.getItem("session_id")
+if (!sessionId) { sessionId = crypto.randomUUID(); sessionStorage.setItem("session_id", sessionId) }
+
+async function sendHeartbeat() {
+  const xf = parseInt(document.getElementById('crossfader').value)
+  const deckId = xf <= 50 ? 'a' : 'b'
+  const deck = DECKS[deckId]
+  if (!deck.currentTrack) return
+  try {
+    await fetch(`${API}/listening`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: currentUser ? `user_${currentUser.id}` : sessionId,
+        username: currentUser ? `@${currentUser.username}` : 'Guest',
+        track_name: getTrackLabel(deck.currentTrack)
+      })
+    })
+  } catch {}
+}
+
+async function pollListeners() {
+  try {
+    const res = await fetch(`${API}/listeners`)
+    if (!res.ok) return
+    const listeners = await res.json()
+    const el = document.getElementById('listeners-compact')
+    if (!listeners.length) { el.textContent = ''; return }
+    el.innerHTML = `<span class="live-dot"></span>${listeners.map(l => l.username).join(', ')}`
+  } catch {}
+}
+
+function startPresence() {
+  if (heartbeatInterval) return
+  sendHeartbeat(); pollListeners()
+  heartbeatInterval = setInterval(sendHeartbeat, 15000)
+  pollInterval = setInterval(pollListeners, 15000)
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────────
+async function init() {
+  const ok = await checkAuth()
+  if (!ok) return
+
+  try {
+    const res = await fetch(`${API}/public-tracks`)
+    playlist = await res.json()
+  } catch { return }
+
+  if (!playlist.length) return
+
+  buildLibrary()
+
+  // Load random tracks to each deck (different ones if possible)
+  const idxA = Math.floor(Math.random() * playlist.length)
+  let idxB = Math.floor(Math.random() * playlist.length)
+  if (playlist.length > 1) while (idxB === idxA) idxB = Math.floor(Math.random() * playlist.length)
+
+  loadTrackToDeck('a', idxA)
+  loadTrackToDeck('b', idxB)
+
+  // Init audio on first user gesture (play button or load-to-deck click)
+  // Also start audio on first library click
+  document.getElementById('library-list').addEventListener('click', () => {
+    if (!audioContext) initAudio()
+  }, { once: true })
+
+  startPresence()
+}
+
+init()
+</script>
+
+</body>
+</html>
