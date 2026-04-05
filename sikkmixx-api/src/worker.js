@@ -329,6 +329,48 @@ ORDER BY uploaded_at DESC`
       return json(results);
     }
 	
+// ---------------- LISTENING HEARTBEAT ----------------
+if (url.pathname === "/listening" && request.method === "POST") {
+  try {
+    const { session_id, username, track_name } = await request.json();
+    if (!session_id) return text("Missing session_id", 400);
+
+    const now = Date.now();
+
+    await env.DB.prepare(`
+      INSERT INTO listeners (session_id, username, track_name, last_seen)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(session_id) DO UPDATE SET
+        username = excluded.username,
+        track_name = excluded.track_name,
+        last_seen = excluded.last_seen
+    `).bind(session_id, username || "Guest", track_name || "", now).run();
+
+    // Clean up anyone gone for more than 60s
+    await env.DB.prepare(
+      "DELETE FROM listeners WHERE last_seen < ?"
+    ).bind(now - 60000).run();
+
+    return json({ success: true });
+  } catch (e) {
+    return text("Server error", 500);
+  }
+}
+
+// ---------------- GET LISTENERS ----------------
+if (url.pathname === "/listeners" && request.method === "GET") {
+  try {
+    const now = Date.now();
+    const { results } = await env.DB.prepare(
+      "SELECT username, track_name FROM listeners WHERE last_seen > ? ORDER BY last_seen DESC"
+    ).bind(now - 30000).all();
+
+    return json(results);
+  } catch (e) {
+    return text("Server error", 500);
+  }
+}
+
 // ---------------- INCREMENT PLAY COUNT ----------------
 if (url.pathname === "/track-played" && request.method === "POST") {
   try {

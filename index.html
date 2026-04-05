@@ -325,28 +325,48 @@ border: 1px solid rgba(255,255,255,0.1);
 #now-playing-info {
   display: none;
   margin-top: 18px;
-  padding: 12px 16px;
+  padding: 14px 16px;
   background: rgba(255, 0, 204, 0.07);
-  border: 1px solid rgba(255, 0, 204, 0.25);
+  border: 1px solid rgba(255, 0, 204, 0.2);
   border-radius: 12px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 1.6;
+  text-align: left;
 }
 
-#now-playing-info .npi-user {
+#now-playing-info .npi-header {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 10px;
+}
+
+.listener-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 13px;
+}
+
+.listener-row:last-child {
+  border-bottom: none;
+}
+
+.listener-name {
   color: #ff00cc;
   font-weight: bold;
-  text-shadow: 0 0 8px rgba(255, 0, 204, 0.6);
+  white-space: nowrap;
+  text-shadow: 0 0 6px rgba(255,0,204,0.5);
+  min-width: 80px;
 }
 
-#now-playing-info .npi-track {
-  display: block;
-  margin-top: 4px;
-  color: rgba(255,255,255,0.9);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+.listener-track {
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .live-dot {
@@ -407,9 +427,8 @@ border: 1px solid rgba(255,255,255,0.1);
     </div>
 
     <div id="now-playing-info">
-      <span class="live-dot"></span>
-      <span id="npi-user">Guest</span> is listening to
-      <span id="npi-track" class="npi-track"></span>
+      <div class="npi-header"><span class="live-dot"></span>Now Listening</div>
+      <div id="listeners-list"></div>
     </div>
 
   </div>
@@ -424,22 +443,69 @@ let bassSmoothed = 0
 let currentTrack = null;
 let currentUser = null;
 
+// Stable session ID per tab
+let sessionId = sessionStorage.getItem("session_id");
+if (!sessionId) {
+  sessionId = crypto.randomUUID();
+  sessionStorage.setItem("session_id", sessionId);
+}
 
-function updateNowPlaying() {
-  const info = document.getElementById("now-playing-info");
-  const npiUser = document.getElementById("npi-user");
-  const npiTrack = document.getElementById("npi-track");
+let heartbeatInterval = null;
+let pollInterval = null;
 
+function getTrackLabel(track) {
+  if (!track) return "";
+  const title = (track.original_name || "").replace(/\.mp3$/i, "");
+  const artist = (track.artist || "").trim();
+  return artist ? `${artist} — ${title}` : title;
+}
+
+async function sendHeartbeat() {
   if (!currentTrack) return;
+  try {
+    await fetch(`${API}/listening`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentUser ? `user_${currentUser.id}` : sessionId,
+        username: currentUser ? `@${currentUser.username}` : "Guest",
+        track_name: getTrackLabel(currentTrack)
+      })
+    });
+  } catch {}
+}
 
-  npiUser.textContent = currentUser ? `@${currentUser.username}` : "Guest";
-  npiUser.className = currentUser ? "npi-user" : "";
+async function pollListeners() {
+  try {
+    const res = await fetch(`${API}/listeners`);
+    if (!res.ok) return;
+    const listeners = await res.json();
 
-  const title = (currentTrack.original_name || "").replace(/\.mp3$/i, "");
-  const artist = (currentTrack.artist || "").trim();
-  npiTrack.textContent = artist ? `${artist} — ${title}` : title;
+    const list = document.getElementById("listeners-list");
+    const info = document.getElementById("now-playing-info");
 
-  info.style.display = "block";
+    if (listeners.length === 0) {
+      info.style.display = "none";
+      return;
+    }
+
+    list.innerHTML = listeners.map(l => `
+      <div class="listener-row">
+        <span class="listener-name">${l.username}</span>
+        <span class="listener-track">${l.track_name}</span>
+      </div>
+    `).join("");
+
+    info.style.display = "block";
+  } catch {}
+}
+
+function startPresence() {
+  if (heartbeatInterval) return; // already running
+  sendHeartbeat();
+  pollListeners();
+  heartbeatInterval = setInterval(sendHeartbeat, 15000);
+  pollInterval = setInterval(pollListeners, 15000);
 }
 
 
@@ -486,7 +552,7 @@ loginBtn.style.color = "rgba(255,180,180,0.9)";
     profileBtn.style.display = "inline-block";
 
     currentUser = me;
-    updateNowPlaying();
+    sendHeartbeat();
 
   } catch (e) {
     localStorage.removeItem("token");
@@ -554,7 +620,7 @@ document.getElementById("trackTitle").innerText =
 
 
   player.src = `${API}/file/${encoded}`;
-  updateNowPlaying();
+  sendHeartbeat();
 }
 
 
@@ -626,6 +692,8 @@ document.getElementById("enterBtn").addEventListener("click", async () => {
 
   await audioContext.resume()
   player.play()
+
+  startPresence()
 
   document.getElementById("intro").style.opacity = 0
   setTimeout(() => {
