@@ -322,6 +322,36 @@ border: 1px solid rgba(255,255,255,0.1);
   filter: brightness(0.8) contrast(1.4);
 }
 
+#vote-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.4);
+  border-radius: 20px;
+  padding: 7px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 14px;
+  letter-spacing: 1px;
+}
+
+#vote-btn:hover {
+  border-color: #ff00cc;
+  color: #ff00cc;
+  box-shadow: 0 0 12px rgba(255,0,204,0.4);
+}
+
+#vote-btn.voted {
+  border-color: #ff00cc;
+  color: #ff00cc;
+  box-shadow: 0 0 14px rgba(255,0,204,0.5);
+}
+
+#vote-btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
 #now-playing-info {
   display: none;
   margin-top: 18px;
@@ -414,6 +444,7 @@ border: 1px solid rgba(255,255,255,0.1);
   <div class="card">
     <h1>LIVE SET</h1>
     <div class="track-title" id="trackTitle">Loading...</div>
+    <button id="vote-btn" disabled>♥ <span id="vote-count">0</span></button>
     <audio id="player" controls crossorigin="anonymous"></audio>
 <div class="controls">
   <button id="prevBtn">⏮</button>
@@ -452,6 +483,71 @@ if (!sessionId) {
 
 let heartbeatInterval = null;
 let pollInterval = null;
+let myVotes = new Set();
+
+async function fetchMyVotes() {
+  if (!token) return;
+  try {
+    const res = await fetch(`${API}/my-votes`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const ids = await res.json();
+      myVotes = new Set(ids);
+      updateVoteBtn();
+    }
+  } catch {}
+}
+
+function updateVoteBtn() {
+  const btn = document.getElementById("vote-btn");
+  const countEl = document.getElementById("vote-count");
+  if (!currentTrack) return;
+
+  countEl.textContent = currentTrack.vote_count || 0;
+
+  if (!currentUser) {
+    btn.disabled = true;
+    btn.classList.remove("voted");
+    btn.title = "Login to upvote";
+    return;
+  }
+
+  btn.disabled = false;
+  if (myVotes.has(currentTrack.id)) {
+    btn.classList.add("voted");
+  } else {
+    btn.classList.remove("voted");
+  }
+}
+
+document.getElementById("vote-btn").addEventListener("click", async () => {
+  if (!currentTrack || !currentUser) return;
+
+  try {
+    const res = await fetch(`${API}/vote`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ track_id: currentTrack.id })
+    });
+
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (data.voted) {
+      myVotes.add(currentTrack.id);
+      currentTrack.vote_count = (currentTrack.vote_count || 0) + 1;
+    } else {
+      myVotes.delete(currentTrack.id);
+      currentTrack.vote_count = Math.max(0, (currentTrack.vote_count || 0) - 1);
+    }
+
+    updateVoteBtn();
+  } catch {}
+});
 
 function getTrackLabel(track) {
   if (!track) return "";
@@ -553,6 +649,7 @@ loginBtn.style.color = "rgba(255,180,180,0.9)";
 
     currentUser = me;
     sendHeartbeat();
+    fetchMyVotes();
 
   } catch (e) {
     localStorage.removeItem("token");
@@ -621,6 +718,7 @@ document.getElementById("trackTitle").innerText =
 
   player.src = `${API}/file/${encoded}`;
   sendHeartbeat();
+  updateVoteBtn();
 }
 
 

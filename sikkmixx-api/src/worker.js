@@ -320,7 +320,7 @@ if (url.pathname === "/my-tracks/delete" && request.method === "POST") {
     // ---------------- PUBLIC: APPROVED TRACKS ONLY ----------------
     if (url.pathname === "/public-tracks" && request.method === "GET") {
       const { results } = await env.DB.prepare(
-        `SELECT id, filename, original_name, artist, genre, note, uploaded_at, play_count
+        `SELECT id, filename, original_name, artist, genre, note, uploaded_at, play_count, vote_count
 FROM tracks
 WHERE status = 'approved'
 ORDER BY uploaded_at DESC`
@@ -369,6 +369,51 @@ if (url.pathname === "/listeners" && request.method === "GET") {
   } catch (e) {
     return text("Server error", 500);
   }
+}
+
+// ---------------- UPVOTE ----------------
+if (url.pathname === "/vote" && request.method === "POST") {
+  const { error, user } = await requireUser(request);
+  if (error) return error;
+
+  const { track_id } = await request.json();
+  if (!track_id) return text("Missing track_id", 400);
+
+  const existing = await env.DB.prepare(
+    "SELECT 1 FROM votes WHERE user_id = ? AND track_id = ?"
+  ).bind(user.id, track_id).first();
+
+  if (existing) {
+    // Un-vote
+    await env.DB.prepare(
+      "DELETE FROM votes WHERE user_id = ? AND track_id = ?"
+    ).bind(user.id, track_id).run();
+    await env.DB.prepare(
+      "UPDATE tracks SET vote_count = MAX(0, COALESCE(vote_count, 0) - 1) WHERE id = ?"
+    ).bind(track_id).run();
+    return json({ voted: false });
+  } else {
+    // Vote
+    await env.DB.prepare(
+      "INSERT INTO votes (user_id, track_id) VALUES (?, ?)"
+    ).bind(user.id, track_id).run();
+    await env.DB.prepare(
+      "UPDATE tracks SET vote_count = COALESCE(vote_count, 0) + 1 WHERE id = ?"
+    ).bind(track_id).run();
+    return json({ voted: true });
+  }
+}
+
+// ---------------- MY VOTES ----------------
+if (url.pathname === "/my-votes" && request.method === "GET") {
+  const { error, user } = await requireUser(request);
+  if (error) return error;
+
+  const { results } = await env.DB.prepare(
+    "SELECT track_id FROM votes WHERE user_id = ?"
+  ).bind(user.id).all();
+
+  return json(results.map(r => r.track_id));
 }
 
 // ---------------- INCREMENT PLAY COUNT ----------------
