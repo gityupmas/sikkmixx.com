@@ -113,7 +113,7 @@
 
     /* ── Waveform ── */
     .deck-waveform {
-      width: 100%; flex: 1; min-height: 60px; border-radius: 6px;
+      width: 100%; height: 80px; flex-shrink: 0; border-radius: 6px;
       display: block; cursor: crosshair;
     }
     .deck-a .deck-waveform { border: 1px solid rgba(255,0,204,0.12); }
@@ -169,7 +169,7 @@
     /* ── Sliders ── */
     .slider-section {
       display: flex; flex-direction: column; gap: 3px;
-      flex-shrink: 0; justify-content: flex-end;
+      flex: 1; min-height: 0; justify-content: center;
     }
     .slider-row {
       display: flex; align-items: center; gap: 7px;
