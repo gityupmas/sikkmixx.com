@@ -383,6 +383,38 @@ border: 1px solid rgba(255,255,255,0.1);
   #recent-panel { display: none; }
 }
 
+#right-panel {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 210px;
+  background: rgba(20, 20, 20, 0.7);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 16px;
+  z-index: 5;
+}
+
+#right-panel .recent-header {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 12px;
+}
+
+#right-panel .section-divider {
+  margin: 14px 0 12px;
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+@media (max-width: 900px) {
+  #right-panel { display: none; }
+}
+
 #vote-btn {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.4);
@@ -529,6 +561,14 @@ border: 1px solid rgba(255,255,255,0.1);
 <div id="recent-panel">
   <div class="recent-header">Recent Drops</div>
   <div id="recent-list"></div>
+</div>
+
+<div id="right-panel">
+  <div class="recent-header">▶ Most Played</div>
+  <div id="most-played-list"></div>
+  <hr class="section-divider">
+  <div class="recent-header">♥ Most Voted</div>
+  <div id="most-voted-list"></div>
 </div>
 
 <script>
@@ -751,6 +791,48 @@ loginBtn.style.color = "rgba(255,180,180,0.9)";
 })();
 
 
+function buildRightPanel() {
+  buildRankedList("most-played-list", "play_count");
+  buildRankedList("most-voted-list", "vote_count");
+}
+
+function buildRankedList(containerId, sortKey) {
+  const container = document.getElementById(containerId);
+
+  const ranked = playlist
+    .map((track, i) => ({ track, i }))
+    .filter(({ track }) => (track[sortKey] || 0) > 0)
+    .sort((a, b) => (b.track[sortKey] || 0) - (a.track[sortKey] || 0))
+    .slice(0, 5);
+
+  if (ranked.length === 0) {
+    container.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.25);padding:4px 0;">None yet</div>`;
+    return;
+  }
+
+  container.innerHTML = ranked.map(({ track, i }) => {
+    const title = (track.original_name || "").replace(/\.mp3$/i, "");
+    const artist = (track.artist || "").trim();
+    const label = artist ? `${artist} — ${title}` : title;
+    const val = track[sortKey] || 0;
+    const icon = sortKey === "play_count" ? "▶" : "♥";
+    return `
+      <div class="recent-item" data-index="${i}">
+        <div class="recent-title">${label}</div>
+        <div class="recent-meta">${icon} ${val}</div>
+      </div>`;
+  }).join("");
+
+  container.querySelectorAll(".recent-item").forEach(el => {
+    el.addEventListener("click", () => {
+      currentIndex = parseInt(el.dataset.index);
+      playCurrentTrack();
+      player.play();
+      updateRecentActive();
+    });
+  });
+}
+
 function buildRecentPanel() {
   const list = document.getElementById("recent-list");
   const recent = playlist.slice(0, 5);
@@ -786,6 +868,7 @@ function updateRecentActive() {
   });
 }
 
+
 async function loadTrack() {
   const res = await fetch(`${API}/public-tracks`)
   playlist = await res.json()
@@ -799,6 +882,7 @@ async function loadTrack() {
   currentIndex = Math.floor(Math.random() * playlist.length)
 
   buildRecentPanel()
+  buildRightPanel()
   playCurrentTrack()
 }
 loadTrack()
