@@ -158,6 +158,40 @@ export default {
       }
     }
 
+ // ---------------- RESET PASSWORD ----------------
+    if (url.pathname === "/reset-password" && request.method === "POST") {
+      try {
+        const { username, secret, new_password } = await request.json();
+
+        if (!username || !secret || !new_password) {
+          return json({ error: "Missing fields" }, 400);
+        }
+        if (secret !== "skkmxx") {
+          return json({ error: "Invalid secret" }, 403);
+        }
+        if (new_password.length < 6) {
+          return json({ error: "Password must be at least 6 characters" }, 400);
+        }
+
+        const user = await env.DB.prepare(
+          "SELECT id FROM users WHERE username = ?"
+        ).bind(username).first();
+
+        if (!user) {
+          return json({ error: "User not found" }, 404);
+        }
+
+        const hashed = await hashPassword(new_password);
+        await env.DB.prepare(
+          "UPDATE users SET password = ? WHERE id = ?"
+        ).bind(hashed, user.id).run();
+
+        return json({ success: true });
+      } catch {
+        return json({ error: "Server error" }, 500);
+      }
+    }
+
  // ---------------- UPLOAD (SUBMISSION) ----------------
 if (url.pathname === "/upload" && request.method === "POST") {
   const { error, user } = await requireUser(request);

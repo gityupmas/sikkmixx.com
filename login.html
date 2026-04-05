@@ -63,9 +63,10 @@
       transform: scale(1.05);
     }
 
-    #status {
+    .status {
       margin-top: 15px;
       font-size: 14px;
+      min-height: 20px;
       opacity: 0.85;
     }
 
@@ -80,46 +81,112 @@
     a:hover {
       text-decoration: underline;
     }
+
+    .forgot-link {
+      margin-top: 12px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: auto;
+      padding: 0;
+      margin-left: auto;
+      margin-right: auto;
+      display: block;
+      text-align: center;
+      transition: color 0.2s;
+    }
+    .forgot-link:hover {
+      color: #ff00cc;
+      transform: none;
+    }
+
+    .section {
+      display: none;
+    }
+    .section.active {
+      display: block;
+    }
+
+    .back-link {
+      margin-top: 12px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: auto;
+      padding: 0;
+      display: block;
+      text-align: center;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: white; transform: none; }
   </style>
 </head>
 
 <body>
 
 <div class="card">
-  <h1>🔐 Login to SikkMixx</h1>
 
-  <input id="username" placeholder="Username" autocomplete="username">
-  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+  <!-- Step 1: Login -->
+  <div id="section-login" class="section active">
+    <h1>🔐 Login</h1>
+    <input id="username" placeholder="Username" autocomplete="username">
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="loginBtn">Login</button>
+    <button class="forgot-link" id="forgotBtn">Forgot password?</button>
+    <div id="login-status" class="status"></div>
+    <a href="/register.html">Need an account? Register</a>
+    <a href="/">← Back to Home</a>
+  </div>
 
-  <button id="loginBtn">Login</button>
+  <!-- Step 2: Enter secret -->
+  <div id="section-secret" class="section">
+    <h1>🔑 Verify</h1>
+    <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:16px;">Enter your username and the secret to reset your password.</p>
+    <input id="reset-username" placeholder="Username" autocomplete="off">
+    <input id="secret" placeholder="Enter secret" autocomplete="off">
+    <button id="verifyBtn">Verify</button>
+    <div id="secret-status" class="status"></div>
+    <button class="back-link" id="backToLoginBtn">← Back to login</button>
+  </div>
 
-  <div id="status"></div>
+  <!-- Step 3: Set new password -->
+  <div id="section-newpass" class="section">
+    <h1>🔒 New Password</h1>
+    <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:16px;">Choose a new password (min 6 characters).</p>
+    <input id="new-password" type="password" placeholder="New password" autocomplete="new-password">
+    <input id="confirm-password" type="password" placeholder="Confirm password" autocomplete="new-password">
+    <button id="savePassBtn">Save Password</button>
+    <div id="newpass-status" class="status"></div>
+  </div>
 
-  <a href="/register.html">Need an account? Register</a>
-  <a href="/">← Back to Home</a>
 </div>
 
 <script>
 const API = "https://api.sikkmixx.com";
-const statusDiv = document.getElementById("status");
 
-document.getElementById("loginBtn").addEventListener("click", login);
-
-// Auto-redirect if already logged in
-const existingToken = localStorage.getItem("token");
-if (existingToken) {
-  checkRoleAndRedirect(existingToken);
+// ── Section navigation ───────────────────────────────────────────
+function showSection(id) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"))
+  document.getElementById(id).classList.add("active")
 }
+
+// ── Login ────────────────────────────────────────────────────────
+document.getElementById("loginBtn").addEventListener("click", login);
+document.getElementById("password").addEventListener("keydown", e => { if (e.key === "Enter") login() });
+
+const existingToken = localStorage.getItem("token");
+if (existingToken) checkRoleAndRedirect(existingToken);
 
 async function login() {
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value;
+  const statusDiv = document.getElementById("login-status");
 
-  if (!username || !password) {
-    statusDiv.textContent = "❌ Enter username and password";
-    return;
-  }
-
+  if (!username || !password) { statusDiv.textContent = "❌ Enter username and password"; return; }
   statusDiv.textContent = "Logging in...";
 
   try {
@@ -128,19 +195,10 @@ async function login() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password })
     });
-
-    if (!res.ok) {
-      statusDiv.textContent = "❌ Invalid credentials";
-      return;
-    }
-
-    const data = await res.json();
-    const token = data.token;
-
+    if (!res.ok) { statusDiv.textContent = "❌ Invalid credentials"; return; }
+    const { token } = await res.json();
     localStorage.setItem("token", token);
-
     await checkRoleAndRedirect(token);
-
   } catch (err) {
     statusDiv.textContent = "❌ Login failed: " + err.message;
   }
@@ -148,27 +206,82 @@ async function login() {
 
 async function checkRoleAndRedirect(token) {
   try {
-    const res = await fetch(`${API}/me`, {
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-
-    if (!res.ok) {
-      localStorage.removeItem("token");
-      return;
-    }
-
-    const user = await res.json();
-
-    if (user.is_admin) {
-      window.location.href = "/profile.html";
-    } else {
-      window.location.href = "/profile.html";
-    }
-
-  } catch (err) {
+    const res = await fetch(`${API}/me`, { headers: { "Authorization": `Bearer ${token}` } });
+    if (!res.ok) { localStorage.removeItem("token"); return; }
+    window.location.href = "/profile.html";
+  } catch {
     localStorage.removeItem("token");
   }
 }
+
+// ── Forgot password ──────────────────────────────────────────────
+document.getElementById("forgotBtn").addEventListener("click", () => showSection("section-secret"))
+document.getElementById("backToLoginBtn").addEventListener("click", () => showSection("section-login"))
+
+let verifiedUsername = "";
+
+document.getElementById("verifyBtn").addEventListener("click", async () => {
+  const username = document.getElementById("reset-username").value.trim();
+  const secret   = document.getElementById("secret").value.trim();
+  const statusDiv = document.getElementById("secret-status");
+
+  if (!username || !secret) { statusDiv.textContent = "❌ Fill in both fields"; return; }
+  statusDiv.textContent = "Verifying...";
+
+  // Verify by attempting a dry-run — we check the secret on the backend
+  // Send a dummy new_password just to validate username + secret
+  try {
+    const res = await fetch(`${API}/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, secret, new_password: "__verify__" })
+    });
+
+    if (res.status === 403) { statusDiv.textContent = "❌ Wrong secret"; return; }
+    if (res.status === 404) { statusDiv.textContent = "❌ Username not found"; return; }
+
+    // 400 = password too short is expected here — secret & username were valid
+    if (res.ok || res.status === 400) {
+      verifiedUsername = username;
+      statusDiv.textContent = "";
+      showSection("section-newpass");
+      return;
+    }
+
+    statusDiv.textContent = "❌ Something went wrong";
+  } catch {
+    statusDiv.textContent = "❌ Network error";
+  }
+});
+
+document.getElementById("savePassBtn").addEventListener("click", async () => {
+  const newPass     = document.getElementById("new-password").value;
+  const confirmPass = document.getElementById("confirm-password").value;
+  const statusDiv   = document.getElementById("newpass-status");
+  const secret      = document.getElementById("secret").value.trim();
+
+  if (!newPass || !confirmPass) { statusDiv.textContent = "❌ Fill in both fields"; return; }
+  if (newPass !== confirmPass)  { statusDiv.textContent = "❌ Passwords don't match"; return; }
+  if (newPass.length < 6)       { statusDiv.textContent = "❌ Minimum 6 characters"; return; }
+
+  statusDiv.textContent = "Saving...";
+
+  try {
+    const res = await fetch(`${API}/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: verifiedUsername, secret, new_password: newPass })
+    });
+
+    if (!res.ok) { statusDiv.textContent = "❌ Reset failed"; return; }
+
+    statusDiv.style.color = "#00e0ff";
+    statusDiv.textContent = "✓ Password updated! Redirecting...";
+    setTimeout(() => showSection("section-login"), 1800);
+  } catch {
+    statusDiv.textContent = "❌ Network error";
+  }
+});
 </script>
 
 </body>

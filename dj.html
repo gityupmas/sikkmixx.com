@@ -988,10 +988,10 @@ class BeatDetector {
   }
 
   process(dataArray) {
-    // Sum energy of bass bins (first 12)
+    // Only look at first 4 bins (~0-688Hz) — kick/sub-bass only
     let energy = 0
-    for (let i = 0; i < 12; i++) energy += dataArray[i] ** 2
-    energy = Math.sqrt(energy / 12)
+    for (let i = 0; i < 4; i++) energy += dataArray[i] ** 2
+    energy = Math.sqrt(energy / 4)
 
     this.energyHistory.push(energy)
     this.energyHistory.shift()
@@ -1000,16 +1000,18 @@ class BeatDetector {
     const now = performance.now()
     const gap = now - this.lastBeatTime
 
-    // Beat = energy spike above average, min 280ms apart (max ~215 BPM)
-    if (energy > avg * 1.4 && gap > 280) {
+    // Min 375ms between beats = max ~160 BPM, avoids detecting subdivisions
+    if (energy > avg * 1.6 && gap > 375) {
       if (this.lastBeatTime > 0 && gap < 2000) {
         this.intervals.push(gap)
-        if (this.intervals.length > 10) this.intervals.shift()
-        const avgGap = this.intervals.reduce((a, b) => a + b) / this.intervals.length
-        this.bpm = Math.round(60000 / avgGap)
+        if (this.intervals.length > 12) this.intervals.shift()
+        // Use median instead of mean — more stable against outliers
+        const sorted = [...this.intervals].sort((a, b) => a - b)
+        const median = sorted[Math.floor(sorted.length / 2)]
+        this.bpm = Math.round(60000 / median)
       }
       this.lastBeatTime = now
-      return true  // beat detected this frame
+      return true
     }
     return false
   }
