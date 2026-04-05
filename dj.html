@@ -137,17 +137,80 @@
     }
 
     .ctrl-btn {
-      width: 34px; height: 34px; border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.06);
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.07);
       backdrop-filter: blur(8px);
-      color: white; font-size: 13px; cursor: pointer;
+      color: rgba(255,255,255,0.85); cursor: pointer;
       transition: all 0.2s ease;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; padding: 0;
     }
-    .deck-a .ctrl-btn:hover { border-color: #ff00cc; box-shadow: 0 0 10px rgba(255,0,204,0.5); transform: scale(1.1); }
-    .deck-b .ctrl-btn:hover { border-color: #00e0ff; box-shadow: 0 0 10px rgba(0,224,255,0.5); transform: scale(1.1); }
+
+    /* Skip buttons */
+    .ctrl-btn.skip-btn {
+      width: 36px; height: 36px; font-size: 14px;
+      letter-spacing: -1px;
+    }
+    .deck-a .ctrl-btn.skip-btn:hover {
+      border-color: #ff00cc; color: #ff00cc;
+      box-shadow: 0 0 10px rgba(255,0,204,0.45);
+      transform: scale(1.1);
+    }
+    .deck-b .ctrl-btn.skip-btn:hover {
+      border-color: #00e0ff; color: #00e0ff;
+      box-shadow: 0 0 10px rgba(0,224,255,0.45);
+      transform: scale(1.1);
+    }
+
+    /* Play button — larger, accent-tinted */
+    .ctrl-btn.play-btn {
+      width: 52px; height: 52px; font-size: 20px;
+    }
+    .deck-a .ctrl-btn.play-btn {
+      background: rgba(255,0,204,0.15);
+      border: 1.5px solid rgba(255,0,204,0.55);
+      color: #ff00cc;
+      box-shadow: 0 0 12px rgba(255,0,204,0.25);
+    }
+    .deck-b .ctrl-btn.play-btn {
+      background: rgba(0,224,255,0.15);
+      border: 1.5px solid rgba(0,224,255,0.55);
+      color: #00e0ff;
+      box-shadow: 0 0 12px rgba(0,224,255,0.25);
+    }
+    .deck-a .ctrl-btn.play-btn:hover {
+      background: rgba(255,0,204,0.28);
+      border-color: #ff00cc;
+      box-shadow: 0 0 22px rgba(255,0,204,0.6);
+      transform: scale(1.08);
+    }
+    .deck-b .ctrl-btn.play-btn:hover {
+      background: rgba(0,224,255,0.28);
+      border-color: #00e0ff;
+      box-shadow: 0 0 22px rgba(0,224,255,0.6);
+      transform: scale(1.08);
+    }
+
+    /* Playing state — pulsing glow ring */
+    .deck-a .ctrl-btn.play-btn.is-playing {
+      background: rgba(255,0,204,0.22);
+      border-color: #ff00cc;
+      animation: pulse-a 1.8s ease-in-out infinite;
+    }
+    .deck-b .ctrl-btn.play-btn.is-playing {
+      background: rgba(0,224,255,0.22);
+      border-color: #00e0ff;
+      animation: pulse-b 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse-a {
+      0%, 100% { box-shadow: 0 0 10px rgba(255,0,204,0.4); }
+      50%       { box-shadow: 0 0 28px rgba(255,0,204,0.85), 0 0 6px rgba(255,0,204,0.4) inset; }
+    }
+    @keyframes pulse-b {
+      0%, 100% { box-shadow: 0 0 10px rgba(0,224,255,0.4); }
+      50%       { box-shadow: 0 0 28px rgba(0,224,255,0.85), 0 0 6px rgba(0,224,255,0.4) inset; }
+    }
 
     .vote-btn {
       margin-left: auto;
@@ -362,9 +425,9 @@
       <canvas class="deck-waveform" id="wave-a"></canvas>
       <canvas class="deck-visualizer" id="vis-a"></canvas>
       <div class="deck-controls">
-        <button class="ctrl-btn" id="prev-a" title="Previous">⏮</button>
-        <button class="ctrl-btn" id="play-a" title="Play / Pause">▶</button>
-        <button class="ctrl-btn" id="next-a" title="Next">⏭</button>
+        <button class="ctrl-btn skip-btn" id="prev-a" title="Previous">⏮</button>
+        <button class="ctrl-btn play-btn" id="play-a" title="Play / Pause">▶</button>
+        <button class="ctrl-btn skip-btn" id="next-a" title="Next">⏭</button>
         <button class="vote-btn" id="vote-a" disabled>♥ <span id="vcount-a">0</span></button>
       </div>
       <div class="slider-section">
@@ -725,7 +788,9 @@ function prevTrack(deckId) {
 
 function updatePlayBtn(deckId) {
   const btn = document.getElementById(`play-${deckId}`)
-  btn.textContent = DECKS[deckId].el?.paused === false ? '⏸' : '▶'
+  const playing = DECKS[deckId].el?.paused === false
+  btn.textContent = playing ? '⏸' : '▶'
+  btn.classList.toggle('is-playing', playing)
 }
 
 // ── Transport event listeners ─────────────────────────────────────
