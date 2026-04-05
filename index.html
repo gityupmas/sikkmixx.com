@@ -598,6 +598,7 @@ let currentIndex = 0
 let bassSmoothed = 0
 let currentTrack = null;
 let currentUser = null;
+let playCountedId = null;
 
 // Stable session ID per tab
 let sessionId = sessionStorage.getItem("session_id");
@@ -922,6 +923,7 @@ document.getElementById("trackTitle").innerText =
 
 
   player.src = `${API}/file/${encoded}`;
+  playCountedId = null;
   document.getElementById("up-next").style.display = "none";
   sendHeartbeat();
   updateVoteBtn();
@@ -944,6 +946,15 @@ player.addEventListener("timeupdate", () => {
     const artist = (next.artist || "").trim();
     upNextTitle.textContent = artist ? `${artist} — ${title}` : title;
     upNextEl.style.display = "block";
+
+    if (currentTrack?.id && playCountedId !== currentTrack.id) {
+      playCountedId = currentTrack.id;
+      fetch(`${API}/track-played`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: currentTrack.id })
+      }).catch(() => {});
+    }
   } else {
     upNextEl.style.display = "none";
   }
@@ -951,15 +962,6 @@ player.addEventListener("timeupdate", () => {
 
 player.addEventListener("ended", async () => {
   if (playlist.length === 0) return;
-
-  // Increment play count for the track that just finished
-  if (currentTrack?.id) {
-    fetch(`${API}/track-played`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: currentTrack.id })
-    }).catch(() => {});
-  }
 
   // Move to next track
   currentIndex++;
