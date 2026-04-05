@@ -30,7 +30,7 @@
       margin: 20px 0;
     }
 	
-	input[type="text"]{
+  input[type="text"], select {
   width: 100%;
   padding: 10px;
   border-radius: 8px;
@@ -38,6 +38,19 @@
   background: #111;
   color: white;
   margin: 10px 0;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+select option {
+  background: #111;
+}
+
+.tag-hint {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  margin: -6px 0 8px;
+  text-align: left;
 }
 
 
@@ -76,9 +89,31 @@
     <h2>🎧 Upload Your MP3</h2>
 
     <form id="uploadForm">
-	<input type="text" name="artist" placeholder="Artist (optional)">
+      <input type="text" id="artistInput" name="artist" placeholder="Artist (optional)">
+      <div class="tag-hint" id="tag-hint" style="display:none;">Tags auto-filled from file</div>
 
-      <input type="file" name="file" accept=".mp3" required>
+      <select id="genreSelect" name="genre">
+        <option value="">Genre (optional)</option>
+        <option>House</option>
+        <option>Deep House</option>
+        <option>Tech House</option>
+        <option>Techno</option>
+        <option>Trance</option>
+        <option>Drum & Bass</option>
+        <option>Jungle</option>
+        <option>Dubstep</option>
+        <option>Hip-Hop</option>
+        <option>R&B</option>
+        <option>Afrobeats</option>
+        <option>Reggae</option>
+        <option>Latin</option>
+        <option>Pop</option>
+        <option>Electronic</option>
+        <option>Ambient</option>
+        <option>Other</option>
+      </select>
+
+      <input type="file" id="fileInput" name="file" accept=".mp3,.m4a,.wav,.ogg,.flac" required>
       <br>
       <button type="submit">Upload Track</button>
     </form>
@@ -88,8 +123,52 @@
     <a href="/">← Back to Home</a>
   </div>
 
-  <script>
-  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+<script>
+
+  document.getElementById("fileInput").addEventListener("change", function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    jsmediatags.read(file, {
+      onSuccess: function (tag) {
+        const tags = tag.tags;
+        const hint = document.getElementById("tag-hint");
+        let filled = false;
+
+        if (tags.artist) {
+          document.getElementById("artistInput").value = tags.artist;
+          filled = true;
+        }
+
+        if (tags.genre) {
+          const genreSelect = document.getElementById("genreSelect");
+          const normalized = tags.genre.trim();
+          // Try to match against existing options
+          const match = Array.from(genreSelect.options).find(
+            o => o.value.toLowerCase() === normalized.toLowerCase()
+          );
+          if (match) {
+            genreSelect.value = match.value;
+          } else {
+            // Add it as a new option and select it
+            const opt = document.createElement("option");
+            opt.value = normalized;
+            opt.textContent = normalized;
+            genreSelect.appendChild(opt);
+            genreSelect.value = normalized;
+          }
+          filled = true;
+        }
+
+        hint.style.display = filled ? "block" : "none";
+      },
+      onError: function () {
+        // No tags — that's fine, user fills in manually
+      }
+    });
+  });
+
     const form = document.getElementById("uploadForm");
     const statusDiv = document.getElementById("status");
 	const token = localStorage.getItem("token");
