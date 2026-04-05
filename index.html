@@ -322,6 +322,49 @@ border: 1px solid rgba(255,255,255,0.1);
   filter: brightness(0.8) contrast(1.4);
 }
 
+#now-playing-info {
+  display: none;
+  margin-top: 18px;
+  padding: 12px 16px;
+  background: rgba(255, 0, 204, 0.07);
+  border: 1px solid rgba(255, 0, 204, 0.25);
+  border-radius: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+}
+
+#now-playing-info .npi-user {
+  color: #ff00cc;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(255, 0, 204, 0.6);
+}
+
+#now-playing-info .npi-track {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255,255,255,0.9);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  background: #ff00cc;
+  border-radius: 50%;
+  margin-right: 7px;
+  box-shadow: 0 0 8px #ff00cc;
+  animation: blink-dot 1.5s infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
 
   </style>
 <!---------------------------------END   STYLE -->
@@ -359,9 +402,16 @@ border: 1px solid rgba(255,255,255,0.1);
 </div>
 
 
-	<div class="equalizer"> 
+	<div class="equalizer">
 <canvas id="visualizer"></canvas>
     </div>
+
+    <div id="now-playing-info">
+      <span class="live-dot"></span>
+      <span id="npi-user">Guest</span> is listening to
+      <span id="npi-track" class="npi-track"></span>
+    </div>
+
   </div>
 </div>
 
@@ -372,6 +422,25 @@ let playlist = []
 let currentIndex = 0
 let bassSmoothed = 0
 let currentTrack = null;
+let currentUser = null;
+
+
+function updateNowPlaying() {
+  const info = document.getElementById("now-playing-info");
+  const npiUser = document.getElementById("npi-user");
+  const npiTrack = document.getElementById("npi-track");
+
+  if (!currentTrack) return;
+
+  npiUser.textContent = currentUser ? `@${currentUser.username}` : "Guest";
+  npiUser.className = currentUser ? "npi-user" : "";
+
+  const title = (currentTrack.original_name || "").replace(/\.mp3$/i, "");
+  const artist = (currentTrack.artist || "").trim();
+  npiTrack.textContent = artist ? `${artist} — ${title}` : title;
+
+  info.style.display = "block";
+}
 
 
 const token = localStorage.getItem("token");
@@ -415,6 +484,9 @@ loginBtn.style.color = "rgba(255,180,180,0.9)";
     // Show profile button with username
     profileBtn.textContent = `@${me.username}`;
     profileBtn.style.display = "inline-block";
+
+    currentUser = me;
+    updateNowPlaying();
 
   } catch (e) {
     localStorage.removeItem("token");
@@ -482,6 +554,7 @@ document.getElementById("trackTitle").innerText =
 
 
   player.src = `${API}/file/${encoded}`;
+  updateNowPlaying();
 }
 
 
