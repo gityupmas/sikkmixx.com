@@ -127,10 +127,10 @@
       font-size: 10px; font-weight: 700; letter-spacing: 1px;
       transition: color 0.3s;
     }
-    .deck-a .deck-bpm { color: rgba(255,0,204,0.5); }
-    .deck-b .deck-bpm { color: rgba(0,224,255,0.5); }
-    .deck-a .deck-bpm.beat { color: #ff00cc; text-shadow: 0 0 8px rgba(255,0,204,0.8); }
-    .deck-b .deck-bpm.beat { color: #00e0ff; text-shadow: 0 0 8px rgba(0,224,255,0.8); }
+    .deck-a .deck-bpm { color: rgba(255,0,204,0.85); }
+    .deck-b .deck-bpm { color: rgba(0,224,255,0.85); }
+    .deck-a .deck-bpm.beat { color: #ff00cc; text-shadow: 0 0 14px #ff00cc, 0 0 4px #fff; }
+    .deck-b .deck-bpm.beat { color: #00e0ff; text-shadow: 0 0 14px #00e0ff, 0 0 4px #fff; }
 
     .deck-controls {
       display: flex; align-items: center; gap: 6px;
@@ -960,7 +960,7 @@ async function decodeAndRenderWaveform(deckId, url) {
   const deck = DECKS[deckId]
   const canvas = document.getElementById(`wave-${deckId}`)
   const accentColor = deckId === 'a' ? '#ff00cc' : '#00e0ff'
-  const dimColor   = deckId === 'a' ? 'rgba(255,0,204,0.25)' : 'rgba(0,224,255,0.25)'
+  const dimColor   = deckId === 'a' ? 'rgba(255,0,204,0.55)' : 'rgba(0,224,255,0.55)'
 
   // Clear to loading state
   const ctx = canvas.getContext('2d')
@@ -1041,13 +1041,13 @@ function drawWaveform(deckId) {
   // Tint played region with accent color
   ctx.save()
   ctx.globalCompositeOperation = 'source-atop'
-  ctx.fillStyle = deck.id === 'a' ? 'rgba(255,0,204,0.5)' : 'rgba(0,224,255,0.5)'
+  ctx.fillStyle = deck.id === 'a' ? 'rgba(255,0,204,0.75)' : 'rgba(0,224,255,0.75)'
   ctx.fillRect(0, 0, playedX, h)
   ctx.restore()
 
   // Playhead line
   ctx.fillStyle = deck.id === 'a' ? '#ff00cc' : '#00e0ff'
-  ctx.shadowBlur = 8
+  ctx.shadowBlur = 18
   ctx.shadowColor = deck.id === 'a' ? '#ff00cc' : '#00e0ff'
   ctx.fillRect(playedX - 1, 0, 2, h)
   ctx.shadowBlur = 0
