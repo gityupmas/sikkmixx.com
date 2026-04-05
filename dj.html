@@ -113,7 +113,7 @@
 
     /* ── Waveform ── */
     .deck-waveform {
-      width: 100%; height: 52px; flex-shrink: 0; border-radius: 6px;
+      width: 100%; flex: 1; min-height: 60px; border-radius: 6px;
       display: block; cursor: crosshair;
     }
     .deck-a .deck-waveform { border: 1px solid rgba(255,0,204,0.12); }
@@ -169,7 +169,7 @@
     /* ── Sliders ── */
     .slider-section {
       display: flex; flex-direction: column; gap: 3px;
-      flex: 1; min-height: 0; justify-content: center;
+      flex-shrink: 0; justify-content: flex-end;
     }
     .slider-row {
       display: flex; align-items: center; gap: 7px;
@@ -1018,12 +1018,12 @@ function drawWaveform(deckId) {
   const deck = DECKS[deckId]
   const canvas = document.getElementById(`wave-${deckId}`)
   const ctx = canvas.getContext('2d')
-  const w = canvas.width, h = canvas.height
-
-  if (canvas.offsetWidth > 0 && canvas.width !== canvas.offsetWidth) {
+  if (canvas.offsetWidth > 0 && (canvas.width !== canvas.offsetWidth || canvas.height !== canvas.offsetHeight)) {
     canvas.width = canvas.offsetWidth
     canvas.height = canvas.offsetHeight
   }
+
+  const w = canvas.width, h = canvas.height
 
   ctx.clearRect(0, 0, w, h)
 
