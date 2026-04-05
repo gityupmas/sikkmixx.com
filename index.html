@@ -255,26 +255,55 @@ border: 1px solid rgba(255,255,255,0.1);
   margin-top: 20px;
   display: flex;
   justify-content: center;
-  gap: 20px;
+  align-items: center;
+  gap: 16px;
 }
 
 .controls button {
-  width: 55px;
-  height: 55px;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.07);
   backdrop-filter: blur(10px);
-  color: white;
-  font-size: 20px;
+  color: rgba(255,255,255,0.85);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
 }
 
-.controls button:hover {
+/* Skip buttons */
+#prevBtn, #nextBtn {
+  width: 38px; height: 38px; font-size: 15px;
+}
+#prevBtn:hover, #nextBtn:hover {
   border-color: #ff00cc;
-  box-shadow: 0 0 15px rgba(255,0,204,0.6);
+  color: #ff00cc;
+  box-shadow: 0 0 10px rgba(255,0,204,0.45);
   transform: scale(1.1);
+}
+
+/* Play button */
+#playPauseBtn {
+  width: 54px; height: 54px; font-size: 20px;
+  background: rgba(255,0,204,0.15);
+  border: 1.5px solid rgba(255,0,204,0.55);
+  color: #ff00cc;
+  box-shadow: 0 0 12px rgba(255,0,204,0.25);
+}
+#playPauseBtn:hover {
+  background: rgba(255,0,204,0.28);
+  border-color: #ff00cc;
+  box-shadow: 0 0 22px rgba(255,0,204,0.6);
+  transform: scale(1.08);
+}
+#playPauseBtn.is-playing {
+  background: rgba(255,0,204,0.22);
+  border-color: #ff00cc;
+  animation: play-pulse 1.8s ease-in-out infinite;
+}
+@keyframes play-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,0,204,0.4); }
+  50%       { box-shadow: 0 0 28px rgba(255,0,204,0.85), 0 0 6px rgba(255,0,204,0.4) inset; }
 }
 
 		
@@ -597,7 +626,7 @@ border: 1px solid rgba(255,255,255,0.1);
     <audio id="player" controls crossorigin="anonymous"></audio>
 <div class="controls">
   <button id="prevBtn">⏮</button>
-  <button id="playPauseBtn">⏯</button>
+  <button id="playPauseBtn">▶</button>
   <button id="nextBtn">⏭</button>
 </div>
 
@@ -1092,14 +1121,19 @@ document.getElementById("prevBtn").addEventListener("click", () => {
   player.play()
 })
 
+function updatePlayPauseBtn() {
+  const btn = document.getElementById("playPauseBtn")
+  const playing = !player.paused
+  btn.textContent = playing ? "⏸" : "▶"
+  btn.classList.toggle("is-playing", playing)
+}
+
+player.addEventListener("play",  updatePlayPauseBtn)
+player.addEventListener("pause", updatePlayPauseBtn)
+
 document.getElementById("playPauseBtn").addEventListener("click", () => {
-
-  if (player.paused) {
-    player.play()
-  } else {
-    player.pause()
-  }
-
+  if (player.paused) player.play()
+  else player.pause()
 })
 
 
