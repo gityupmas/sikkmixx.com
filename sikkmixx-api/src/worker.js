@@ -320,10 +320,11 @@ if (url.pathname === "/my-tracks/delete" && request.method === "POST") {
     // ---------------- PUBLIC: APPROVED TRACKS ONLY ----------------
     if (url.pathname === "/public-tracks" && request.method === "GET") {
       const { results } = await env.DB.prepare(
-        `SELECT id, filename, original_name, artist, genre, note, uploaded_at, play_count, vote_count
-FROM tracks
-WHERE status = 'approved'
-ORDER BY uploaded_at DESC`
+        `SELECT t.id, t.filename, t.original_name, t.artist, t.genre, t.note, t.uploaded_at, t.play_count, t.vote_count, u.username
+FROM tracks t
+LEFT JOIN users u ON t.user_id = u.id
+WHERE t.status = 'approved'
+ORDER BY t.uploaded_at DESC`
       ).all();
 
       return json(results);
