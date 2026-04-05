@@ -407,6 +407,8 @@
       cursor: grab;
       flex-shrink: 0;
       display: block;
+      touch-action: none;
+      user-select: none;
     }
     .disc-canvas:active { cursor: grabbing; }
     .disc-canvas.scratching { cursor: grabbing; }
@@ -1331,37 +1333,33 @@ function getScratchAngle(e, canvas) {
   const canvas = document.getElementById(`disc-${id}`)
   const deck   = DECKS[id]
 
-  function startScratch(e) {
+  canvas.addEventListener('pointerdown', e => {
     e.preventDefault()
+    canvas.setPointerCapture(e.pointerId)   // lock events to this canvas until release
     if (!audioContext) initAudio()
     deck.scratching = true
     deck.scratchWasPlaying = !deck.el.paused
     deck.scratchLastAngle = getScratchAngle(e, canvas)
     deck.el.pause()
     canvas.classList.add('scratching')
-  }
+  })
 
-  function moveScratch(e) {
+  canvas.addEventListener('pointermove', e => {
     if (!deck.scratching) return
     e.preventDefault()
     const angle = getScratchAngle(e, canvas)
     let delta = angle - deck.scratchLastAngle
-    // Normalise to [-π, π] to handle the ±180° boundary
     if (delta >  Math.PI) delta -= 2 * Math.PI
     if (delta < -Math.PI) delta += 2 * Math.PI
     deck.scratchLastAngle = angle
-
-    // Rotate disc manually while scratching
     deck.discAngle += delta
-
-    // Map rotation to time: 1 full revolution = 1.8 seconds of audio
     if (deck.el && deck.el.duration) {
       deck.el.currentTime = Math.max(0, Math.min(
         deck.el.duration,
         deck.el.currentTime + (delta / (2 * Math.PI)) * 1.8
       ))
     }
-  }
+  })
 
   function endScratch() {
     if (!deck.scratching) return
@@ -1370,13 +1368,8 @@ function getScratchAngle(e, canvas) {
     if (deck.scratchWasPlaying) playDeck(id)
   }
 
-  canvas.addEventListener('mousedown',  startScratch)
-  canvas.addEventListener('mousemove',  moveScratch)
-  canvas.addEventListener('mouseup',    endScratch)
-  canvas.addEventListener('mouseleave', endScratch)
-  canvas.addEventListener('touchstart', startScratch, { passive: false })
-  canvas.addEventListener('touchmove',  moveScratch,  { passive: false })
-  canvas.addEventListener('touchend',   endScratch)
+  canvas.addEventListener('pointerup',     endScratch)
+  canvas.addEventListener('pointercancel', endScratch)
 })
 
 // ── Bootstrap ─────────────────────────────────────────────────────
