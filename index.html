@@ -146,20 +146,38 @@
   box-shadow: 0 0 10px #ff00cc;
 }
 
-#loginBtn    { 
+#loginBtn {
   position: fixed;
-right: 15px; }
+  right: 15px;
+  animation: pulse-login 3s ease-in-out infinite;
+}
 
 #registerBtn {
   position: fixed;
   left: 15px;
+  animation: pulse-register 3s ease-in-out infinite;
 }
 
 #registerBtn:hover {
   color: #00e0ff;
-    opacity: 1;
+  opacity: 1;
   border-color: #00e0ff;
   box-shadow: 0 0 10px #00e0ff;
+  animation: none;
+}
+
+#loginBtn:hover {
+  animation: none;
+}
+
+@keyframes pulse-login {
+  0%, 100% { opacity: 0.5; box-shadow: none; }
+  50%       { opacity: 0.9; box-shadow: 0 0 12px rgba(255,0,204,0.5); border-color: rgba(255,0,204,0.6); color: rgba(255,100,220,0.9); }
+}
+
+@keyframes pulse-register {
+  0%, 100% { opacity: 0.5; box-shadow: none; }
+  50%       { opacity: 0.9; box-shadow: 0 0 12px rgba(0,224,255,0.5); border-color: rgba(0,224,255,0.6); color: rgba(100,230,255,0.9); }
 }
 
 #visual-bg {
