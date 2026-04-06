@@ -85,9 +85,10 @@ export default {
 
     // ---------------- EMAIL ----------------
     async function sendEmail(subject, html) {
-      if (!env.RESEND_API_KEY || !env.NOTIFY_EMAIL) return;
+      if (!env.RESEND_API_KEY) { console.error("EMAIL: RESEND_API_KEY not set"); return; }
+      if (!env.NOTIFY_EMAIL)   { console.error("EMAIL: NOTIFY_EMAIL not set"); return; }
       try {
-        await fetch("https://api.resend.com/emails", {
+        const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${env.RESEND_API_KEY}`,
@@ -100,7 +101,15 @@ export default {
             html
           })
         });
-      } catch {}
+        const body = await res.json();
+        if (!res.ok) {
+          console.error("EMAIL failed:", res.status, JSON.stringify(body));
+        } else {
+          console.log("EMAIL sent:", body.id);
+        }
+      } catch (e) {
+        console.error("EMAIL exception:", e.message);
+      }
     }
 
     async function hashPassword(password) {
