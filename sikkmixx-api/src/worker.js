@@ -249,7 +249,9 @@ if (url.pathname === "/upload" && request.method === "POST") {
 
   const id = crypto.randomUUID();
   const safeOriginal = (file.name || "upload.mp3").replace(/[^\w.\- ]+/g, "");
-  const key = `pending/${id}-${safeOriginal}`;
+  const isAdmin = !!user.is_admin;
+  const key = isAdmin ? `tracks/${id}-${safeOriginal}` : `pending/${id}-${safeOriginal}`;
+  const status = isAdmin ? "approved" : "pending";
 
   await env.MEDIA.put(key, await file.arrayBuffer(), {
     httpMetadata: { contentType: file.type || "application/octet-stream" },
@@ -257,22 +259,24 @@ if (url.pathname === "/upload" && request.method === "POST") {
 
   await env.DB.prepare(
     `INSERT INTO tracks (user_id, filename, original_name, status, genre, note, artist)
-     VALUES (?, ?, ?, 'pending', ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
   )
-    .bind(user.id, key, file.name || safeOriginal, genre, note, artist)
+    .bind(user.id, key, file.name || safeOriginal, status, genre, note, artist)
     .run();
 
-  await sendEmail(
-    `🎵 New SiKKMiXX Upload: ${artist ? artist + " — " : ""}${file.name || safeOriginal}`,
-    `<h2>New track submitted for review</h2>
-     <p><strong>Submitted by:</strong> @${user.username}</p>
-     <p><strong>File:</strong> ${file.name || safeOriginal}</p>
-     ${artist ? `<p><strong>Artist:</strong> ${artist}</p>` : ""}
-     ${genre  ? `<p><strong>Genre:</strong> ${genre}</p>`   : ""}
-     ${note   ? `<p><strong>Note:</strong> ${note}</p>`     : ""}
-     <p><strong>Time:</strong> ${new Date().toUTCString()}</p>
-     <p><a href="https://sikkmixx.com/admin.html">Review in admin panel →</a></p>`
-  );
+  if (!isAdmin) {
+    await sendEmail(
+      `🎵 New SiKKMiXX Upload: ${artist ? artist + " — " : ""}${file.name || safeOriginal}`,
+      `<h2>New track submitted for review</h2>
+       <p><strong>Submitted by:</strong> @${user.username}</p>
+       <p><strong>File:</strong> ${file.name || safeOriginal}</p>
+       ${artist ? `<p><strong>Artist:</strong> ${artist}</p>` : ""}
+       ${genre  ? `<p><strong>Genre:</strong> ${genre}</p>`   : ""}
+       ${note   ? `<p><strong>Note:</strong> ${note}</p>`     : ""}
+       <p><strong>Time:</strong> ${new Date().toUTCString()}</p>
+       <p><a href="https://sikkmixx.com/admin.html">Review in admin panel →</a></p>`
+    );
+  }
 
   return json({ success: true, key });
 }
