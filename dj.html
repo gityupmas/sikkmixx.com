@@ -426,7 +426,44 @@
       .decks-row { flex-direction: column; }
       .disc-canvas { width: 110px; height: 110px; }
     }
+
+    /* ── Spotify Integration ── */
+    .spotify-col {
+      width: 150px; flex-shrink: 0;
+      display: none; flex-direction: column;
+      gap: 6px; padding: 4px 0;
+    }
+    #spotify-query {
+      width: 100%;
+      background: rgba(30,215,96,0.08);
+      border: 1px solid rgba(30,215,96,0.3);
+      border-radius: 8px; color: white;
+      font-size: 11px; padding: 5px 8px;
+      outline: none; box-sizing: border-box;
+    }
+    #spotify-query::placeholder { color: rgba(255,255,255,0.25); }
+    #spotify-query:focus { border-color: rgba(30,215,96,0.65); box-shadow: 0 0 6px rgba(30,215,96,0.2); }
+    #spotify-results { overflow-y: auto; flex: 1; }
+    #spotify-results::-webkit-scrollbar { width: 3px; }
+    #spotify-results::-webkit-scrollbar-thumb { background: rgba(30,215,96,0.3); border-radius: 2px; }
+    .sp-result { padding: 4px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; border-radius: 4px; transition: background 0.15s; }
+    .sp-result:hover { background: rgba(30,215,96,0.1); }
+    .sp-result-name { font-size: 10px; color: rgba(255,255,255,0.75); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sp-result-artist { font-size: 9px; color: rgba(255,255,255,0.35); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #spotify-connect-btn {
+      background: transparent;
+      border: 1px solid rgba(30,215,96,0.4);
+      color: rgba(30,215,96,0.8);
+      border-radius: 14px; padding: 3px 8px;
+      font-size: 10px; cursor: pointer;
+      letter-spacing: 0.5px; transition: all 0.2s ease;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    #spotify-connect-btn:hover { border-color: #1ed760; color: #1ed760; box-shadow: 0 0 8px rgba(30,215,96,0.4); }
+    #spotify-connect-btn.connected { border-color: rgba(30,215,96,0.6); color: rgba(30,215,96,0.9); }
   </style>
+
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
 </head>
 <body>
 
@@ -509,11 +546,17 @@
       <div class="deck-header-row">
         <div class="deck-label">Deck B</div>
         <span class="deck-bpm" id="bpm-b">-- BPM</span>
+        <button id="spotify-connect-btn">🎵 Spotify</button>
       </div>
       <div class="deck-track-title" id="title-b">No track loaded</div>
       <div class="deck-body">
-        <div class="disc-col">
+        <div class="disc-col" id="disc-col-b">
           <canvas class="disc-canvas" id="disc-b" width="150" height="150"></canvas>
+        </div>
+        <!-- Spotify panel replaces disc-col when connected -->
+        <div class="spotify-col" id="spotify-col-b">
+          <input type="text" id="spotify-query" placeholder="Search Spotify...">
+          <div id="spotify-results"></div>
         </div>
         <div class="controls-col">
           <canvas class="deck-waveform" id="wave-b"></canvas>
@@ -525,7 +568,7 @@
             <button class="vote-btn" id="vote-b" disabled>♥ <span id="vcount-b">0</span></button>
           </div>
           <div class="slider-section">
-            <div class="slider-row">
+            <div class="slider-row" id="tempo-row-b">
               <span class="slider-label">Tempo</span>
               <input type="range" id="tempo-b" min="50" max="150" value="100" step="1">
               <span class="slider-val" id="tempo-val-b">0%</span>
@@ -535,17 +578,17 @@
               <input type="range" id="vol-b" min="0" max="100" value="80" step="1">
               <span class="slider-val" id="vol-val-b">80%</span>
             </div>
-            <div class="slider-row">
+            <div class="slider-row" id="bass-row-b">
               <span class="slider-label">Bass</span>
               <input type="range" id="bass-b" min="-12" max="12" value="0" step="0.5">
               <span class="slider-val" id="bass-val-b">0 dB</span>
             </div>
-            <div class="slider-row">
+            <div class="slider-row" id="mid-row-b">
               <span class="slider-label">Mid</span>
               <input type="range" id="mid-b" min="-12" max="12" value="0" step="0.5">
               <span class="slider-val" id="mid-val-b">0 dB</span>
             </div>
-            <div class="slider-row">
+            <div class="slider-row" id="treble-row-b">
               <span class="slider-label">Treble</span>
               <input type="range" id="treble-b" min="-12" max="12" value="0" step="0.5">
               <span class="slider-val" id="treble-val-b">0 dB</span>
@@ -694,6 +737,11 @@ function updateCrossfader(pos) {
   const angle = (pos / 100) * Math.PI / 2
   if (DECKS.a.gainXfade) DECKS.a.gainXfade.gain.setTargetAtTime(Math.cos(angle), audioContext.currentTime, 0.05)
   if (DECKS.b.gainXfade) DECKS.b.gainXfade.gain.setTargetAtTime(Math.sin(angle), audioContext.currentTime, 0.05)
+  if (DECKS.b.spotifyMode && spotifyPlayer) {
+    const bGain = Math.sin(angle)
+    const vol = parseInt(document.getElementById('vol-b').value) / 100
+    spotifyPlayer.setVolume(bGain * vol).catch(() => {})
+  }
 }
 
 document.getElementById('crossfader').addEventListener('input', e => {
@@ -749,6 +797,7 @@ function startVisualizerLoop() {
     // Advance disc rotation for non-scratching, playing decks
     for (const id of ['a', 'b']) {
       const deck = DECKS[id]
+      if (deck.spotifyMode) continue  // disc hidden, skip
       if (!deck.scratching && deck.el && !deck.el.paused) {
         deck.discAngle += RAD_PER_SEC * (deck.el.playbackRate || 1) * (dt / 1000)
       }
@@ -756,7 +805,7 @@ function startVisualizerLoop() {
     }
 
     const bA = drawDeck(DECKS.a, 300)
-    const bB = drawDeck(DECKS.b, 185)
+    const bB = DECKS.b.spotifyMode ? 0 : drawDeck(DECKS.b, 185)
     const combined = Math.max(bA, bB)
     document.body.style.transform = `scale(${1 + combined * 0.015})`
     const hue = 280 - combined * 90
@@ -765,12 +814,12 @@ function startVisualizerLoop() {
 
     // Waveforms
     drawWaveform('a')
-    drawWaveform('b')
+    if (!DECKS.b.spotifyMode) drawWaveform('b')
 
     // BPM detection
     for (const id of ['a', 'b']) {
       const deck = DECKS[id]
-      if (!deck.dataArray || !deck.beatDetector) continue
+      if (deck.spotifyMode || !deck.dataArray || !deck.beatDetector) continue
       deck.analyser.getByteFrequencyData(deck.dataArray)
       const beat = deck.beatDetector.process(deck.dataArray)
       const bpmEl = document.getElementById(`bpm-${id}`)
@@ -825,12 +874,16 @@ function loadTrackToDeck(deckId, trackIndex) {
 
 function playDeck(deckId) {
   const deck = DECKS[deckId]
+  if (deck.spotifyMode) { spotifyPlayer?.resume().catch(() => {}); return }
   if (!deck.el) return
   if (audioContext && audioContext.state === 'suspended') audioContext.resume()
   deck.el.play().catch(() => {})
 }
 
-function pauseDeck(deckId) { DECKS[deckId].el?.pause() }
+function pauseDeck(deckId) {
+  if (DECKS[deckId].spotifyMode) { spotifyPlayer?.pause().catch(() => {}); return }
+  DECKS[deckId].el?.pause()
+}
 
 function toggleDeck(deckId) {
   const el = DECKS[deckId].el
@@ -842,6 +895,7 @@ function toggleDeck(deckId) {
 }
 
 function nextTrack(deckId) {
+  if (deckId === 'b' && DECKS.b.spotifyMode) { spotifyPlayer?.nextTrack().catch(() => {}); return }
   const deck = DECKS[deckId]
   if (!playlist.length) return
   loadTrackToDeck(deckId, (deck.currentIndex + 1) % playlist.length)
@@ -849,6 +903,7 @@ function nextTrack(deckId) {
 }
 
 function prevTrack(deckId) {
+  if (deckId === 'b' && DECKS.b.spotifyMode) { spotifyPlayer?.previousTrack().catch(() => {}); return }
   const deck = DECKS[deckId]
   if (!playlist.length) return
   const idx = deck.currentIndex <= 0 ? playlist.length - 1 : deck.currentIndex - 1
@@ -905,7 +960,13 @@ function setupSliders(id) {
   vol.addEventListener('input', () => {
     const v = parseInt(vol.value)
     volVal.textContent = `${v}%`
-    if (deck.gainVol) deck.gainVol.gain.setTargetAtTime(v / 100, audioContext.currentTime, 0.02)
+    if (deck.spotifyMode && spotifyPlayer) {
+      const xf = parseInt(document.getElementById('crossfader').value)
+      const angle = (xf / 100) * Math.PI / 2
+      spotifyPlayer.setVolume(Math.sin(angle) * v / 100).catch(() => {})
+    } else if (deck.gainVol) {
+      deck.gainVol.gain.setTargetAtTime(v / 100, audioContext.currentTime, 0.02)
+    }
   })
 
   const bass = document.getElementById(`bass-${id}`)
@@ -1374,6 +1435,13 @@ function getScratchAngle(e, canvas) {
 
 // ── Bootstrap ─────────────────────────────────────────────────────
 async function init() {
+  // Handle Spotify OAuth callback before auth check (page may redirect back with ?code=)
+  const urlParams = new URLSearchParams(window.location.search)
+  const spCode = urlParams.get('code')
+  const spError = urlParams.get('error')
+  if (spError) window.history.replaceState({}, '', '/dj.html')
+  if (spCode && !spError) await exchangeSpotifyCode(spCode)
+
   const ok = await checkAuth()
   if (!ok) return
 
@@ -1395,15 +1463,265 @@ async function init() {
   loadTrackToDeck('b', idxB)
 
   // Init audio on first user gesture (play button or load-to-deck click)
-  // Also start audio on first library click
   document.getElementById('library-list').addEventListener('click', () => {
     if (!audioContext) initAudio()
   }, { once: true })
 
   startPresence()
+
+  // If Spotify SDK already loaded and token exists, init player
+  if (typeof Spotify !== 'undefined' && localStorage.getItem('sp_token')) {
+    initSpotifyPlayer()
+  }
 }
 
 init()
+
+// ── Spotify Integration ───────────────────────────────────────────
+const SPOTIFY_CLIENT_ID = 'YOUR_CLIENT_ID_HERE'  // ← Replace with your Spotify App Client ID
+const SPOTIFY_REDIRECT_URI = window.location.origin + '/dj.html'
+const SPOTIFY_SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state'
+
+let spotifyPlayer = null
+let spotifyDeviceId = null
+let spotifyCurrentTrackId = null
+DECKS.b.spotifyMode = false
+DECKS.b.spotifyState = null
+
+// PKCE helpers
+function generateCodeVerifier() {
+  const arr = new Uint8Array(32)
+  crypto.getRandomValues(arr)
+  return btoa(String.fromCharCode(...arr)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+async function generateCodeChallenge(verifier) {
+  const data = new TextEncoder().encode(verifier)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+async function connectSpotify() {
+  const verifier = generateCodeVerifier()
+  const challenge = await generateCodeChallenge(verifier)
+  localStorage.setItem('sp_verifier', verifier)
+  const params = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: SPOTIFY_REDIRECT_URI,
+    scope: SPOTIFY_SCOPES,
+    code_challenge_method: 'S256',
+    code_challenge: challenge
+  })
+  window.location.href = `https://accounts.spotify.com/authorize?${params}`
+}
+
+async function exchangeSpotifyCode(code) {
+  const verifier = localStorage.getItem('sp_verifier')
+  if (!verifier) return null
+  try {
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: SPOTIFY_CLIENT_ID,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: SPOTIFY_REDIRECT_URI,
+        code_verifier: verifier
+      })
+    })
+    const data = await res.json()
+    if (data.access_token) {
+      localStorage.setItem('sp_token', data.access_token)
+      if (data.refresh_token) localStorage.setItem('sp_refresh', data.refresh_token)
+      localStorage.setItem('sp_expiry', Date.now() + data.expires_in * 1000)
+      localStorage.removeItem('sp_verifier')
+      window.history.replaceState({}, '', '/dj.html')
+      return data.access_token
+    }
+  } catch (e) { console.error('Spotify token exchange failed:', e) }
+  return null
+}
+
+async function getSpotifyToken() {
+  const expiry = parseInt(localStorage.getItem('sp_expiry') || '0')
+  if (Date.now() < expiry - 60000) return localStorage.getItem('sp_token')
+  return refreshSpotifyToken()
+}
+
+async function refreshSpotifyToken() {
+  const rt = localStorage.getItem('sp_refresh')
+  if (!rt) return null
+  try {
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: SPOTIFY_CLIENT_ID,
+        grant_type: 'refresh_token',
+        refresh_token: rt
+      })
+    })
+    const data = await res.json()
+    if (data.access_token) {
+      localStorage.setItem('sp_token', data.access_token)
+      localStorage.setItem('sp_expiry', Date.now() + data.expires_in * 1000)
+      if (data.refresh_token) localStorage.setItem('sp_refresh', data.refresh_token)
+      return data.access_token
+    }
+  } catch {}
+  localStorage.removeItem('sp_token')
+  localStorage.removeItem('sp_refresh')
+  return null
+}
+
+function setSpotifyMode(enabled) {
+  DECKS.b.spotifyMode = enabled
+  document.getElementById('disc-col-b').style.display = enabled ? 'none' : ''
+  document.getElementById('spotify-col-b').style.display = enabled ? 'flex' : 'none'
+  document.getElementById('wave-b').style.display = enabled ? 'none' : ''
+  document.getElementById('vis-b').style.display = enabled ? 'none' : ''
+  document.getElementById('tempo-row-b').style.display = enabled ? 'none' : ''
+  document.getElementById('bass-row-b').style.display = enabled ? 'none' : ''
+  document.getElementById('mid-row-b').style.display = enabled ? 'none' : ''
+  document.getElementById('treble-row-b').style.display = enabled ? 'none' : ''
+  document.getElementById('vote-b').style.display = enabled ? 'none' : ''
+  const btn = document.getElementById('spotify-connect-btn')
+  btn.textContent = enabled ? '🎵 Connected' : '🎵 Spotify'
+  btn.classList.toggle('connected', enabled)
+  btn.onclick = enabled ? disconnectSpotify : connectSpotify
+  if (enabled) {
+    DECKS.b.el.volume = 0
+    DECKS.b.el.pause()
+    document.getElementById('title-b').textContent = 'Search Spotify →'
+    document.getElementById('bpm-b').textContent = '-- BPM'
+    document.getElementById('play-b').textContent = '▶'
+    document.getElementById('play-b').classList.remove('is-playing')
+  } else {
+    DECKS.b.el.volume = 1
+  }
+}
+
+function disconnectSpotify() {
+  if (spotifyPlayer) { spotifyPlayer.disconnect(); spotifyPlayer = null }
+  spotifyDeviceId = null
+  spotifyCurrentTrackId = null
+  localStorage.removeItem('sp_token')
+  localStorage.removeItem('sp_refresh')
+  localStorage.removeItem('sp_expiry')
+  setSpotifyMode(false)
+  document.getElementById('title-b').textContent = 'No track loaded'
+  document.getElementById('bpm-b').textContent = '-- BPM'
+}
+
+async function initSpotifyPlayer() {
+  const token = await getSpotifyToken()
+  if (!token) return
+
+  spotifyPlayer = new Spotify.Player({
+    name: 'SiKKMiXX Deck B',
+    getOAuthToken: async cb => { cb(await getSpotifyToken() || '') },
+    volume: 0.8
+  })
+
+  spotifyPlayer.addListener('ready', ({ device_id }) => {
+    spotifyDeviceId = device_id
+    setSpotifyMode(true)
+  })
+
+  spotifyPlayer.addListener('not_ready', () => {
+    spotifyDeviceId = null
+  })
+
+  spotifyPlayer.addListener('player_state_changed', state => {
+    if (!state) return
+    DECKS.b.spotifyState = state
+    const paused = state.paused
+    const btn = document.getElementById('play-b')
+    btn.textContent = paused ? '▶' : '⏸'
+    btn.classList.toggle('is-playing', !paused)
+    const track = state.track_window?.current_track
+    if (track && track.id !== spotifyCurrentTrackId) {
+      spotifyCurrentTrackId = track.id
+      const artist = track.artists?.[0]?.name || ''
+      document.getElementById('title-b').textContent = artist ? `${artist} — ${track.name}` : track.name
+      fetchSpotifyBPM(track.id)
+    }
+  })
+
+  spotifyPlayer.addListener('initialization_error', ({ message }) => console.error('Spotify init error:', message))
+  spotifyPlayer.addListener('authentication_error', () => disconnectSpotify())
+
+  spotifyPlayer.connect()
+}
+
+// Spotify SDK calls this when the script finishes loading
+window.onSpotifyWebPlaybackSDKReady = () => {
+  if (localStorage.getItem('sp_token')) initSpotifyPlayer()
+}
+
+// Connect button wired up here (onclick overridden by setSpotifyMode when connected)
+document.getElementById('spotify-connect-btn').onclick = connectSpotify
+
+// Spotify search with debounce
+let spSearchTimer = null
+document.getElementById('spotify-query').addEventListener('input', e => {
+  clearTimeout(spSearchTimer)
+  spSearchTimer = setTimeout(() => searchSpotify(e.target.value), 400)
+})
+
+async function searchSpotify(query) {
+  const resultsEl = document.getElementById('spotify-results')
+  if (!query.trim()) { resultsEl.innerHTML = ''; return }
+  const token = await getSpotifyToken()
+  if (!token) return
+  try {
+    const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    const tracks = data.tracks?.items || []
+    resultsEl.innerHTML = tracks.map(t => `
+      <div class="sp-result" data-uri="${t.uri}">
+        <span class="sp-result-name">${t.name}</span>
+        <span class="sp-result-artist">${t.artists.map(a => a.name).join(', ')}</span>
+      </div>`).join('')
+    resultsEl.querySelectorAll('.sp-result').forEach(el => {
+      el.addEventListener('click', () => {
+        playSpotifyTrack(el.dataset.uri)
+        document.getElementById('spotify-query').value = ''
+        resultsEl.innerHTML = ''
+      })
+    })
+  } catch {}
+}
+
+async function playSpotifyTrack(uri) {
+  const token = await getSpotifyToken()
+  if (!token || !spotifyDeviceId) return
+  try {
+    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${spotifyDeviceId}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uris: [uri] })
+    })
+  } catch {}
+}
+
+async function fetchSpotifyBPM(trackId) {
+  const token = await getSpotifyToken()
+  if (!token) return
+  try {
+    const res = await fetch(`https://api.spotify.com/v1/audio-features/${trackId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.tempo) document.getElementById('bpm-b').textContent = `${Math.round(data.tempo)} BPM`
+  } catch {}
+}
 </script>
 
 </body>
