@@ -151,7 +151,7 @@ export default {
           .bind(username, hashed)
           .run();
 
-        sendEmail(
+        await sendEmail(
           `🎤 New SiKKMiXX Registration: @${username}`,
           `<h2>New user registered</h2>
            <p><strong>Username:</strong> @${username}</p>
@@ -262,7 +262,7 @@ if (url.pathname === "/upload" && request.method === "POST") {
     .bind(user.id, key, file.name || safeOriginal, genre, note, artist)
     .run();
 
-  sendEmail(
+  await sendEmail(
     `🎵 New SiKKMiXX Upload: ${artist ? artist + " — " : ""}${file.name || safeOriginal}`,
     `<h2>New track submitted for review</h2>
      <p><strong>Submitted by:</strong> @${user.username}</p>
