@@ -491,7 +491,7 @@ border: 1px solid rgba(255,255,255,0.1);
   min-width: 180px;
   max-width: 240px;
   z-index: 100;
-  pointer-events: none;
+  pointer-events: auto;
   box-shadow: 0 0 20px rgba(255,0,204,0.15);
 }
 
@@ -506,11 +506,17 @@ border: 1px solid rgba(255,255,255,0.1);
 #submitter-popup .popup-track {
   font-size: 12px;
   color: rgba(255,255,255,0.7);
-  padding: 3px 0;
+  padding: 4px 0;
   border-bottom: 1px solid rgba(255,255,255,0.05);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+#submitter-popup .popup-track:hover {
+  color: #ff00cc;
 }
 
 #submitter-popup .popup-track:last-child {
@@ -946,19 +952,32 @@ function buildRankedList(containerId, sortKey) {
 const popup = document.getElementById("submitter-popup");
 
 function showSubmitterPopup(username, anchorEl) {
-  const tracks = playlist.filter(t => t.username === username);
+  const tracks = playlist
+    .map((t, i) => ({ t, i }))
+    .filter(({ t }) => t.username === username);
   if (tracks.length === 0) return;
 
   const rect = anchorEl.getBoundingClientRect();
 
   popup.innerHTML = `
     <div class="popup-name">@${username}</div>
-    ${tracks.map(t => {
+    ${tracks.map(({ t, i }) => {
       const title = (t.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
       const artist = (t.artist || "").trim();
-      return `<div class="popup-track">${artist ? `${artist} — ${title}` : title}</div>`;
+      const label = artist ? `${artist} — ${title}` : title;
+      return `<div class="popup-track" data-index="${i}">▶ ${label}</div>`;
     }).join("")}
   `;
+
+  popup.querySelectorAll(".popup-track").forEach(el => {
+    el.addEventListener("click", () => {
+      currentIndex = parseInt(el.dataset.index);
+      playCurrentTrack();
+      player.play();
+      updateRecentActive();
+      hideSubmitterPopup();
+    });
+  });
 
   // Position to the right of the panel
   popup.style.left = `${rect.right + 10}px`;
@@ -991,7 +1010,14 @@ async function buildSubmitters() {
 
     container.querySelectorAll(".submitter-row").forEach(el => {
       el.addEventListener("mouseenter", () => showSubmitterPopup(el.dataset.username, el));
-      el.addEventListener("mouseleave", hideSubmitterPopup);
+      el.addEventListener("mouseleave", (e) => {
+        // Only hide if not moving into the popup itself
+        if (!e.relatedTarget || !popup.contains(e.relatedTarget)) hideSubmitterPopup();
+      });
+    });
+
+    popup.addEventListener("mouseleave", (e) => {
+      if (!e.relatedTarget || !document.querySelector(".submitter-row:hover")) hideSubmitterPopup();
     });
   } catch {}
 }
