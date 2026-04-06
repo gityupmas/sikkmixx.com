@@ -1583,29 +1583,54 @@ async function refreshSpotifyToken() {
   return null
 }
 
+// Show status in Deck B's title and connect button
+function spStatus(msg) {
+  document.getElementById('title-b').textContent = msg
+}
+
+function showSpotifyPanel(connecting) {
+  // Show the search panel immediately, disable input until player is ready
+  document.getElementById('disc-col-b').style.display = 'none'
+  document.getElementById('spotify-col-b').style.display = 'flex'
+  document.getElementById('wave-b').style.display = 'none'
+  document.getElementById('vis-b').style.display = 'none'
+  document.getElementById('tempo-row-b').style.display = 'none'
+  document.getElementById('bass-row-b').style.display = 'none'
+  document.getElementById('mid-row-b').style.display = 'none'
+  document.getElementById('treble-row-b').style.display = 'none'
+  document.getElementById('vote-b').style.display = 'none'
+  const btn = document.getElementById('spotify-connect-btn')
+  btn.textContent = connecting ? '🎵 Connecting...' : '🎵 Connected'
+  btn.classList.toggle('connected', !connecting)
+  btn.onclick = disconnectSpotify
+  document.getElementById('spotify-query').disabled = connecting
+  document.getElementById('spotify-query').placeholder = connecting ? 'Connecting...' : 'Search tracks...'
+}
+
 function setSpotifyMode(enabled) {
   DECKS.b.spotifyMode = enabled
-  document.getElementById('disc-col-b').style.display = enabled ? 'none' : ''
-  document.getElementById('spotify-col-b').style.display = enabled ? 'flex' : 'none'
-  document.getElementById('wave-b').style.display = enabled ? 'none' : ''
-  document.getElementById('vis-b').style.display = enabled ? 'none' : ''
-  document.getElementById('tempo-row-b').style.display = enabled ? 'none' : ''
-  document.getElementById('bass-row-b').style.display = enabled ? 'none' : ''
-  document.getElementById('mid-row-b').style.display = enabled ? 'none' : ''
-  document.getElementById('treble-row-b').style.display = enabled ? 'none' : ''
-  document.getElementById('vote-b').style.display = enabled ? 'none' : ''
-  const btn = document.getElementById('spotify-connect-btn')
-  btn.textContent = enabled ? '🎵 Connected' : '🎵 Spotify'
-  btn.classList.toggle('connected', enabled)
-  btn.onclick = enabled ? disconnectSpotify : connectSpotify
   if (enabled) {
+    showSpotifyPanel(false)
     DECKS.b.el.volume = 0
     DECKS.b.el.pause()
-    document.getElementById('title-b').textContent = 'Search Spotify →'
+    spStatus('Type above to search Spotify')
     document.getElementById('bpm-b').textContent = '-- BPM'
     document.getElementById('play-b').textContent = '▶'
     document.getElementById('play-b').classList.remove('is-playing')
   } else {
+    document.getElementById('disc-col-b').style.display = ''
+    document.getElementById('spotify-col-b').style.display = 'none'
+    document.getElementById('wave-b').style.display = ''
+    document.getElementById('vis-b').style.display = ''
+    document.getElementById('tempo-row-b').style.display = ''
+    document.getElementById('bass-row-b').style.display = ''
+    document.getElementById('mid-row-b').style.display = ''
+    document.getElementById('treble-row-b').style.display = ''
+    document.getElementById('vote-b').style.display = ''
+    const btn = document.getElementById('spotify-connect-btn')
+    btn.textContent = '🎵 Spotify'
+    btn.classList.remove('connected')
+    btn.onclick = connectSpotify
     DECKS.b.el.volume = 1
   }
 }
@@ -1623,8 +1648,12 @@ function disconnectSpotify() {
 }
 
 async function initSpotifyPlayer() {
+  if (spotifyPlayer) return  // already initialized
   const token = await getSpotifyToken()
-  if (!token) return
+  if (!token) { spStatus('No Spotify token — click 🎵 Spotify to reconnect'); return }
+
+  spStatus('Connecting to Spotify...')
+  showSpotifyPanel(true)
 
   spotifyPlayer = new Spotify.Player({
     name: 'SiKKMiXX Deck B',
@@ -1639,6 +1668,7 @@ async function initSpotifyPlayer() {
 
   spotifyPlayer.addListener('not_ready', () => {
     spotifyDeviceId = null
+    spStatus('Spotify player went offline')
   })
 
   spotifyPlayer.addListener('player_state_changed', state => {
@@ -1657,17 +1687,31 @@ async function initSpotifyPlayer() {
     }
   })
 
-  spotifyPlayer.addListener('initialization_error', ({ message }) => console.error('Spotify init error:', message))
-  spotifyPlayer.addListener('authentication_error', () => disconnectSpotify())
+  spotifyPlayer.addListener('initialization_error', ({ message }) => spStatus(`Init error: ${message}`))
+  spotifyPlayer.addListener('authentication_error', ({ message }) => {
+    spStatus(`Auth error: ${message} — reconnect`)
+    spotifyPlayer = null
+    setSpotifyMode(false)
+  })
+  spotifyPlayer.addListener('account_error', ({ message }) => {
+    spStatus('Spotify Premium required')
+    spotifyPlayer = null
+    setSpotifyMode(false)
+  })
+  spotifyPlayer.addListener('playback_error', ({ message }) => spStatus(`Playback error: ${message}`))
 
-  spotifyPlayer.connect()
+  const ok = await spotifyPlayer.connect()
+  if (!ok) spStatus('Spotify connection failed — try disconnecting and reconnecting')
 }
 
 // Spotify SDK calls this when it is internally ready to create players
 let spotifySDKReady = false
 window.onSpotifyWebPlaybackSDKReady = () => {
   spotifySDKReady = true
-  if (localStorage.getItem('sp_token')) initSpotifyPlayer()
+  if (localStorage.getItem('sp_token')) {
+    spStatus('Spotify SDK ready...')
+    initSpotifyPlayer()
+  }
 }
 
 // Connect button wired up here (onclick overridden by setSpotifyMode when connected)
