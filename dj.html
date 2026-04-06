@@ -431,25 +431,30 @@
     .spotify-col {
       width: 150px; flex-shrink: 0;
       display: none; flex-direction: column;
-      gap: 6px; padding: 4px 0;
+      gap: 5px; padding: 2px 0;
+      align-self: stretch;
+    }
+    .spotify-col-label {
+      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700;
+      color: rgba(30,215,96,0.6); flex-shrink: 0;
     }
     #spotify-query {
       width: 100%;
-      background: rgba(30,215,96,0.08);
-      border: 1px solid rgba(30,215,96,0.3);
+      background: rgba(30,215,96,0.1);
+      border: 1px solid rgba(30,215,96,0.5);
       border-radius: 8px; color: white;
       font-size: 11px; padding: 5px 8px;
-      outline: none; box-sizing: border-box;
+      outline: none; box-sizing: border-box; flex-shrink: 0;
     }
-    #spotify-query::placeholder { color: rgba(255,255,255,0.25); }
-    #spotify-query:focus { border-color: rgba(30,215,96,0.65); box-shadow: 0 0 6px rgba(30,215,96,0.2); }
-    #spotify-results { overflow-y: auto; flex: 1; }
+    #spotify-query::placeholder { color: rgba(255,255,255,0.35); }
+    #spotify-query:focus { border-color: #1ed760; box-shadow: 0 0 8px rgba(30,215,96,0.25); }
+    #spotify-results { overflow-y: auto; flex: 1; min-height: 0; }
     #spotify-results::-webkit-scrollbar { width: 3px; }
     #spotify-results::-webkit-scrollbar-thumb { background: rgba(30,215,96,0.3); border-radius: 2px; }
-    .sp-result { padding: 4px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; border-radius: 4px; transition: background 0.15s; }
-    .sp-result:hover { background: rgba(30,215,96,0.1); }
-    .sp-result-name { font-size: 10px; color: rgba(255,255,255,0.75); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sp-result-artist { font-size: 9px; color: rgba(255,255,255,0.35); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sp-result { padding: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; border-radius: 4px; transition: background 0.15s; }
+    .sp-result:hover { background: rgba(30,215,96,0.12); }
+    .sp-result-name { font-size: 10px; color: rgba(255,255,255,0.85); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sp-result-artist { font-size: 9px; color: rgba(30,215,96,0.6); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #spotify-connect-btn {
       background: transparent;
       border: 1px solid rgba(30,215,96,0.4);
@@ -555,7 +560,8 @@
         </div>
         <!-- Spotify panel replaces disc-col when connected -->
         <div class="spotify-col" id="spotify-col-b">
-          <input type="text" id="spotify-query" placeholder="Search Spotify...">
+          <span class="spotify-col-label">🎵 Spotify</span>
+          <input type="text" id="spotify-query" placeholder="Search tracks...">
           <div id="spotify-results"></div>
         </div>
         <div class="controls-col">
@@ -1440,7 +1446,11 @@ async function init() {
   const spCode = urlParams.get('code')
   const spError = urlParams.get('error')
   if (spError) window.history.replaceState({}, '', '/dj.html')
-  if (spCode && !spError) await exchangeSpotifyCode(spCode)
+  if (spCode && !spError) {
+    await exchangeSpotifyCode(spCode)
+    // If SDK was already ready before the code was exchanged, init now
+    if (spotifySDKReady && localStorage.getItem('sp_token') && !spotifyPlayer) initSpotifyPlayer()
+  }
 
   const ok = await checkAuth()
   if (!ok) return
@@ -1468,11 +1478,7 @@ async function init() {
   }, { once: true })
 
   startPresence()
-
-  // If Spotify SDK already loaded and token exists, init player
-  if (typeof Spotify !== 'undefined' && localStorage.getItem('sp_token')) {
-    initSpotifyPlayer()
-  }
+  // Spotify player initialized by window.onSpotifyWebPlaybackSDKReady when SDK is ready
 }
 
 init()
@@ -1657,8 +1663,10 @@ async function initSpotifyPlayer() {
   spotifyPlayer.connect()
 }
 
-// Spotify SDK calls this when the script finishes loading
+// Spotify SDK calls this when it is internally ready to create players
+let spotifySDKReady = false
 window.onSpotifyWebPlaybackSDKReady = () => {
+  spotifySDKReady = true
   if (localStorage.getItem('sp_token')) initSpotifyPlayer()
 }
 
