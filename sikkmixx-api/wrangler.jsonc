@@ -26,6 +26,9 @@
       "head_sampling_rate": 1
     }
   },
+  "vars": {
+    "NOTIFY_EMAIL": "wakesetter@gmail.com"
+  },
   "d1_databases": [
     {
       "binding": "DB",

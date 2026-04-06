@@ -83,6 +83,26 @@ export default {
       return { error: null, user };
     }
 
+    // ---------------- EMAIL ----------------
+    async function sendEmail(subject, html) {
+      if (!env.RESEND_API_KEY || !env.NOTIFY_EMAIL) return;
+      try {
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${env.RESEND_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            from: "SiKKMiXX <notifications@sikkmixx.com>",
+            to: [env.NOTIFY_EMAIL],
+            subject,
+            html
+          })
+        });
+      } catch {}
+    }
+
     async function hashPassword(password) {
       const encoder = new TextEncoder();
       const data = encoder.encode(password);
@@ -121,6 +141,13 @@ export default {
         )
           .bind(username, hashed)
           .run();
+
+        sendEmail(
+          `🎤 New SiKKMiXX Registration: @${username}`,
+          `<h2>New user registered</h2>
+           <p><strong>Username:</strong> @${username}</p>
+           <p><strong>Time:</strong> ${new Date().toUTCString()}</p>`
+        );
 
         return json({ success: true });
       } catch {
@@ -225,6 +252,18 @@ if (url.pathname === "/upload" && request.method === "POST") {
   )
     .bind(user.id, key, file.name || safeOriginal, genre, note, artist)
     .run();
+
+  sendEmail(
+    `🎵 New SiKKMiXX Upload: ${artist ? artist + " — " : ""}${file.name || safeOriginal}`,
+    `<h2>New track submitted for review</h2>
+     <p><strong>Submitted by:</strong> @${user.username}</p>
+     <p><strong>File:</strong> ${file.name || safeOriginal}</p>
+     ${artist ? `<p><strong>Artist:</strong> ${artist}</p>` : ""}
+     ${genre  ? `<p><strong>Genre:</strong> ${genre}</p>`   : ""}
+     ${note   ? `<p><strong>Note:</strong> ${note}</p>`     : ""}
+     <p><strong>Time:</strong> ${new Date().toUTCString()}</p>
+     <p><a href="https://sikkmixx.com/admin.html">Review in admin panel →</a></p>`
+  );
 
   return json({ success: true, key });
 }
