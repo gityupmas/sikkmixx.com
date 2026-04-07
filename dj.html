@@ -679,6 +679,7 @@ async function checkAuth() {
 
 document.getElementById("logoutBtn").addEventListener("click", e => {
   e.preventDefault()
+  disconnectSpotify()
   localStorage.removeItem("token")
   window.location.href = '/'
 })
