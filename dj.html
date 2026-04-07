@@ -893,9 +893,14 @@ function pauseDeck(deckId) {
 }
 
 function toggleDeck(deckId) {
+  if (deckId === 'b' && DECKS.b.spotifyMode) {
+    const isPlaying = DECKS.b.spotifyState && !DECKS.b.spotifyState.paused
+    if (isPlaying) pauseDeck(deckId)
+    else playDeck(deckId)
+    return
+  }
   const el = DECKS[deckId].el
   if (!el) return
-  // Init audio on first interaction
   if (!audioContext) initAudio()
   if (el.paused) playDeck(deckId)
   else pauseDeck(deckId)
@@ -1605,16 +1610,9 @@ function spStatus(msg) {
 }
 
 function showSpotifyPanel(connecting) {
-  // Show the search panel immediately, disable input until player is ready
+  // Swap disc for search panel only — keep all other controls intact
   document.getElementById('disc-col-b').style.display = 'none'
   document.getElementById('spotify-col-b').style.display = 'flex'
-  document.getElementById('wave-b').style.display = 'none'
-  document.getElementById('vis-b').style.display = 'none'
-  document.getElementById('tempo-row-b').style.display = 'none'
-  document.getElementById('bass-row-b').style.display = 'none'
-  document.getElementById('mid-row-b').style.display = 'none'
-  document.getElementById('treble-row-b').style.display = 'none'
-  document.getElementById('vote-b').style.display = 'none'
   const btn = document.getElementById('spotify-connect-btn')
   btn.textContent = connecting ? '🎵 Connecting...' : '🎵 Connected'
   btn.classList.toggle('connected', !connecting)
@@ -1636,13 +1634,6 @@ function setSpotifyMode(enabled) {
   } else {
     document.getElementById('disc-col-b').style.display = ''
     document.getElementById('spotify-col-b').style.display = 'none'
-    document.getElementById('wave-b').style.display = ''
-    document.getElementById('vis-b').style.display = ''
-    document.getElementById('tempo-row-b').style.display = ''
-    document.getElementById('bass-row-b').style.display = ''
-    document.getElementById('mid-row-b').style.display = ''
-    document.getElementById('treble-row-b').style.display = ''
-    document.getElementById('vote-b').style.display = ''
     const btn = document.getElementById('spotify-connect-btn')
     btn.textContent = '🎵 Spotify'
     btn.classList.remove('connected')
