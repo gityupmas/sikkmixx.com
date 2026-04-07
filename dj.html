@@ -1448,14 +1448,20 @@ async function init() {
   const spError = urlParams.get('error')
   if (spError) window.history.replaceState({}, '', '/dj.html')
   if (spCode && !spError) {
+    console.log('[Spotify] OAuth code found, exchanging...')
     await exchangeSpotifyCode(spCode)
-    // Show search panel immediately as soon as we have a token — no SDK player needed
-    if (localStorage.getItem('sp_token')) setSpotifyMode(true)
+    if (localStorage.getItem('sp_token')) {
+      console.log('[Spotify] token present, showing panel')
+      setSpotifyMode(true)
+    } else {
+      console.warn('[Spotify] token exchange completed but no token in localStorage')
+    }
     if (spotifySDKReady && !spotifyPlayer) initSpotifyPlayer()
   } else if (localStorage.getItem('sp_token') || localStorage.getItem('sp_refresh')) {
-    // Returning user: show search panel right away, SDK player will connect when ready
+    console.log('[Spotify] existing tokens found, showing panel')
     const tok = await getSpotifyToken()
     if (tok) setSpotifyMode(true)
+    else console.warn('[Spotify] token refresh failed')
   }
 
   const ok = await checkAuth()
@@ -1545,13 +1551,17 @@ async function exchangeSpotifyCode(code) {
       })
     })
     const data = await res.json()
+    console.log('[Spotify] token exchange response:', data)
     if (data.access_token) {
       localStorage.setItem('sp_token', data.access_token)
       if (data.refresh_token) localStorage.setItem('sp_refresh', data.refresh_token)
       localStorage.setItem('sp_expiry', Date.now() + data.expires_in * 1000)
       localStorage.removeItem('sp_verifier')
       window.history.replaceState({}, '', '/dj.html')
+      console.log('[Spotify] token stored successfully')
       return data.access_token
+    } else {
+      console.error('[Spotify] token exchange failed — no access_token in response:', data)
     }
   } catch (e) { console.error('Spotify token exchange failed:', e) }
   return null
