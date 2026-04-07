@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -E \"\\\\.\\(html|js|css\\)$\")"
+      "Bash(grep -E \"\\\\.\\(html|js|css\\)$\")",
+      "Bash(npx wrangler:*)"
     ]
   }
 }

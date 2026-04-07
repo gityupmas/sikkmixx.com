@@ -1493,10 +1493,8 @@ async function init() {
   // Spotify player initialized by window.onSpotifyWebPlaybackSDKReady when SDK is ready
 }
 
-init()
-
 // ── Spotify Integration ───────────────────────────────────────────
-const SPOTIFY_CLIENT_ID = 'a03f77c61e2e4f8cabfb957532080a0a'  // ← Replace with your Spotify App Client ID
+const SPOTIFY_CLIENT_ID = 'a03f77c61e2e4f8cabfb957532080a0a'
 const SPOTIFY_REDIRECT_URI = window.location.origin + '/dj.html'
 const SPOTIFY_SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state'
 
@@ -1504,6 +1502,8 @@ let spotifyPlayer = null
 let spotifyDeviceId = null
 let spotifyCurrentTrackId = null
 DECKS.b.spotifyMode = false
+
+init()
 DECKS.b.spotifyState = null
 
 // PKCE helpers
