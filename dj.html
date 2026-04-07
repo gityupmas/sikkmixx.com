@@ -1449,8 +1449,13 @@ async function init() {
   if (spError) window.history.replaceState({}, '', '/dj.html')
   if (spCode && !spError) {
     await exchangeSpotifyCode(spCode)
-    // If SDK was already ready before the code was exchanged, init now
-    if (spotifySDKReady && localStorage.getItem('sp_token') && !spotifyPlayer) initSpotifyPlayer()
+    // Show search panel immediately as soon as we have a token — no SDK player needed
+    if (localStorage.getItem('sp_token')) setSpotifyMode(true)
+    if (spotifySDKReady && !spotifyPlayer) initSpotifyPlayer()
+  } else if (localStorage.getItem('sp_token') || localStorage.getItem('sp_refresh')) {
+    // Returning user: show search panel right away, SDK player will connect when ready
+    const tok = await getSpotifyToken()
+    if (tok) setSpotifyMode(true)
   }
 
   const ok = await checkAuth()
@@ -1653,8 +1658,11 @@ async function initSpotifyPlayer() {
   const token = await getSpotifyToken()
   if (!token) { spStatus('No Spotify token — click 🎵 Spotify to reconnect'); return }
 
-  spStatus('Connecting to Spotify...')
-  showSpotifyPanel(true)
+  // Ensure the search panel is visible (init() normally handles this, but SDK may fire first)
+  if (!DECKS.b.spotifyMode) setSpotifyMode(true)
+  spStatus('Connecting Spotify player...')
+  document.getElementById('spotify-query').disabled = true
+  document.getElementById('spotify-query').placeholder = 'Connecting...'
 
   spotifyPlayer = new Spotify.Player({
     name: 'SiKKMiXX Deck B',
@@ -1690,14 +1698,18 @@ async function initSpotifyPlayer() {
 
   spotifyPlayer.addListener('initialization_error', ({ message }) => spStatus(`Init error: ${message}`))
   spotifyPlayer.addListener('authentication_error', ({ message }) => {
-    spStatus(`Auth error: ${message} — reconnect`)
+    spStatus(`Auth error — disconnect and reconnect Spotify`)
     spotifyPlayer = null
-    setSpotifyMode(false)
+    // Keep search panel visible; re-enable input for searching
+    document.getElementById('spotify-query').disabled = false
+    document.getElementById('spotify-query').placeholder = 'Search tracks...'
   })
   spotifyPlayer.addListener('account_error', ({ message }) => {
-    spStatus('Spotify Premium required')
+    spStatus('Spotify Premium required for playback — search still available')
     spotifyPlayer = null
-    setSpotifyMode(false)
+    // Keep search panel visible; re-enable input for searching
+    document.getElementById('spotify-query').disabled = false
+    document.getElementById('spotify-query').placeholder = 'Search tracks...'
   })
   spotifyPlayer.addListener('playback_error', ({ message }) => spStatus(`Playback error: ${message}`))
 
@@ -1709,8 +1721,7 @@ async function initSpotifyPlayer() {
 let spotifySDKReady = false
 window.onSpotifyWebPlaybackSDKReady = () => {
   spotifySDKReady = true
-  if (localStorage.getItem('sp_token')) {
-    spStatus('Spotify SDK ready...')
+  if ((localStorage.getItem('sp_token') || localStorage.getItem('sp_refresh')) && !spotifyPlayer) {
     initSpotifyPlayer()
   }
 }
