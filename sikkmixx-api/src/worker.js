@@ -406,7 +406,7 @@ if (url.pathname === "/my-tracks/delete" && request.method === "POST") {
     // ---------------- PUBLIC: APPROVED TRACKS ONLY ----------------
     if (url.pathname === "/public-tracks" && request.method === "GET") {
       const { results } = await env.DB.prepare(
-        `SELECT t.id, t.filename, t.original_name, t.artist, t.genre, t.note, t.uploaded_at, t.play_count, t.vote_count, t.bpm, u.username
+        `SELECT t.id, t.filename, t.original_name, t.artist, t.genre, t.note, t.uploaded_at, t.play_count, t.vote_count, t.bpm, t.key, u.username
 FROM tracks t
 LEFT JOIN users u ON t.user_id = u.id
 WHERE t.status = 'approved'
@@ -434,6 +434,21 @@ ORDER BY t.uploaded_at DESC`
       return json({ success: true });
     }
 	
+    // ---------------- SAVE TRACK KEY ----------------
+    if (url.pathname === "/track-key" && request.method === "POST") {
+      const { error } = await requireUser(request);
+      if (error) return error;
+
+      const { id, key } = await request.json();
+      if (!id || !key || typeof key !== 'string' || key.length > 10) return text("Invalid key", 400);
+
+      await env.DB.prepare(
+        "UPDATE tracks SET key = ? WHERE id = ? AND status = 'approved' AND (key IS NULL OR key = '')"
+      ).bind(key.trim(), id).run();
+
+      return json({ success: true });
+    }
+
 // ---------------- TOP SUBMITTERS ----------------
 if (url.pathname === "/top-submitters" && request.method === "GET") {
   const { results } = await env.DB.prepare(`
