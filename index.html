@@ -617,6 +617,15 @@ border: 1px solid rgba(255,255,255,0.1);
   50% { opacity: 0.2; }
 }
 
+#track-bpm {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: rgba(255, 0, 204, 0.75);
+  margin-top: 4px;
+  min-height: 16px;
+  text-transform: uppercase;
+}
+
   </style>
 <!---------------------------------END   STYLE -->
 
@@ -645,6 +654,7 @@ border: 1px solid rgba(255,255,255,0.1);
 <div id="main">
   <div class="card">
     <div class="track-title" id="trackTitle">Loading...</div>
+    <div id="track-bpm"></div>
     <div id="up-next">Up next: <span id="up-next-title"></span></div>
     <button id="vote-btn" disabled>♥ <span id="vote-count">0</span></button>
     <audio id="player" controls crossorigin="anonymous"></audio>
@@ -1079,6 +1089,78 @@ loadTrack()
 
 
 
+// BPM helpers
+const BPM_CACHE_KEY = 'sikkmixx_bpm_cache'
+function getBPMCache() { try { return JSON.parse(localStorage.getItem(BPM_CACHE_KEY) || '{}') } catch { return {} } }
+function saveBPMToCache(trackId, bpm) { const c = getBPMCache(); c[trackId] = bpm; localStorage.setItem(BPM_CACHE_KEY, JSON.stringify(c)) }
+
+function detectBPM(audioBuffer) {
+  const data = audioBuffer.getChannelData(0)
+  const sr = audioBuffer.sampleRate
+  const hopSize = Math.round(sr / 100)
+  const frameRate = sr / hopSize
+  const maxFrames = Math.min(Math.floor(data.length / hopSize), Math.round(frameRate * 90))
+  const energy = new Float32Array(maxFrames)
+  for (let i = 0; i < maxFrames; i++) {
+    let sum = 0; const base = i * hopSize
+    for (let j = 0; j < hopSize; j++) sum += data[base + j] ** 2
+    energy[i] = Math.sqrt(sum / hopSize)
+  }
+  const onset = new Float32Array(maxFrames)
+  for (let i = 1; i < maxFrames; i++) onset[i] = Math.max(0, energy[i] - energy[i - 1])
+  const minLag = Math.ceil(frameRate * 60 / 200)
+  const maxLag = Math.floor(frameRate * 60 / 60)
+  let bestLag = minLag, bestScore = 0
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let score = 0
+    for (let i = lag; i < maxFrames; i++) score += onset[i] * onset[i - lag]
+    score /= (maxFrames - lag)
+    if (score > bestScore) { bestScore = score; bestLag = lag }
+  }
+  let bpm = frameRate * 60 / bestLag
+  if (bpm > 160 && bpm / 2 >= 60) bpm /= 2
+  else if (bpm < 70 && bpm * 2 <= 200) bpm *= 2
+  return Math.round(bpm)
+}
+
+function showBPM(bpm) {
+  const el = document.getElementById('track-bpm')
+  if (!el) return
+  el.textContent = bpm ? `${bpm} BPM` : ''
+}
+
+let bpmAnalysisId = null
+
+async function analyzeBPMForTrack(track) {
+  const analysisId = track.id
+  bpmAnalysisId = analysisId
+  try {
+    const encoded = encodeURIComponent(track.filename)
+    const res = await fetch(`${API}/file/${encoded}`)
+    if (!res.ok || bpmAnalysisId !== analysisId) return
+    const arrayBuffer = await res.arrayBuffer()
+    if (bpmAnalysisId !== analysisId) return
+    const decodeCtx = new (window.AudioContext || window.webkitAudioContext)()
+    const audioBuffer = await decodeCtx.decodeAudioData(arrayBuffer)
+    await decodeCtx.close()
+    if (bpmAnalysisId !== analysisId) return
+    const bpm = detectBPM(audioBuffer)
+    if (bpm > 0) {
+      saveBPMToCache(track.id, bpm)
+      const pi = playlist.findIndex(t => t.id === track.id)
+      if (pi >= 0) playlist[pi].bpm = bpm
+      if (bpmAnalysisId === analysisId && currentTrack?.id === track.id) showBPM(bpm)
+      if (token) {
+        fetch(`${API}/track-bpm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ id: track.id, bpm })
+        }).catch(() => {})
+      }
+    }
+  } catch {}
+}
+
 function playCurrentTrack() {
   const track = playlist[currentIndex];
   currentTrack = track;
@@ -1098,6 +1180,10 @@ document.getElementById("trackTitle").innerText =
   sendHeartbeat();
   updateVoteBtn();
   updateRecentActive();
+
+  const knownBPM = track.bpm || getBPMCache()[track.id] || null
+  showBPM(knownBPM)
+  if (!knownBPM) analyzeBPMForTrack(track)
 }
 
 
