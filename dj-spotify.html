@@ -841,7 +841,7 @@ function startVisualizerLoop() {
       }
     }
   }
-  frame()
+  frame(performance.now())
 }
 
 // ── Track loading & playback ─────────────────────────────────────
@@ -1400,10 +1400,8 @@ function drawDisc(deckId) {
 // ── Scratch ────────────────────────────────────────────────────────
 function getScratchAngle(e, canvas) {
   const rect = canvas.getBoundingClientRect()
-  const cx = rect.left + rect.width  / 2
-  const cy = rect.top  + rect.height / 2
-  const src = e.touches ? e.touches[0] : e
-  return Math.atan2(src.clientY - cy, src.clientX - cx)
+  return Math.atan2(e.clientY - (rect.top + rect.height / 2),
+                    e.clientX - (rect.left + rect.width  / 2))
 }
 
 ;['a', 'b'].forEach(id => {
