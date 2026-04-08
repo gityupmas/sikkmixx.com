@@ -992,9 +992,11 @@ function setupSliders(id) {
   const tempo = document.getElementById(`tempo-${id}`)
   const tempoVal = document.getElementById(`tempo-val-${id}`)
   tempo.addEventListener('input', () => {
-    const pct = parseFloat(tempo.value) - 100
+    const rate = parseFloat(tempo.value) / 100
+    const pct  = parseFloat(tempo.value) - 100
     tempoVal.textContent = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`
-    if (deck.el) deck.el.playbackRate = parseFloat(tempo.value) / 100
+    if (deck.el) deck.el.playbackRate = rate
+    if (deck.detectedBPM) document.getElementById(`bpm-${id}`).textContent = `${Math.round(deck.detectedBPM * rate)} BPM`
   })
 
   const vol = document.getElementById(`vol-${id}`)
@@ -1521,12 +1523,15 @@ function getScratchAngle(e, canvas) {
 // ── Beat Match ────────────────────────────────────────────────────
 function applyTempo(deckId, sliderVal) {
   const v      = Math.round(sliderVal * 10) / 10
+  const rate   = v / 100
   const slider = document.getElementById(`tempo-${deckId}`)
   const valEl  = document.getElementById(`tempo-val-${deckId}`)
   slider.value = v
   const pct = v - 100
   valEl.textContent = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`
-  DECKS[deckId].el.playbackRate = v / 100
+  DECKS[deckId].el.playbackRate = rate
+  const bpm = DECKS[deckId].detectedBPM
+  if (bpm) document.getElementById(`bpm-${deckId}`).textContent = `${Math.round(bpm * rate)} BPM`
 }
 
 function syncDeckTempo(deckId) {
