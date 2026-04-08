@@ -45,6 +45,31 @@
     #spotifyBtn { right: 100px; color: rgba(30,215,96,0.8); border-color: rgba(30,215,96,0.4); }
     #spotifyBtn:hover { color: #1ed760; border-color: #1ed760; box-shadow: 0 0 10px rgba(30,215,96,0.5); }
 
+    /* ── Sync / Nudge ── */
+    .sync-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.4);
+      border-radius: 10px; padding: 2px 9px;
+      font-size: 8px; letter-spacing: 1.5px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease; flex-shrink: 0;
+    }
+    .deck-a .sync-btn:hover, .deck-a .sync-btn.synced {
+      border-color: #ff00cc; color: #ff00cc; box-shadow: 0 0 8px rgba(255,0,204,0.4);
+    }
+    .deck-b .sync-btn:hover, .deck-b .sync-btn.synced {
+      border-color: #00e0ff; color: #00e0ff; box-shadow: 0 0 8px rgba(0,224,255,0.4);
+    }
+    .nudge-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.3);
+      border-radius: 4px; padding: 1px 5px;
+      font-size: 9px; cursor: pointer; transition: all 0.15s ease;
+      flex-shrink: 0; line-height: 1;
+    }
+    .nudge-btn:hover { border-color: rgba(255,255,255,0.35); color: rgba(255,255,255,0.65); }
+
     /* ── Backgrounds ── */
     #bg-image {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -459,6 +484,7 @@
       <div class="deck-header-row">
         <div class="deck-label">Deck A</div>
         <span class="deck-bpm" id="bpm-a">-- BPM</span>
+        <button class="sync-btn" id="sync-a">SYNC</button>
       </div>
       <div class="deck-track-title" id="title-a">No track loaded</div>
       <div class="deck-body">
@@ -477,7 +503,9 @@
           <div class="slider-section">
             <div class="slider-row">
               <span class="slider-label">Tempo</span>
+              <button class="nudge-btn" id="nudge-l-a" title="Nudge slow">◄</button>
               <input type="range" id="tempo-a" min="50" max="150" value="100" step="1">
+              <button class="nudge-btn" id="nudge-r-a" title="Nudge fast">►</button>
               <span class="slider-val" id="tempo-val-a">0%</span>
             </div>
             <div class="slider-row">
@@ -510,6 +538,7 @@
       <div class="deck-header-row">
         <div class="deck-label">Deck B</div>
         <span class="deck-bpm" id="bpm-b">-- BPM</span>
+        <button class="sync-btn" id="sync-b">SYNC</button>
       </div>
       <div class="deck-track-title" id="title-b">No track loaded</div>
       <div class="deck-body">
@@ -528,7 +557,9 @@
           <div class="slider-section">
             <div class="slider-row">
               <span class="slider-label">Tempo</span>
+              <button class="nudge-btn" id="nudge-l-b" title="Nudge slow">◄</button>
               <input type="range" id="tempo-b" min="50" max="150" value="100" step="1">
+              <button class="nudge-btn" id="nudge-r-b" title="Nudge fast">►</button>
               <span class="slider-val" id="tempo-val-b">0%</span>
             </div>
             <div class="slider-row">
@@ -808,6 +839,7 @@ function loadTrackToDeck(deckId, trackIndex) {
 
   // Reset BPM display for new track (offline analysis will fill it in)
   document.getElementById(`bpm-${deckId}`).textContent = '-- BPM'
+  deck.detectedBPM = null
   deck.energyAvg = 0
   deck.beatFlashing = false
 
@@ -1119,7 +1151,11 @@ async function decodeAndRenderWaveform(deckId, url) {
 
     // Offline BPM analysis
     const bpm = detectBPM(audioBuffer)
-    if (bpm > 0) document.getElementById(`bpm-${deckId}`).textContent = `${bpm} BPM`
+    if (bpm > 0) {
+      document.getElementById(`bpm-${deckId}`).textContent = `${bpm} BPM`
+      DECKS[deckId].detectedBPM = bpm
+      document.getElementById(`sync-${deckId}`).classList.remove('synced')
+    }
 
     // Build offscreen canvas
     const offscreen = document.createElement('canvas')
@@ -1326,6 +1362,9 @@ function drawDisc(deckId) {
 }
 
 // ── Scratch ────────────────────────────────────────────────────────
+// Normal vinyl: 33.33 RPM = (33.33/60)*2π rad/s ≈ 0.003491 rad/ms
+const NORMAL_RADS_PER_MS = (33.33 / 60) * 2 * Math.PI / 1000
+
 function getScratchAngle(e, canvas) {
   const rect = canvas.getBoundingClientRect()
   return Math.atan2(e.clientY - (rect.top + rect.height / 2),
@@ -1339,32 +1378,46 @@ function getScratchAngle(e, canvas) {
   canvas.addEventListener('pointerdown', e => {
     e.preventDefault()
     if (!audioContext) initAudio()
-    canvas.setPointerCapture(e.pointerId)   // keep all events even outside the canvas
+    canvas.setPointerCapture(e.pointerId)
     deck.scratching = true
     deck.scratchWasPlaying = !deck.el.paused
     deck.scratchLastAngle = getScratchAngle(e, canvas)
-    deck.el.pause()
+    deck.scratchLastTime  = performance.now()
+    // Start playing at near-zero rate so audio is ready to scratch immediately
+    if (deck.el.paused) deck.el.play().catch(() => {})
+    deck.el.playbackRate = 0.01
     canvas.classList.add('scratching')
   })
 
   canvas.addEventListener('pointermove', e => {
     if (!deck.scratching) return
     e.preventDefault()
+    const now = performance.now()
+    const dt  = Math.max(4, now - deck.scratchLastTime)  // min 4ms to avoid /0 noise
+    deck.scratchLastTime = now
+
     const angle = getScratchAngle(e, canvas)
     let delta = angle - deck.scratchLastAngle
-    // Normalise to [-π, π] to handle the ±180° wrap
     if (delta >  Math.PI) delta -= 2 * Math.PI
     if (delta < -Math.PI) delta += 2 * Math.PI
     deck.scratchLastAngle = angle
-
     deck.discAngle += delta
 
-    // 1 full revolution = 1.8 s of audio
-    if (deck.el && deck.el.duration) {
-      deck.el.currentTime = Math.max(0, Math.min(
-        deck.el.duration,
-        deck.el.currentTime + (delta / (2 * Math.PI)) * 1.8
-      ))
+    const angVel    = delta / dt                       // rad/ms (signed)
+    const speedRatio = angVel / NORMAL_RADS_PER_MS     // 1.0 = normal vinyl speed
+
+    if (speedRatio >= 0) {
+      // Forward scratch — let audio play at scratch speed (the pitch shift IS the scratch sound)
+      deck.el.playbackRate = Math.max(0.01, Math.min(4, speedRatio))
+    } else {
+      // Backward — HTMLMediaElement can't reverse; scrub position manually + near-silence
+      deck.el.playbackRate = 0.01
+      if (deck.el.duration) {
+        deck.el.currentTime = Math.max(0, Math.min(
+          deck.el.duration,
+          deck.el.currentTime + (delta / (2 * Math.PI)) * 1.8
+        ))
+      }
     }
   })
 
@@ -1372,11 +1425,52 @@ function getScratchAngle(e, canvas) {
     if (!deck.scratching) return
     deck.scratching = false
     canvas.classList.remove('scratching')
-    if (deck.scratchWasPlaying) playDeck(id)
+    // Restore rate from tempo slider
+    deck.el.playbackRate = parseInt(document.getElementById(`tempo-${id}`).value) / 100
+    if (!deck.scratchWasPlaying) deck.el.pause()
   }
 
   canvas.addEventListener('pointerup',     endScratch)
   canvas.addEventListener('pointercancel', endScratch)
+})
+
+// ── Beat Match ────────────────────────────────────────────────────
+function applyTempo(deckId, sliderVal) {
+  const slider = document.getElementById(`tempo-${deckId}`)
+  const valEl  = document.getElementById(`tempo-val-${deckId}`)
+  slider.value = sliderVal
+  const pct = sliderVal - 100
+  valEl.textContent = `${pct > 0 ? '+' : ''}${pct}%`
+  DECKS[deckId].el.playbackRate = sliderVal / 100
+}
+
+function syncDeckTempo(deckId) {
+  const otherId = deckId === 'a' ? 'b' : 'a'
+  const myBPM    = DECKS[deckId].detectedBPM
+  const otherBPM = DECKS[otherId].detectedBPM
+  if (!myBPM || !otherBPM) return
+
+  // Find the playback-rate multiplier that makes my BPM match the other deck
+  let ratio = otherBPM / myBPM
+  // Collapse obvious double/half-time (±10% of 2:1 or 1:2)
+  if (ratio > 1.8 && ratio < 2.2) ratio = 2
+  if (ratio > 0.45 && ratio < 0.55) ratio = 0.5
+
+  const sliderVal = Math.round(Math.max(50, Math.min(150, ratio * 100)))
+  applyTempo(deckId, sliderVal)
+  document.getElementById(`sync-${deckId}`).classList.add('synced')
+}
+
+function nudgeTempo(deckId, dir) {
+  const slider = document.getElementById(`tempo-${deckId}`)
+  applyTempo(deckId, Math.max(50, Math.min(150, parseInt(slider.value) + dir)))
+  document.getElementById(`sync-${deckId}`).classList.remove('synced')
+}
+
+;['a', 'b'].forEach(id => {
+  document.getElementById(`sync-${id}`).addEventListener('click', () => syncDeckTempo(id))
+  document.getElementById(`nudge-l-${id}`).addEventListener('click', () => nudgeTempo(id, -1))
+  document.getElementById(`nudge-r-${id}`).addEventListener('click', () => nudgeTempo(id, +1))
 })
 
 // ── Bootstrap ─────────────────────────────────────────────────────
