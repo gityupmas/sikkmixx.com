@@ -899,10 +899,10 @@ function loadTrackToDeck(deckId, trackIndex) {
   deck.playCountedId = null
   deck.waveOffscreen = null  // clear old waveform
 
-  // BPM — show cached value immediately, analysis will confirm/update
-  const cachedBPM = getBPMCache()[track.id]
-  deck.detectedBPM = cachedBPM || null
-  document.getElementById(`bpm-${deckId}`).textContent = cachedBPM ? `${cachedBPM} BPM` : '-- BPM'
+  // BPM — DB value first, then localStorage cache, then wait for analysis
+  const knownBPM = track.bpm || getBPMCache()[track.id] || null
+  deck.detectedBPM = knownBPM
+  document.getElementById(`bpm-${deckId}`).textContent = knownBPM ? `${knownBPM} BPM` : '-- BPM'
   deck.energyAvg = 0
   deck.beatFlashing = false
 
@@ -1102,7 +1102,8 @@ function buildLibrary(filter = '') {
     const onA = DECKS.a.currentIndex === idx
     const onB = DECKS.b.currentIndex === idx
     const nameColor = onA ? 'color:#ff00cc;' : onB ? 'color:#00e0ff;' : ''
-    const bpmStr = bpmCache[track.id] ? `<span class="lib-bpm">${bpmCache[track.id]}</span>` : ''
+    const bpmVal = track.bpm || bpmCache[track.id]
+    const bpmStr = bpmVal ? `<span class="lib-bpm">${bpmVal}</span>` : ''
     return `
       <div class="lib-track">
         <span class="lib-track-name" style="${nameColor}">${label}</span>
@@ -1244,6 +1245,12 @@ async function decodeAndRenderWaveform(deckId, url) {
         document.getElementById(`sync-${deckId}`).classList.remove('synced')
         if (deck.currentTrack) {
           saveBPMToCache(deck.currentTrack.id, bpm)
+          deck.currentTrack.bpm = bpm
+          fetch(`${API}/track-bpm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ id: deck.currentTrack.id, bpm })
+          }).catch(() => {})
           buildLibrary(document.getElementById('library-search').value)
         }
       }

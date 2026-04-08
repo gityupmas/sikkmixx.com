@@ -406,7 +406,7 @@ if (url.pathname === "/my-tracks/delete" && request.method === "POST") {
     // ---------------- PUBLIC: APPROVED TRACKS ONLY ----------------
     if (url.pathname === "/public-tracks" && request.method === "GET") {
       const { results } = await env.DB.prepare(
-        `SELECT t.id, t.filename, t.original_name, t.artist, t.genre, t.note, t.uploaded_at, t.play_count, t.vote_count, u.username
+        `SELECT t.id, t.filename, t.original_name, t.artist, t.genre, t.note, t.uploaded_at, t.play_count, t.vote_count, t.bpm, u.username
 FROM tracks t
 LEFT JOIN users u ON t.user_id = u.id
 WHERE t.status = 'approved'
@@ -414,6 +414,24 @@ ORDER BY t.uploaded_at DESC`
       ).all();
 
       return json(results);
+    }
+
+    // ---------------- SAVE TRACK BPM ----------------
+    if (url.pathname === "/track-bpm" && request.method === "POST") {
+      const { error } = await requireUser(request);
+      if (error) return error;
+
+      const { id, bpm } = await request.json();
+      if (!id) return text("Missing id", 400);
+      const bpmInt = Math.round(Number(bpm));
+      if (!bpmInt || bpmInt < 40 || bpmInt > 300) return text("Invalid bpm", 400);
+
+      // Only update if bpm is not yet set (first writer wins — avoids thrash from many listeners)
+      await env.DB.prepare(
+        "UPDATE tracks SET bpm = ? WHERE id = ? AND status = 'approved' AND (bpm IS NULL OR bpm = 0)"
+      ).bind(bpmInt, id).run();
+
+      return json({ success: true });
     }
 	
 // ---------------- TOP SUBMITTERS ----------------
