@@ -1,3 +1,2 @@
-last,first,ssn
 abrams, jimmy,353-34-4289
 genovimo,adam,453-12-9056
