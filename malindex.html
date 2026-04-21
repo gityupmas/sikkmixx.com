@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MALICIOUS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: white;
+      overflow: hidden;
+	   transition: transform 0.1s linear;
+    }
+
+
+    /* CLUB INTRO SCREEN */
+    #intro {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, #111 0%, #000 80%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 10;
+      transition: opacity 1s ease;
+    }
+
+.header-btn {
+  position: fixed;
+  top: 10px;
+  opacity: 0.5;
+  font-size: 14px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+  z-index: 20;
+}
+
+.header-btn:hover {
+  color: #ff00cc;
+  opacity: 1;
+  border-color: #ff00cc;
+  box-shadow: 0 0 10px #ff00cc;
+}
+
+/* ---------- INTRO LOGO ---------- */
+
+#introLogo {
+  width: min(600px, 90vw);
+  margin-bottom: 40px;
+}
+
+#sikkmixx-logo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 1.35;
+}
+
+.deck {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.disc {
+  position: relative;
+  width: 46%;
+  aspect-ratio: 1/1;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.14), transparent 52%),
+              rgba(20,20,20,.6);
+  display: grid;
+  place-items: center;
+  overflow: visible;
+}
+
+.disc.left  { transform: translateX(12%); z-index:2; }
+.disc.right { transform: translateX(-12%); }
+
+.spin {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+}
+
+.base {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: 800;
+  font-size: clamp(28px, 5.5vw, 52px); /* bigger */
+  letter-spacing: 1px;
+  color: rgba(255,255,255,.9);
+  text-shadow: 0 0 14px rgba(255,255,255,.18);
+}
+
+/* Move base words closer to the hot letters */
+.disc.left .base  { transform: translate(-50%, -50%) translateX(25%); }
+.disc.right .base { transform: translate(-50%, -50%) translateX(-25%); }
+
+/* Big rim letters */
+.rim {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-weight: 900;
+  font-size: clamp(70px, 12vw, 140px); /* slightly bigger */
+  background: linear-gradient(90deg, #ff00cc, #3333ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 14px rgba(255,0,204,.7);
+}
+
+.disc.left .rim  { transform: translate(-50%, -50%) translateX(58%); }
+.disc.right .rim { transform: translate(-50%, -50%) translateX(-58%); }
+
+#visualizer {
+  margin-top: 30px;
+  width: 100%;
+  height: 80px;
+}
+
+#profileBtn {
+  position: fixed;
+  left: 15px; /* adjust if it overlaps */
+}
+
+#profileBtn:hover {
+  color: #ff00cc;
+  opacity: 1;
+  border-color: #ff00cc;
+  box-shadow: 0 0 10px #ff00cc;
+}
+
+#loginBtn {
+  position: fixed;
+  right: 15px;
+  animation: pulse-login 3s ease-in-out infinite;
+}
+
+#registerBtn {
+  position: fixed;
+  left: 15px;
+  animation: pulse-register 3s ease-in-out infinite;
+}
+
+#registerBtn:hover {
+  color: #00e0ff;
+  opacity: 1;
+  border-color: #00e0ff;
+  box-shadow: 0 0 10px #00e0ff;
+  animation: none;
+}
+
+#loginBtn:hover {
+  animation: none;
+}
+
+@keyframes pulse-login {
+  0%, 100% { opacity: 0.5; box-shadow: none; }
+  50%       { opacity: 0.9; box-shadow: 0 0 12px rgba(255,0,204,0.5); border-color: rgba(255,0,204,0.6); color: rgba(255,100,220,0.9); }
+}
+
+@keyframes pulse-register {
+  0%, 100% { opacity: 0.5; box-shadow: none; }
+  50%       { opacity: 0.9; box-shadow: 0 0 12px rgba(0,224,255,0.5); border-color: rgba(0,224,255,0.6); color: rgba(100,230,255,0.9); }
+}
+
+#visual-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: radial-gradient(circle at center, #fff0cc, #090);
+  transition: background 0.2s ease;
+  overflow: hidden;
+}
+
+#visual-bg::before {
+  content: "";
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  top: -10%;
+  left: -10%;
+  background: radial-gradient(circle, rgba(0,255,255,0.2), transparent 80%);
+  animation: rotate 30s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+    #enterBtn {
+      padding: 20px 50px;
+      font-size: 22px;
+      letter-spacing: 3px;
+      background: transparent;
+      border: 2px solid #ff00cc;
+      color: #ff00cc;
+      cursor: pointer;
+      border-radius: 50px;
+      box-shadow: 0 0 20px #ff00cc;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 10px #ff00cc; }
+      50% { box-shadow: 0 0 40px #ff00cc; }
+      100% { box-shadow: 0 0 10px #ff00cc; }
+    }
+
+    /* MAIN PLAYER */
+#main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: transparent;   /* 🔥 important */
+
+}
+
+    .card {
+background: rgba(30, 30, 30, 0.5);
+backdrop-filter: blur(20px);
+border: 1px solid rgba(255,255,255,0.1);
+
+      padding: 40px;
+      text-align: center;
+      width: 90%;
+      max-width: 470px;
+      box-shadow: 0 0 40px rgba(255,0,204,0.3);
+	  
+	    opacity: 0.5;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+	  
+
+    h1 {
+      letter-spacing: 3px;
+      margin-bottom: 20px;
+    }
+
+    .track-title {
+      margin-bottom: 25px;
+      font-size: 20px;
+    }
+
+    audio {
+      width: 100%;
+      filter: invert(1);
+    }
+	
+	.controls {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.controls button {
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.07);
+  backdrop-filter: blur(10px);
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+}
+
+/* Skip buttons */
+#prevBtn, #nextBtn {
+  width: 38px; height: 38px; font-size: 15px;
+}
+#prevBtn:hover, #nextBtn:hover {
+  border-color: #ff00cc;
+  color: #ff00cc;
+  box-shadow: 0 0 10px rgba(255,0,204,0.45);
+  transform: scale(1.1);
+}
+
+/* Play button */
+#playPauseBtn {
+  width: 54px; height: 54px; font-size: 20px;
+  background: rgba(255,0,204,0.15);
+  border: 1.5px solid rgba(255,0,204,0.55);
+  color: #ff00cc;
+  box-shadow: 0 0 12px rgba(255,0,204,0.25);
+}
+#playPauseBtn:hover {
+  background: rgba(255,0,204,0.28);
+  border-color: #ff00cc;
+  box-shadow: 0 0 22px rgba(255,0,204,0.6);
+  transform: scale(1.08);
+}
+#playPauseBtn.is-playing {
+  background: rgba(255,0,204,0.22);
+  border-color: #ff00cc;
+  animation: play-pulse 1.8s ease-in-out infinite;
+}
+@keyframes play-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,0,204,0.4); }
+  50%       { box-shadow: 0 0 28px rgba(255,0,204,0.85), 0 0 6px rgba(255,0,204,0.4) inset; }
+}
+
+		
+	
+	.equalizer {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 6px;
+  height: 50px;
+}
+
+.equalizer span {
+  width: 6px;
+  height: 10px;
+  background: #ff00cc;
+  box-shadow: 0 0 10px #ff00cc;
+  animation: bounce 1s infinite ease-in-out;
+}
+
+/* stagger animation timing */
+.equalizer span:nth-child(1) { animation-delay: 0s; }
+.equalizer span:nth-child(2) { animation-delay: .1s; }
+.equalizer span:nth-child(3) { animation-delay: .2s; }
+.equalizer span:nth-child(4) { animation-delay: .3s; }
+.equalizer span:nth-child(5) { animation-delay: .4s; }
+.equalizer span:nth-child(6) { animation-delay: .5s; }
+.equalizer span:nth-child(7) { animation-delay: .6s; }
+.equalizer span:nth-child(8) { animation-delay: .7s; }
+
+@keyframes bounce {
+  0%, 100% { height: 10px; }
+  50% { height: 50px; }
+}
+
+#bg-image {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("omnia.webp") center center / cover no-repeat;
+  z-index: -2;
+  filter: brightness(0.8) contrast(1.4);
+}
+
+#recent-panel {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 210px;
+  background: rgba(20, 20, 20, 0.35);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 16px;
+  z-index: 5;
+}
+
+#recent-panel .recent-header {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 12px;
+}
+
+.recent-item {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recent-item:last-child {
+  border-bottom: none;
+}
+
+.recent-item:hover .recent-title {
+  color: #ff00cc;
+}
+
+.recent-title {
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s ease;
+}
+
+.recent-item.active .recent-title {
+  color: #ff00cc;
+  text-shadow: 0 0 8px rgba(255,0,204,0.5);
+}
+
+.recent-meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  margin-top: 3px;
+}
+
+@media (max-width: 900px) {
+  #recent-panel { display: none; }
+}
+
+#right-panel {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 210px;
+  background: rgba(20, 20, 20, 0.35);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 16px;
+  z-index: 5;
+}
+
+#right-panel .recent-header {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 12px;
+}
+
+.section-divider {
+  margin: 14px 0 12px;
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+@media (max-width: 900px) {
+  #right-panel { display: none; }
+}
+
+#up-next {
+  display: none;
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.5px;
+  animation: soft-pulse 2.5s infinite ease-in-out;
+}
+
+#up-next span {
+  color: rgba(255,255,255,0.85);
+}
+
+@keyframes soft-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+#submitter-popup {
+  position: fixed;
+  display: none;
+  background: rgba(15, 15, 15, 0.92);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,0,204,0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-width: 180px;
+  max-width: 240px;
+  z-index: 100;
+  pointer-events: auto;
+  box-shadow: 0 0 20px rgba(255,0,204,0.15);
+}
+
+#submitter-popup .popup-name {
+  font-size: 12px;
+  color: #ff00cc;
+  font-weight: bold;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+#submitter-popup .popup-track {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+#submitter-popup .popup-track:hover {
+  color: #ff00cc;
+}
+
+#submitter-popup .popup-track:last-child {
+  border-bottom: none;
+}
+
+#vote-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.8);
+  border-radius: 20px;
+  padding: 7px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 14px;
+  letter-spacing: 1px;
+}
+
+#vote-btn:hover {
+  border-color: #ff00cc;
+  color: #ff00cc;
+  box-shadow: 0 0 12px rgba(255,0,204,0.4);
+}
+
+#vote-btn.voted {
+  border-color: #ff00cc;
+  color: #ff00cc;
+  box-shadow: 0 0 14px rgba(255,0,204,0.5);
+}
+
+#vote-btn:disabled {
+  cursor: default;
+  opacity: 0.8;
+}
+
+#now-playing-info {
+  display: none;
+  margin-top: 18px;
+  padding: 14px 16px;
+  background: rgba(255, 0, 204, 0.07);
+  border: 1px solid rgba(255, 0, 204, 0.2);
+  border-radius: 12px;
+  text-align: left;
+}
+
+#now-playing-info .npi-header {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 10px;
+}
+
+.listener-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 13px;
+}
+
+.listener-row:last-child {
+  border-bottom: none;
+}
+
+.listener-name {
+  color: #ff00cc;
+  font-weight: bold;
+  white-space: nowrap;
+  text-shadow: 0 0 6px rgba(255,0,204,0.5);
+  min-width: 80px;
+}
+
+.listener-track {
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  background: #ff00cc;
+  border-radius: 50%;
+  margin-right: 7px;
+  box-shadow: 0 0 8px #ff00cc;
+  animation: blink-dot 1.5s infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+#track-bpm {
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: #ff00cc;
+  text-shadow: 0 0 8px rgba(255, 0, 204, 0.8);
+  margin-top: 6px;
+  min-height: 18px;
+  text-transform: uppercase;
+}
+
+#track-key {
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #00e0ff;
+  text-shadow: 0 0 7px rgba(0, 224, 255, 0.7);
+  margin-top: 2px;
+  min-height: 16px;
+  text-transform: uppercase;
+}
+
+  </style>
+<!---------------------------------END   STYLE -->
+
+</head>
+
+<body>
+
+<a href="/register.html" id="registerBtn" class="header-btn">Register</a>
+<a href="/login.html" id="loginBtn" class="header-btn">Login</a>
+<a href="/profile.html" id="profileBtn" class="header-btn" style="display:none;">@user</a>
+<a href="/dj.html" id="djBtn" class="header-btn" style="display:none; position:fixed; bottom:15px; left:15px; top:auto; letter-spacing:2px; opacity:1; border-color:#ff00cc; color:#ff00cc; box-shadow:0 0 14px rgba(255,0,204,0.6);">🎛 DJ</a>
+
+
+<div id="bg-image"></div>
+<div id="visual-bg"></div>
+
+
+<!-- INTRO SCREEN -->
+<div id="intro">
+  <div id="introLogo"></div>
+  <button id="enterBtn">MALICIOUS</button>
+</div>
+
+
+<!-- MAIN PLAYER -->
+<div id="main">
+  <div class="card">
+    <div class="track-title" id="trackTitle">Loading...</div>
+    <div id="track-bpm"></div>
+    <div id="track-key"></div>
+    <div id="up-next">Up next: <span id="up-next-title"></span></div>
+    <button id="vote-btn" disabled>♥ <span id="vote-count">0</span></button>
+    <audio id="player" controls crossorigin="anonymous"></audio>
+<div class="controls">
+  <button id="prevBtn">⏮</button>
+  <button id="playPauseBtn">▶</button>
+  <button id="nextBtn">⏭</button>
+</div>
+
+
+	<div class="equalizer">
+<canvas id="visualizer"></canvas>
+    </div>
+
+    <div id="now-playing-info">
+      <div class="npi-header"><span class="live-dot"></span>Now Listening</div>
+      <div id="listeners-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="submitter-popup"></div>
+
+<div id="recent-panel">
+  <div class="recent-header">Recent Drops</div>
+  <div id="recent-list"></div>
+  <hr class="section-divider">
+  <div class="recent-header">Top Submitters</div>
+  <div id="submitters-list"></div>
+</div>
+
+<div id="right-panel">
+  <div class="recent-header">▶ Most Played</div>
+  <div id="most-played-list"></div>
+  <hr class="section-divider">
+  <div class="recent-header">♥ Most Voted</div>
+  <div id="most-voted-list"></div>
+</div>
+
+<script>
+const API = "https://api.sikkmixx.com"
+let player = document.getElementById("player")
+let playlist = []
+let currentIndex = 0
+let bassSmoothed = 0
+let currentTrack = null;
+let currentUser = null;
+let playCountedId = null;
+
+// Stable session ID per tab
+let sessionId = sessionStorage.getItem("session_id");
+if (!sessionId) {
+  sessionId = crypto.randomUUID();
+  sessionStorage.setItem("session_id", sessionId);
+}
+
+let heartbeatInterval = null;
+let pollInterval = null;
+let myVotes = new Set();
+
+async function fetchMyVotes() {
+  if (!token) return;
+  try {
+    const res = await fetch(`${API}/my-votes`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const ids = await res.json();
+      myVotes = new Set(ids);
+      updateVoteBtn();
+    }
+  } catch {}
+}
+
+function updateVoteBtn() {
+  const btn = document.getElementById("vote-btn");
+  const countEl = document.getElementById("vote-count");
+  if (!currentTrack) return;
+
+  countEl.textContent = currentTrack.vote_count || 0;
+
+  if (!currentUser) {
+    btn.disabled = true;
+    btn.classList.remove("voted");
+    btn.title = "Login to upvote";
+    return;
+  }
+
+  btn.disabled = false;
+  if (myVotes.has(currentTrack.id)) {
+    btn.classList.add("voted");
+  } else {
+    btn.classList.remove("voted");
+  }
+}
+
+document.getElementById("vote-btn").addEventListener("click", async () => {
+  if (!currentTrack || !currentUser) return;
+
+  try {
+    const res = await fetch(`${API}/vote`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ track_id: currentTrack.id })
+    });
+
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (data.voted) {
+      myVotes.add(currentTrack.id);
+      currentTrack.vote_count = (currentTrack.vote_count || 0) + 1;
+    } else {
+      myVotes.delete(currentTrack.id);
+      currentTrack.vote_count = Math.max(0, (currentTrack.vote_count || 0) - 1);
+    }
+
+    updateVoteBtn();
+  } catch {}
+});
+
+function getTrackLabel(track) {
+  if (!track) return "";
+  const title = (track.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
+  const artist = (track.artist || "").trim();
+  return artist ? `${artist} — ${title}` : title;
+}
+
+async function sendHeartbeat() {
+  if (!currentTrack) return;
+  try {
+    await fetch(`${API}/listening`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentUser ? `user_${currentUser.id}` : sessionId,
+        username: currentUser ? `@${currentUser.username}` : "Guest",
+        track_name: getTrackLabel(currentTrack)
+      })
+    });
+  } catch {}
+}
+
+async function pollListeners() {
+  try {
+    const res = await fetch(`${API}/listeners`);
+    if (!res.ok) return;
+    const listeners = await res.json();
+
+    const list = document.getElementById("listeners-list");
+    const info = document.getElementById("now-playing-info");
+
+    if (listeners.length === 0) {
+      info.style.display = "none";
+      return;
+    }
+
+    list.innerHTML = listeners.map(l => `
+      <div class="listener-row">
+        <span class="listener-name">${l.username}</span>
+        <span class="listener-track">${l.track_name}</span>
+      </div>
+    `).join("");
+
+    info.style.display = "block";
+  } catch {}
+}
+
+function startPresence() {
+  if (heartbeatInterval) return; // already running
+  sendHeartbeat();
+  pollListeners();
+  heartbeatInterval = setInterval(sendHeartbeat, 15000);
+  pollInterval = setInterval(pollListeners, 15000);
+}
+
+
+const token = localStorage.getItem("token");
+
+const registerBtn = document.getElementById("registerBtn");
+const loginBtn = document.getElementById("loginBtn");
+const profileBtn = document.getElementById("profileBtn");
+
+(async () => {
+
+  if (!token) return; // Not logged in → do nothing
+
+  try {
+    const meRes = await fetch(`${API}/me`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    if (!meRes.ok) {
+      localStorage.removeItem("token");
+      return;
+    }
+
+    const me = await meRes.json();
+
+    // Hide Register
+    registerBtn.style.display = "none";
+
+    // Change Login → Logout
+	loginBtn.style.borderColor = "rgba(255,80,80,0.6)";
+loginBtn.style.color = "rgba(255,180,180,0.9)";
+
+    loginBtn.textContent = "Logout";
+    loginBtn.href = "#";
+
+    loginBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      localStorage.removeItem("token");
+      window.location.reload();
+    });
+
+    // Show profile button with username
+    profileBtn.textContent = `@${me.username}`;
+    profileBtn.style.display = "inline-block";
+    document.getElementById("djBtn").style.display = "inline-block";
+
+    currentUser = me;
+    sendHeartbeat();
+    fetchMyVotes();
+
+  } catch (e) {
+    localStorage.removeItem("token");
+  }
+
+})();
+
+
+
+(async () => {
+  if (!token) return;
+
+  try {
+    const meRes = await fetch(`${API}/me`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    if (!meRes.ok) {
+      localStorage.removeItem("token");
+      return;
+    }
+
+    const me = await meRes.json();
+    profileBtn.textContent = `@${me.username}`;
+    profileBtn.style.display = "inline-block";
+
+    // Optional: hide Login when logged in
+    // document.getElementById("loginBtn").style.display = "none";
+
+  } catch (e) {
+    // If it fails, just don’t show the button
+  }
+})();
+
+
+function buildRightPanel() {
+  buildRankedList("most-played-list", "play_count");
+  buildRankedList("most-voted-list", "vote_count");
+}
+
+function buildRankedList(containerId, sortKey) {
+  const container = document.getElementById(containerId);
+
+  const ranked = playlist
+    .map((track, i) => ({ track, i }))
+    .filter(({ track }) => (track[sortKey] || 0) > 0)
+    .sort((a, b) => (b.track[sortKey] || 0) - (a.track[sortKey] || 0))
+    .slice(0, 5);
+
+  if (ranked.length === 0) {
+    container.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.25);padding:4px 0;">None yet</div>`;
+    return;
+  }
+
+  container.innerHTML = ranked.map(({ track, i }) => {
+    const title = (track.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
+    const artist = (track.artist || "").trim();
+    const label = artist ? `${artist} — ${title}` : title;
+    const val = track[sortKey] || 0;
+    const icon = sortKey === "play_count" ? "▶" : "♥";
+    return `
+      <div class="recent-item" data-index="${i}">
+        <div class="recent-title">${label}</div>
+        <div class="recent-meta">${icon} ${val}</div>
+      </div>`;
+  }).join("");
+
+  container.querySelectorAll(".recent-item").forEach(el => {
+    el.addEventListener("click", () => {
+      currentIndex = parseInt(el.dataset.index);
+      playCurrentTrack();
+      player.play();
+      updateRecentActive();
+    });
+  });
+}
+
+const popup = document.getElementById("submitter-popup");
+
+function showSubmitterPopup(username, anchorEl) {
+  const tracks = playlist
+    .map((t, i) => ({ t, i }))
+    .filter(({ t }) => t.username === username);
+  if (tracks.length === 0) return;
+
+  const rect = anchorEl.getBoundingClientRect();
+
+  popup.innerHTML = `
+    <div class="popup-name">@${username}</div>
+    ${tracks.map(({ t, i }) => {
+      const title = (t.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
+      const artist = (t.artist || "").trim();
+      const label = artist ? `${artist} — ${title}` : title;
+      return `<div class="popup-track" data-index="${i}">▶ ${label}</div>`;
+    }).join("")}
+  `;
+
+  popup.querySelectorAll(".popup-track").forEach(el => {
+    el.addEventListener("click", () => {
+      currentIndex = parseInt(el.dataset.index);
+      playCurrentTrack();
+      player.play();
+      updateRecentActive();
+      hideSubmitterPopup();
+    });
+  });
+
+  // Position to the right of the panel
+  popup.style.left = `${rect.right + 10}px`;
+  popup.style.top = `${rect.top}px`;
+  popup.style.display = "block";
+}
+
+function hideSubmitterPopup() {
+  popup.style.display = "none";
+}
+
+async function buildSubmitters() {
+  try {
+    const res = await fetch(`${API}/top-submitters`);
+    if (!res.ok) return;
+    const submitters = await res.json();
+    const container = document.getElementById("submitters-list");
+
+    if (submitters.length === 0) {
+      container.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.25);padding:4px 0;">None yet</div>`;
+      return;
+    }
+
+    container.innerHTML = submitters.map(s => `
+      <div class="recent-item submitter-row" data-username="${s.username}" style="cursor:default;">
+        <div class="recent-title">@${s.username}</div>
+        <div class="recent-meta">🎵 ${s.track_count} track${s.track_count !== 1 ? "s" : ""}</div>
+      </div>
+    `).join("");
+
+    container.querySelectorAll(".submitter-row").forEach(el => {
+      el.addEventListener("mouseenter", () => showSubmitterPopup(el.dataset.username, el));
+      el.addEventListener("mouseleave", (e) => {
+        // Only hide if not moving into the popup itself
+        if (!e.relatedTarget || !popup.contains(e.relatedTarget)) hideSubmitterPopup();
+      });
+    });
+
+    popup.addEventListener("mouseleave", (e) => {
+      if (!e.relatedTarget || !document.querySelector(".submitter-row:hover")) hideSubmitterPopup();
+    });
+  } catch {}
+}
+
+function buildRecentPanel() {
+  const list = document.getElementById("recent-list");
+  const recent = playlist.slice(0, 5);
+
+  list.innerHTML = recent.map((track, i) => {
+    const title = (track.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
+    const artist = (track.artist || "").trim();
+    const label = artist ? `${artist} — ${title}` : title;
+    const votes = track.vote_count || 0;
+    const plays = track.play_count || 0;
+    return `
+      <div class="recent-item" data-index="${i}">
+        <div class="recent-title">${label}</div>
+        <div class="recent-meta">♥ ${votes} &nbsp;·&nbsp; ▶ ${plays}</div>
+      </div>`;
+  }).join("");
+
+  list.querySelectorAll(".recent-item").forEach(el => {
+    el.addEventListener("click", () => {
+      currentIndex = parseInt(el.dataset.index);
+      playCurrentTrack();
+      player.play();
+      updateRecentActive();
+    });
+  });
+
+  updateRecentActive();
+}
+
+function updateRecentActive() {
+  document.querySelectorAll(".recent-item").forEach(el => {
+    el.classList.toggle("active", parseInt(el.dataset.index) === currentIndex);
+  });
+}
+
+
+async function loadTrack() {
+  const res = await fetch(`${API}/public-tracks`)
+  playlist = await res.json()
+
+  if (playlist.length === 0) {
+    document.getElementById("trackTitle").innerText = "No live track yet"
+    return
+  }
+
+  // 🔀 Start randomly
+  currentIndex = Math.floor(Math.random() * playlist.length)
+
+  buildRecentPanel()
+  buildRightPanel()
+  buildSubmitters()
+  playCurrentTrack()
+}
+loadTrack()
+
+
+
+// BPM helpers
+const BPM_CACHE_KEY = 'sikkmixx_bpm_cache'
+function getBPMCache() { try { return JSON.parse(localStorage.getItem(BPM_CACHE_KEY) || '{}') } catch { return {} } }
+function saveBPMToCache(trackId, bpm) { const c = getBPMCache(); c[trackId] = bpm; localStorage.setItem(BPM_CACHE_KEY, JSON.stringify(c)) }
+
+function detectBPM(audioBuffer) {
+  const data = audioBuffer.getChannelData(0)
+  const sr = audioBuffer.sampleRate
+  const hopSize = Math.round(sr / 100)
+  const frameRate = sr / hopSize
+  const maxFrames = Math.min(Math.floor(data.length / hopSize), Math.round(frameRate * 90))
+  const energy = new Float32Array(maxFrames)
+  for (let i = 0; i < maxFrames; i++) {
+    let sum = 0; const base = i * hopSize
+    for (let j = 0; j < hopSize; j++) sum += data[base + j] ** 2
+    energy[i] = Math.sqrt(sum / hopSize)
+  }
+  const onset = new Float32Array(maxFrames)
+  for (let i = 1; i < maxFrames; i++) onset[i] = Math.max(0, energy[i] - energy[i - 1])
+  const minLag = Math.ceil(frameRate * 60 / 200)
+  const maxLag = Math.floor(frameRate * 60 / 60)
+  let bestLag = minLag, bestScore = 0
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let score = 0
+    for (let i = lag; i < maxFrames; i++) score += onset[i] * onset[i - lag]
+    score /= (maxFrames - lag)
+    if (score > bestScore) { bestScore = score; bestLag = lag }
+  }
+  let bpm = frameRate * 60 / bestLag
+  if (bpm > 160 && bpm / 2 >= 60) bpm /= 2
+  else if (bpm < 70 && bpm * 2 <= 200) bpm *= 2
+  return Math.round(bpm)
+}
+
+function showBPM(bpm) {
+  const el = document.getElementById('track-bpm')
+  if (!el) return
+  el.textContent = bpm ? `${bpm} BPM` : ''
+}
+
+// Key helpers
+const KEY_CACHE_KEY = 'sikkmixx_key_cache'
+function getKeyCache() { try { return JSON.parse(localStorage.getItem(KEY_CACHE_KEY) || '{}') } catch { return {} } }
+function saveKeyToCache(trackId, key) { const c = getKeyCache(); c[trackId] = key; localStorage.setItem(KEY_CACHE_KEY, JSON.stringify(c)) }
+
+function showKey(key) {
+  const el = document.getElementById('track-key')
+  if (!el) return
+  el.textContent = key || ''
+}
+
+function fft(re, im) {
+  const n = re.length
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1
+    for (; j & bit; bit >>= 1) j ^= bit
+    j ^= bit
+    if (i < j) { ;[re[i],re[j]]=[re[j],re[i]]; [im[i],im[j]]=[im[j],im[i]] }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -2 * Math.PI / len
+    const wRe = Math.cos(ang), wIm = Math.sin(ang)
+    for (let i = 0; i < n; i += len) {
+      let cRe = 1, cIm = 0
+      for (let j = 0; j < len >> 1; j++) {
+        const uRe = re[i+j], uIm = im[i+j]
+        const h = i+j+(len>>1)
+        const vRe = re[h]*cRe - im[h]*cIm, vIm = re[h]*cIm + im[h]*cRe
+        re[i+j] = uRe+vRe; im[i+j] = uIm+vIm
+        re[h] = uRe-vRe; im[h] = uIm-vIm
+        const nr = cRe*wRe - cIm*wIm; cIm = cRe*wIm + cIm*wRe; cRe = nr
+      }
+    }
+  }
+}
+
+function detectKey(audioBuffer) {
+  const data = audioBuffer.getChannelData(0)
+  const sr = audioBuffer.sampleRate
+  const frameSize = 4096, hopSize = 2048
+  const chroma = new Float32Array(12)
+  const maxSamples = Math.min(data.length, sr * 60)
+  const hann = new Float32Array(frameSize)
+  for (let i = 0; i < frameSize; i++) hann[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / frameSize)
+  const re = new Float32Array(frameSize), im = new Float32Array(frameSize)
+  for (let start = 0; start + frameSize <= maxSamples; start += hopSize) {
+    for (let i = 0; i < frameSize; i++) { re[i] = data[start+i] * hann[i]; im[i] = 0 }
+    fft(re, im)
+    for (let bin = 1; bin < frameSize >> 1; bin++) {
+      const freq = bin * sr / frameSize
+      if (freq < 65 || freq > 2093) continue
+      const pc = ((Math.round(12 * Math.log2(freq / 261.63)) % 12) + 12) % 12
+      chroma[pc] += Math.sqrt(re[bin]*re[bin] + im[bin]*im[bin])
+    }
+  }
+  const maxC = Math.max(...chroma)
+  if (maxC === 0) return null
+  for (let i = 0; i < 12; i++) chroma[i] /= maxC
+  const MAJ = [6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88]
+  const MIN = [6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17]
+  const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+  function corr(profile, shift) {
+    let sx=0,sy=0,sxy=0,sx2=0,sy2=0
+    for (let i = 0; i < 12; i++) {
+      const x = chroma[i], y = profile[(i-shift+12)%12]
+      sx+=x; sy+=y; sxy+=x*y; sx2+=x*x; sy2+=y*y
+    }
+    const d = Math.sqrt((12*sx2-sx*sx)*(12*sy2-sy*sy))
+    return d > 0 ? (12*sxy-sx*sy)/d : 0
+  }
+  let bestKey = 'C', bestMode = 'maj', bestScore = -Infinity
+  for (let s = 0; s < 12; s++) {
+    const mj = corr(MAJ, s), mn = corr(MIN, s)
+    if (mj > bestScore) { bestScore=mj; bestKey=NOTES[s]; bestMode='maj' }
+    if (mn > bestScore) { bestScore=mn; bestKey=NOTES[s]; bestMode='min' }
+  }
+  return `${bestKey} ${bestMode}`
+}
+
+let bpmAnalysisId = null
+
+async function analyzeBPMForTrack(track) {
+  const analysisId = track.id
+  bpmAnalysisId = analysisId
+  try {
+    const encoded = encodeURIComponent(track.filename)
+    const res = await fetch(`${API}/file/${encoded}`)
+    if (!res.ok || bpmAnalysisId !== analysisId) return
+    const arrayBuffer = await res.arrayBuffer()
+    if (bpmAnalysisId !== analysisId) return
+    const decodeCtx = new (window.AudioContext || window.webkitAudioContext)()
+    const audioBuffer = await decodeCtx.decodeAudioData(arrayBuffer)
+    await decodeCtx.close()
+    if (bpmAnalysisId !== analysisId) return
+    const bpm = detectBPM(audioBuffer)
+    if (bpm > 0) {
+      saveBPMToCache(track.id, bpm)
+      const pi = playlist.findIndex(t => t.id === track.id)
+      if (pi >= 0) playlist[pi].bpm = bpm
+      if (bpmAnalysisId === analysisId && currentTrack?.id === track.id) showBPM(bpm)
+      if (token) {
+        fetch(`${API}/track-bpm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ id: track.id, bpm })
+        }).catch(() => {})
+      }
+    }
+    const key = detectKey(audioBuffer)
+    if (key) {
+      saveKeyToCache(track.id, key)
+      const pi = playlist.findIndex(t => t.id === track.id)
+      if (pi >= 0) playlist[pi].key = key
+      if (bpmAnalysisId === analysisId && currentTrack?.id === track.id) showKey(key)
+      if (token) {
+        fetch(`${API}/track-key`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ id: track.id, key })
+        }).catch(() => {})
+      }
+    }
+  } catch {}
+}
+
+function playCurrentTrack() {
+  const track = playlist[currentIndex];
+  currentTrack = track;
+
+  const encoded = encodeURIComponent(track.filename);
+const title = (track.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
+const artist = (track.artist || "").trim();
+
+document.getElementById("trackTitle").innerText =
+  artist ? `${artist} — ${title}` : title;
+
+
+
+  player.src = `${API}/file/${encoded}`;
+  playCountedId = null;
+  document.getElementById("up-next").style.display = "none";
+  sendHeartbeat();
+  updateVoteBtn();
+  updateRecentActive();
+
+  const knownBPM = track.bpm || getBPMCache()[track.id] || null
+  showBPM(knownBPM)
+  const knownKey = track.key || getKeyCache()[track.id] || null
+  showKey(knownKey)
+  if (!knownBPM || !knownKey) analyzeBPMForTrack(track)
+}
+
+
+
+player.addEventListener("timeupdate", () => {
+  if (!player.duration || playlist.length < 2) return;
+
+  const remaining = player.duration - player.currentTime;
+  const upNextEl = document.getElementById("up-next");
+  const upNextTitle = document.getElementById("up-next-title");
+
+  if (remaining <= 60 && remaining > 0) {
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    const next = playlist[nextIndex];
+    const title = (next.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "");
+    const artist = (next.artist || "").trim();
+    upNextTitle.textContent = artist ? `${artist} — ${title}` : title;
+    upNextEl.style.display = "block";
+
+    if (currentTrack?.id && playCountedId !== currentTrack.id) {
+      playCountedId = currentTrack.id;
+      fetch(`${API}/track-played`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: currentTrack.id })
+      }).catch(() => {});
+    }
+  } else {
+    upNextEl.style.display = "none";
+  }
+});
+
+player.addEventListener("ended", async () => {
+  if (playlist.length === 0) return;
+
+  // Move to next track
+  currentIndex++;
+  if (currentIndex >= playlist.length) currentIndex = 0;
+
+  playCurrentTrack();
+  player.play();
+});
+
+
+
+document.getElementById("nextBtn").addEventListener("click", () => {
+
+  if (playlist.length === 0) return
+
+  currentIndex++
+  if (currentIndex >= playlist.length) currentIndex = 0
+
+  playCurrentTrack()
+  player.play()
+})
+
+document.getElementById("prevBtn").addEventListener("click", () => {
+
+  if (playlist.length === 0) return
+
+  currentIndex--
+  if (currentIndex < 0) currentIndex = playlist.length - 1
+
+  playCurrentTrack()
+  player.play()
+})
+
+function updatePlayPauseBtn() {
+  const btn = document.getElementById("playPauseBtn")
+  const playing = !player.paused
+  btn.textContent = playing ? "⏸" : "▶"
+  btn.classList.toggle("is-playing", playing)
+}
+
+player.addEventListener("play",  updatePlayPauseBtn)
+player.addEventListener("pause", updatePlayPauseBtn)
+
+document.getElementById("playPauseBtn").addEventListener("click", () => {
+  if (player.paused) player.play()
+  else player.pause()
+})
+
+
+
+
+
+// ENTER BUTTON LOGIC
+document.getElementById("enterBtn").addEventListener("click", async () => {
+
+  if (!audioContext) {
+    initVisualizer()
+  }
+
+  await audioContext.resume()
+  player.play()
+
+  startPresence()
+
+  document.getElementById("intro").style.opacity = 0
+  setTimeout(() => {
+    document.getElementById("intro").style.display = "none"
+    document.getElementById("main").style.opacity = 1
+  }, 1000)
+})
+
+const canvas = document.getElementById("visualizer")
+const ctx = canvas.getContext("2d")
+
+canvas.width = canvas.offsetWidth
+canvas.height = canvas.offsetHeight
+
+let audioContext
+let analyser
+let source
+let dataArray
+
+
+function initVisualizer() {
+
+  audioContext = new (window.AudioContext || window.webkitAudioContext)()
+  analyser = audioContext.createAnalyser()
+
+  analyser.fftSize = 256          // better resolution
+  analyser.smoothingTimeConstant = 0.8  // smoother motion
+
+  source = audioContext.createMediaElementSource(player)
+  source.connect(analyser)
+  analyser.connect(audioContext.destination)
+
+  const bufferLength = analyser.frequencyBinCount
+  dataArray = new Uint8Array(bufferLength)
+
+  function draw() {
+    requestAnimationFrame(draw)
+
+    analyser.getByteFrequencyData(dataArray)
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    const bars = 32
+    const step = Math.floor(bufferLength / bars)
+    const barWidth = canvas.width / bars
+
+
+
+//            🎵 BASS DETECTION (first few frequency bins)
+let bassSum = 0
+for (let i = 0; i < 8; i++) {
+  bassSum += dataArray[i]
+}
+let bass = bassSum / 8
+
+// smooth it
+bassSmoothed = bassSmoothed * 0.8 + bass * 0.2
+
+let bassNormalized = bassSmoothed / 255
+
+
+//           🔥 BACKGROUND REACTION
+const bg = document.getElementById("visual-bg")
+
+document.body.style.transform = `scale(${1 + bassNormalized * 0.02})`
+
+
+let hueShift = 280 - (bassNormalized * 90)
+let brightness = 8 + (bassNormalized * 35)
+
+bg.style.background = `
+  radial-gradient(circle at center,
+    hsla(${hueShift}, 100%, ${brightness}%, 0.5),
+    rgba(0,0,0,0.8))
+`
+
+for (let i = 0; i < bars; i++) {
+
+  let sum = 0
+  for (let j = 0; j < step; j++) {
+    sum += dataArray[i * step + j]
+  }
+
+  let value = sum / step
+
+  // normalize + compress
+  let normalized = value / 255
+  let scaled = Math.pow(normalized, 1.5) * canvas.height
+
+  const x = i * barWidth
+  const y = canvas.height - scaled
+
+  // 🎨 COLOR SHIFT BASED ON INTENSITY
+  let hue = 280 - (normalized * 200)   // purple → blue
+  let brightness = 50 + (normalized * 50)
+
+  ctx.fillStyle = `hsl(${hue}, 100%, ${brightness}%)`
+  ctx.shadowBlur = 25
+  ctx.shadowColor = `hsl(${hue}, 100%, 60%)`
+
+  ctx.fillRect(x, y, barWidth - 3, scaled)
+}
+  }
+  draw( )
+}
+</script>
+  
+</a>
+
+
+<script>
+document.getElementById("introLogo").innerHTML = `
+  <div id="sikkmixx-logo">
+    <div class="deck">
+      <div class="disc left" id="discLeft">
+        <div class="spin" id="spinLeft">
+          <div class="base">si</div>
+          <div class="rim" id="rimKK">KK</div>
+        </div>
+      </div>
+
+      <div class="disc right" id="discRight">
+        <div class="spin" id="spinRight">
+          <div class="base">mi</div>
+          <div class="rim" id="rimXX">XX</div>
+        </div>
+      </div>
+
+      <div class="spark" id="spark"></div>
+    </div>
+  </div>
+`;
+</script>
+
+<script>
+let logoPlaying = true;
+const SPEED = 44;
+const spinLeft  = () => document.getElementById("spinLeft");
+const spinRight = () => document.getElementById("spinRight");
+
+const t0 = performance.now();
+
+function tick(now){
+  if(!logoPlaying) return;
+
+  const dt = (now - t0)/1000;
+  const aRight = dt * SPEED;
+  const aLeft  = -dt * SPEED;
+
+  if(spinRight()) spinRight().style.transform = `rotate(${aRight}deg)`;
+  if(spinLeft())  spinLeft().style.transform  = `rotate(${aLeft}deg)`;
+
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+
+
+</body>
+</html>
