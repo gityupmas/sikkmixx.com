@@ -44,8 +44,6 @@
     #logoutBtn:hover { color: #ff6060; border-color: #ff6060; box-shadow: 0 0 10px rgba(255,80,80,0.5); }
     #spotifyBtn { right: 100px; color: rgba(30,215,96,0.8); border-color: rgba(30,215,96,0.4); }
     #spotifyBtn:hover { color: #1ed760; border-color: #1ed760; box-shadow: 0 0 10px rgba(30,215,96,0.5); }
-    #soundcloudBtn { right: 220px; color: rgba(255,102,0,0.8); border-color: rgba(255,102,0,0.4); }
-    #soundcloudBtn:hover { color: #ff6600; border-color: #ff6600; box-shadow: 0 0 10px rgba(255,102,0,0.5); }
 
     /* ── Sync / Nudge ── */
     .sync-btn {
@@ -164,12 +162,6 @@
     }
     .deck-a .deck-key { color: #ff00cc; }
     .deck-b .deck-key { color: #00e0ff; }
-    .deck-bitrate {
-      font-size: 9px; font-weight: 600; letter-spacing: 0.5px;
-      opacity: 0.5;
-    }
-    .deck-a .deck-bitrate { color: #ff00cc; }
-    .deck-b .deck-bitrate { color: #00e0ff; }
     .deck-a .deck-bpm.beat { color: #ff00cc; text-shadow: 0 0 14px #ff00cc, 0 0 4px #fff; }
     .deck-b .deck-bpm.beat { color: #00e0ff; text-shadow: 0 0 14px #00e0ff, 0 0 4px #fff; }
 
@@ -469,9 +461,56 @@
       min-height: 0;
     }
 
-    @media (max-width: 700px) {
+    /* ── Portrait phone: stack decks vertically ── */
+    @media (max-width: 700px) and (orientation: portrait) {
       .decks-row { flex-direction: column; }
-      .disc-canvas { width: 110px; height: 110px; }
+      .disc-canvas { width: 100px; height: 100px; }
+      .deck-panel { padding: 8px 10px; }
+      #main { gap: 4px; padding: 42px 6px 6px; }
+      .library-row { height: 110px; }
+    }
+
+    /* ── Landscape phone: side-by-side decks, compact everything ── */
+    @media (max-height: 500px) and (orientation: landscape) {
+      #main {
+        padding: 4px 6px 4px;
+        gap: 3px;
+      }
+      .decks-row {
+        flex-direction: row;
+        flex: 1;
+      }
+      .deck-panel {
+        padding: 5px 8px;
+        gap: 3px;
+      }
+      .disc-canvas {
+        width: 72px;
+        height: 72px;
+      }
+      .deck-track-title { font-size: 10px; }
+      .deck-track-artist { font-size: 9px; }
+      .deck-header-row { gap: 4px; }
+      .deck-label { font-size: 8px; }
+      .deck-bpm { font-size: 9px; }
+      .deck-key { font-size: 9px; }
+      .deck-bitrate { font-size: 8px; }
+      .ctrl-btn.play-btn { width: 38px; height: 38px; font-size: 15px; }
+      .ctrl-btn.skip-btn { width: 28px; height: 28px; font-size: 11px; }
+      .slider-label { font-size: 8px; width: 32px; }
+      .slider-val { font-size: 8px; width: 28px; }
+      .crossfader-row { padding: 3px 10px; }
+      .xf-label { font-size: 9px; }
+      .library-row { height: 80px; }
+      .library-title { font-size: 8px; }
+      .lib-track-name { font-size: 11px; }
+      /* Hide header buttons in landscape to save space */
+      .header-btn { font-size: 11px; padding: 4px 8px; top: 4px; }
+      #backBtn { left: 6px; }
+      #profileBtn { left: 80px; }
+      #logoutBtn { right: 6px; }
+      #spotifyBtn { right: 90px; }
+      #soundcloudBtn { right: 185px; }
     }
   </style>
 </head>
@@ -491,7 +530,6 @@
 <a href="/profile.html" id="profileBtn" class="header-btn" style="display:none;">@user</a>
 <a href="#" id="logoutBtn" class="header-btn" style="display:none;">Logout</a>
 <a href="#" id="spotifyBtn" class="header-btn" style="display:none;">🎵 Spotify</a>
-<a href="/dj-soundcloud.html" id="soundcloudBtn" class="header-btn">☁ SoundCloud</a>
 
 <!-- Hidden audio elements -->
 <audio id="player-a" crossorigin="anonymous" preload="none"></audio>
@@ -508,7 +546,6 @@
         <div class="deck-label">Deck A</div>
         <span class="deck-key" id="key-a"></span>
         <span class="deck-bpm" id="bpm-a">-- BPM</span>
-        <span class="deck-bitrate" id="bitrate-a"></span>
         <button class="sync-btn" id="sync-a">SYNC</button>
       </div>
       <div class="deck-track-title" id="title-a">No track loaded</div>
@@ -564,7 +601,6 @@
         <div class="deck-label">Deck B</div>
         <span class="deck-key" id="key-b"></span>
         <span class="deck-bpm" id="bpm-b">-- BPM</span>
-        <span class="deck-bitrate" id="bitrate-b"></span>
         <button class="sync-btn" id="sync-b">SYNC</button>
       </div>
       <div class="deck-track-title" id="title-b">No track loaded</div>
@@ -672,11 +708,6 @@ DECKS.b.el = document.getElementById('player-b')
 
 // ── Auth check ──────────────────────────────────────────────────
 async function checkAuth() {
-  // App mode — skip auth gate entirely
-  if (new URLSearchParams(window.location.search).get('app') === '1') {
-    document.getElementById("auth-gate").style.display = "none"
-    return true
-  }
   if (!token) { window.location.href = '/login.html'; return false }
   try {
     const res = await fetch(`${API}/me`, { headers: { "Authorization": `Bearer ${token}` } })
@@ -881,7 +912,6 @@ function loadTrackToDeck(deckId, trackIndex) {
   const knownKey = track.key || getKeyCache()[track.id] || null
   deck.detectedKey = knownKey
   document.getElementById(`key-${deckId}`).textContent = knownKey || ''
-  document.getElementById(`bitrate-${deckId}`).textContent = ''
   deck.energyAvg = 0
   deck.beatFlashing = false
 
@@ -1270,16 +1300,9 @@ async function decodeAndRenderWaveform(deckId, url) {
   try {
     const response = await fetch(url)
     const arrayBuffer = await response.arrayBuffer()
-    const fileSizeBytes = arrayBuffer.byteLength  // save before decodeAudioData detaches it
     // Use a temp AudioContext for decoding if main one not ready yet
     const ctx2 = audioContext || new (window.AudioContext || window.webkitAudioContext)()
     const audioBuffer = await ctx2.decodeAudioData(arrayBuffer)
-
-    // Bitrate — calculated from file size and duration
-    if (audioBuffer.duration > 0) {
-      const kbps = Math.round((fileSizeBytes * 8) / audioBuffer.duration / 1000)
-      document.getElementById(`bitrate-${deckId}`).textContent = `${kbps} kbps`
-    }
 
     // Offline BPM + Key analysis — skip if already cached
     const deck = DECKS[deckId]
