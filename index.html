@@ -1250,6 +1250,7 @@ async function analyzeBPMForTrack(track) {
     if (!res.ok || bpmAnalysisId !== analysisId) return
     const arrayBuffer = await res.arrayBuffer()
     if (bpmAnalysisId !== analysisId) return
+    const fileSizeBytes = arrayBuffer.byteLength  // save before decodeAudioData detaches it
     const decodeCtx = new (window.AudioContext || window.webkitAudioContext)()
     const audioBuffer = await decodeCtx.decodeAudioData(arrayBuffer)
     await decodeCtx.close()
@@ -1257,7 +1258,7 @@ async function analyzeBPMForTrack(track) {
 
     // Bitrate from file size and duration
     if (audioBuffer.duration > 0) {
-      const kbps = Math.round((arrayBuffer.byteLength * 8) / audioBuffer.duration / 1000)
+      const kbps = Math.round((fileSizeBytes * 8) / audioBuffer.duration / 1000)
       if (bpmAnalysisId === analysisId && currentTrack?.id === track.id) showBitrate(kbps)
     }
     const bpm = detectBPM(audioBuffer)
