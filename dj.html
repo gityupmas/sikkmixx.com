@@ -672,6 +672,11 @@ DECKS.b.el = document.getElementById('player-b')
 
 // ── Auth check ──────────────────────────────────────────────────
 async function checkAuth() {
+  // App mode — skip auth gate entirely
+  if (new URLSearchParams(window.location.search).get('app') === '1') {
+    document.getElementById("auth-gate").style.display = "none"
+    return true
+  }
   if (!token) { window.location.href = '/login.html'; return false }
   try {
     const res = await fetch(`${API}/me`, { headers: { "Authorization": `Bearer ${token}` } })
