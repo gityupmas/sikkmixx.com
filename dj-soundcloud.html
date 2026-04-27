@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SiKKMiXX — SoundCloud Booth</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: white;
+      overflow: hidden;
+      height: 100vh;
+      transition: transform 0.1s linear;
+    }
+
+    /* ── Header buttons ── */
+    .header-btn {
+      position: fixed;
+      top: 10px;
+      opacity: 0.5;
+      font-size: 14px;
+      text-decoration: none;
+      color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 6px 12px;
+      border-radius: 20px;
+      backdrop-filter: blur(6px);
+      transition: all 0.3s ease;
+      z-index: 20;
+    }
+    .header-btn:hover {
+      color: #ff00cc;
+      opacity: 1;
+      border-color: #ff00cc;
+      box-shadow: 0 0 10px #ff00cc;
+    }
+    #backBtn  { left: 15px; }
+    #backBtn:hover { color: #00e0ff; border-color: #00e0ff; box-shadow: 0 0 10px #00e0ff; }
+    #profileBtn { left: 100px; }
+    #logoutBtn  { right: 15px; color: rgba(255,150,150,0.8); border-color: rgba(255,80,80,0.4); }
+    #logoutBtn:hover { color: #ff6060; border-color: #ff6060; box-shadow: 0 0 10px rgba(255,80,80,0.5); }
+    #djBtn { right: 110px; color: rgba(255,0,204,0.8); border-color: rgba(255,0,204,0.4); }
+    #djBtn:hover { color: #ff00cc; border-color: #ff00cc; box-shadow: 0 0 10px rgba(255,0,204,0.5); }
+
+    /* ── Sync / Nudge ── */
+    .sync-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.4);
+      border-radius: 10px; padding: 2px 9px;
+      font-size: 8px; letter-spacing: 1.5px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease; flex-shrink: 0;
+    }
+    .deck-a .sync-btn:hover, .deck-a .sync-btn.synced {
+      border-color: #ff6600; color: #ff6600; box-shadow: 0 0 8px rgba(255,102,0,0.4);
+    }
+    .deck-b .sync-btn:hover, .deck-b .sync-btn.synced {
+      border-color: #ff9900; color: #ff9900; box-shadow: 0 0 8px rgba(255,153,0,0.4);
+    }
+    .nudge-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.3);
+      border-radius: 4px; padding: 1px 5px;
+      font-size: 9px; cursor: pointer; transition: all 0.15s ease;
+      flex-shrink: 0; line-height: 1;
+    }
+    .nudge-btn:hover { border-color: rgba(255,255,255,0.35); color: rgba(255,255,255,0.65); }
+
+    /* ── Backgrounds ── */
+    #bg-image {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: url("omnia.webp") center center / cover no-repeat;
+      z-index: -2; filter: brightness(0.5) contrast(1.4);
+    }
+    #visual-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1;
+      background: radial-gradient(circle at center, #111 0%, #000 80%);
+      transition: background 0.2s ease;
+    }
+
+    /* ── Main layout ── */
+    #main {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 46px 10px 8px;
+      gap: 6px;
+    }
+
+    /* ── Decks row ── */
+    .decks-row {
+      display: flex;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .deck-panel {
+      flex: 1;
+      background: rgba(18, 18, 18, 0.6);
+      backdrop-filter: blur(20px);
+      border-radius: 14px;
+      padding: 11px 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+    .deck-panel.deck-a {
+      border: 1px solid rgba(255, 102, 0, 0.35);
+      box-shadow: 0 0 24px rgba(255,102,0,0.08);
+    }
+    .deck-panel.deck-b {
+      border: 1px solid rgba(255, 153, 0, 0.35);
+      box-shadow: 0 0 24px rgba(255,153,0,0.08);
+    }
+
+    .deck-label {
+      font-size: 9px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700;
+    }
+    .deck-a .deck-label { color: #ff6600; text-shadow: 0 0 8px rgba(255,102,0,0.7); }
+    .deck-b .deck-label { color: #ff9900; text-shadow: 0 0 8px rgba(255,153,0,0.7); }
+
+    /* SoundCloud logo badge */
+    .sc-badge {
+      font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
+      background: rgba(255,102,0,0.15); border: 1px solid rgba(255,102,0,0.3);
+      border-radius: 6px; padding: 1px 6px; color: rgba(255,102,0,0.8);
+    }
+
+    .deck-track-title {
+      font-size: 12px;
+      color: rgba(255,255,255,0.85);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-height: 16px;
+    }
+    .deck-track-artist {
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-height: 14px;
+    }
+
+    .deck-visualizer {
+      width: 100%; height: 36px; flex-shrink: 0; border-radius: 6px;
+      display: block;
+    }
+
+    /* ── BPM ── */
+    .deck-header-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    }
+    .deck-bpm {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      transition: color 0.3s;
+    }
+    .deck-a .deck-bpm { color: #ff6600; text-shadow: 0 0 6px rgba(255,102,0,0.7); }
+    .deck-b .deck-bpm { color: #ff9900; text-shadow: 0 0 6px rgba(255,153,0,0.7); }
+    .deck-a .deck-bpm.beat { color: #ff6600; text-shadow: 0 0 14px #ff6600, 0 0 4px #fff; }
+    .deck-b .deck-bpm.beat { color: #ff9900; text-shadow: 0 0 14px #ff9900, 0 0 4px #fff; }
+
+    .deck-controls {
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .ctrl-btn {
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(8px);
+      color: rgba(255,255,255,0.85); cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; padding: 0;
+    }
+
+    .ctrl-btn.skip-btn {
+      width: 36px; height: 36px; font-size: 14px;
+      letter-spacing: -1px;
+    }
+    .deck-a .ctrl-btn.skip-btn:hover {
+      border-color: #ff6600; color: #ff6600;
+      box-shadow: 0 0 10px rgba(255,102,0,0.45);
+      transform: scale(1.1);
+    }
+    .deck-b .ctrl-btn.skip-btn:hover {
+      border-color: #ff9900; color: #ff9900;
+      box-shadow: 0 0 10px rgba(255,153,0,0.45);
+      transform: scale(1.1);
+    }
+
+    .ctrl-btn.play-btn {
+      width: 52px; height: 52px; font-size: 20px;
+    }
+    .deck-a .ctrl-btn.play-btn {
+      background: rgba(255,102,0,0.15);
+      border: 1.5px solid rgba(255,102,0,0.55);
+      color: #ff6600;
+      box-shadow: 0 0 12px rgba(255,102,0,0.25);
+    }
+    .deck-b .ctrl-btn.play-btn {
+      background: rgba(255,153,0,0.15);
+      border: 1.5px solid rgba(255,153,0,0.55);
+      color: #ff9900;
+      box-shadow: 0 0 12px rgba(255,153,0,0.25);
+    }
+    .deck-a .ctrl-btn.play-btn:hover {
+      background: rgba(255,102,0,0.28);
+      border-color: #ff6600;
+      box-shadow: 0 0 22px rgba(255,102,0,0.6);
+      transform: scale(1.08);
+    }
+    .deck-b .ctrl-btn.play-btn:hover {
+      background: rgba(255,153,0,0.28);
+      border-color: #ff9900;
+      box-shadow: 0 0 22px rgba(255,153,0,0.6);
+      transform: scale(1.08);
+    }
+    .deck-a .ctrl-btn.play-btn.is-playing {
+      background: rgba(255,102,0,0.22);
+      border-color: #ff6600;
+      animation: pulse-a 1.8s ease-in-out infinite;
+    }
+    .deck-b .ctrl-btn.play-btn.is-playing {
+      background: rgba(255,153,0,0.22);
+      border-color: #ff9900;
+      animation: pulse-b 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse-a {
+      0%, 100% { box-shadow: 0 0 10px rgba(255,102,0,0.4); }
+      50%       { box-shadow: 0 0 28px rgba(255,102,0,0.85), 0 0 6px rgba(255,102,0,0.4) inset; }
+    }
+    @keyframes pulse-b {
+      0%, 100% { box-shadow: 0 0 10px rgba(255,153,0,0.4); }
+      50%       { box-shadow: 0 0 28px rgba(255,153,0,0.85), 0 0 6px rgba(255,153,0,0.4) inset; }
+    }
+
+    /* ── Sliders ── */
+    .slider-section {
+      display: flex; flex-direction: column; gap: 3px;
+      flex: 1; min-height: 0; justify-content: center;
+    }
+    .slider-row {
+      display: flex; align-items: center; gap: 7px;
+    }
+    .slider-label {
+      font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+      color: rgba(255,255,255,0.3); width: 40px; flex-shrink: 0; text-align: right;
+    }
+    .slider-val {
+      font-size: 9px; color: rgba(255,255,255,0.35);
+      width: 36px; flex-shrink: 0; text-align: left;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      flex: 1; height: 3px; border-radius: 2px;
+      background: rgba(255,255,255,0.12);
+      outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px; height: 13px; border-radius: 50%;
+      cursor: pointer; transition: box-shadow 0.2s ease;
+    }
+    .deck-a input[type="range"]::-webkit-slider-thumb {
+      background: #ff6600; box-shadow: 0 0 6px rgba(255,102,0,0.7);
+    }
+    .deck-b input[type="range"]::-webkit-slider-thumb {
+      background: #ff9900; box-shadow: 0 0 6px rgba(255,153,0,0.7);
+    }
+
+    /* ── Crossfader ── */
+    .crossfader-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 5px 14px;
+      background: rgba(15,15,15,0.5);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .xf-label {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      font-weight: 700; flex-shrink: 0;
+    }
+    .xf-label.a { color: rgba(255,102,0,0.8); }
+    .xf-label.b { color: rgba(255,153,0,0.8); }
+    #crossfader {
+      flex: 1;
+      background: linear-gradient(to right, rgba(255,102,0,0.3), rgba(255,255,255,0.1) 50%, rgba(255,153,0,0.3));
+    }
+    #crossfader::-webkit-slider-thumb {
+      background: white;
+      box-shadow: 0 0 10px rgba(255,255,255,0.8);
+      width: 16px; height: 16px;
+    }
+
+    /* ── URL Input area ── */
+    .url-row {
+      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    }
+    .sc-url-input {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,102,0,0.2);
+      border-radius: 8px;
+      color: white; font-size: 11px;
+      padding: 4px 10px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .sc-url-input::placeholder { color: rgba(255,255,255,0.2); }
+    .sc-url-input:focus { border-color: rgba(255,102,0,0.5); }
+    .sc-load-btn {
+      font-size: 10px; padding: 4px 12px; border-radius: 8px; cursor: pointer;
+      border: 1px solid; background: transparent; letter-spacing: 0.5px;
+      transition: all 0.15s ease; flex-shrink: 0; white-space: nowrap;
+    }
+    .deck-a .sc-load-btn { border-color: rgba(255,102,0,0.4); color: rgba(255,102,0,0.7); }
+    .deck-a .sc-load-btn:hover { border-color: #ff6600; color: #ff6600; box-shadow: 0 0 8px rgba(255,102,0,0.4); }
+    .deck-b .sc-load-btn { border-color: rgba(255,153,0,0.4); color: rgba(255,153,0,0.7); }
+    .deck-b .sc-load-btn:hover { border-color: #ff9900; color: #ff9900; box-shadow: 0 0 8px rgba(255,153,0,0.4); }
+
+    /* ── Hidden SC iframes ── */
+    .sc-iframe {
+      position: absolute;
+      width: 1px; height: 1px;
+      opacity: 0; pointer-events: none;
+      border: none;
+    }
+
+    /* ── Disc ── */
+    .deck-body {
+      display: flex;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+    .disc-col {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .disc-canvas {
+      width: 140px; height: 140px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: block;
+    }
+    .controls-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    /* ── Search / library panel ── */
+    .library-row {
+      background: rgba(12,12,12,0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 7px 12px;
+      flex-shrink: 0;
+      height: 100px;
+      display: flex;
+      flex-direction: column;
+    }
+    .library-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 5px; flex-shrink: 0;
+    }
+    .library-title {
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(255,255,255,0.25); flex-shrink: 0;
+    }
+    .sc-hint {
+      font-size: 10px; color: rgba(255,102,0,0.5);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Auth overlay ── */
+    #auth-gate {
+      position: fixed; inset: 0;
+      background: #000;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 20px;
+      z-index: 100;
+    }
+    #auth-gate p { color: rgba(255,255,255,0.5); font-size: 16px; letter-spacing: 1px; }
+    #auth-gate a {
+      padding: 12px 36px; font-size: 16px; letter-spacing: 2px;
+      background: transparent; border: 2px solid #ff6600; color: #ff6600;
+      cursor: pointer; border-radius: 40px; text-decoration: none;
+      box-shadow: 0 0 16px rgba(255,102,0,0.4); transition: box-shadow 0.2s;
+    }
+    #auth-gate a:hover { box-shadow: 0 0 30px rgba(255,102,0,0.7); }
+
+    /* ── SC widget status ── */
+    .sc-status {
+      font-size: 9px; letter-spacing: 1px;
+      color: rgba(255,255,255,0.2);
+      margin-left: auto;
+    }
+    .sc-status.ready { color: rgba(255,102,0,0.7); }
+    .sc-status.playing { color: #ff6600; }
+    .sc-status.error { color: rgba(255,80,80,0.7); }
+
+    @media (max-width: 700px) {
+      .decks-row { flex-direction: column; }
+      .disc-canvas { width: 100px; height: 100px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Hidden SC iframes (Widget API) -->
+<iframe id="sc-iframe-a" class="sc-iframe" allow="autoplay"></iframe>
+<iframe id="sc-iframe-b" class="sc-iframe" allow="autoplay"></iframe>
+
+<!-- Auth gate -->
+<div id="auth-gate">
+  <p>DJ Booth is members only</p>
+  <a href="/login.html">Login to Enter</a>
+</div>
+
+<div id="bg-image"></div>
+<div id="visual-bg"></div>
+
+<!-- Header -->
+<a href="/" id="backBtn" class="header-btn">← Back</a>
+<a href="/profile.html" id="profileBtn" class="header-btn" style="display:none;">@user</a>
+<a href="#" id="logoutBtn" class="header-btn" style="display:none;">Logout</a>
+<a href="/dj.html" id="djBtn" class="header-btn">🎛 DJ Booth</a>
+
+<!-- DJ Layout -->
+<div id="main">
+
+  <div class="decks-row">
+
+    <!-- DECK A -->
+    <div class="deck-panel deck-a">
+      <div class="deck-header-row">
+        <div class="deck-label">Deck A</div>
+        <span class="sc-badge">SoundCloud</span>
+        <span class="deck-bpm" id="bpm-a">-- BPM</span>
+        <button class="sync-btn" id="sync-a">SYNC</button>
+        <span class="sc-status" id="status-a">no track</span>
+      </div>
+      <div class="deck-track-title" id="title-a">No track loaded</div>
+      <div class="deck-track-artist" id="artist-a"></div>
+      <div class="deck-body">
+        <div class="disc-col">
+          <canvas class="disc-canvas" id="disc-a" width="140" height="140"></canvas>
+        </div>
+        <div class="controls-col">
+          <canvas class="deck-visualizer" id="vis-a"></canvas>
+          <div class="deck-controls">
+            <button class="ctrl-btn play-btn" id="play-a" title="Play / Pause">▶</button>
+          </div>
+          <div class="url-row">
+            <input class="sc-url-input" id="url-a" type="text" placeholder="Paste SoundCloud track URL...">
+            <button class="sc-load-btn" onclick="loadURL('a')">Load A</button>
+          </div>
+          <div class="slider-section">
+            <div class="slider-row">
+              <span class="slider-label">Volume</span>
+              <input type="range" id="vol-a" min="0" max="100" value="80" step="1">
+              <span class="slider-val" id="vol-val-a">80%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DECK B -->
+    <div class="deck-panel deck-b">
+      <div class="deck-header-row">
+        <div class="deck-label">Deck B</div>
+        <span class="sc-badge" style="border-color:rgba(255,153,0,0.3);color:rgba(255,153,0,0.8);background:rgba(255,153,0,0.15);">SoundCloud</span>
+        <span class="deck-bpm" id="bpm-b">-- BPM</span>
+        <button class="sync-btn" id="sync-b">SYNC</button>
+        <span class="sc-status" id="status-b">no track</span>
+      </div>
+      <div class="deck-track-title" id="title-b">No track loaded</div>
+      <div class="deck-track-artist" id="artist-b"></div>
+      <div class="deck-body">
+        <div class="disc-col">
+          <canvas class="disc-canvas" id="disc-b" width="140" height="140"></canvas>
+        </div>
+        <div class="controls-col">
+          <canvas class="deck-visualizer" id="vis-b"></canvas>
+          <div class="deck-controls">
+            <button class="ctrl-btn play-btn" id="play-b" title="Play / Pause">▶</button>
+          </div>
+          <div class="url-row">
+            <input class="sc-url-input" id="url-b" type="text" placeholder="Paste SoundCloud track URL...">
+            <button class="sc-load-btn" onclick="loadURL('b')">Load B</button>
+          </div>
+          <div class="slider-section">
+            <div class="slider-row">
+              <span class="slider-label">Volume</span>
+              <input type="range" id="vol-b" min="0" max="100" value="80" step="1">
+              <span class="slider-val" id="vol-val-b">80%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.decks-row -->
+
+  <!-- Crossfader -->
+  <div class="crossfader-row">
+    <span class="xf-label a">A</span>
+    <input type="range" id="crossfader" min="0" max="100" value="50" step="1">
+    <span class="xf-label b">B</span>
+  </div>
+
+  <!-- Hint bar -->
+  <div class="library-row">
+    <div class="library-header">
+      <span class="library-title">How to use</span>
+      <span class="sc-hint">Paste any public SoundCloud track URL into a deck and hit Load → Play</span>
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.2);line-height:1.7;padding-top:2px;">
+      Example: <span style="color:rgba(255,102,0,0.6)">https://soundcloud.com/artist/track-name</span>
+      &nbsp;·&nbsp; Crossfader blends volume between decks
+      &nbsp;·&nbsp; Both decks play independently via the SoundCloud Widget API
+      &nbsp;·&nbsp; Some tracks may be restricted by the artist or region
+    </div>
+  </div>
+
+</div><!-- /#main -->
+
+<!-- SoundCloud Widget API -->
+<script src="https://w.soundcloud.com/player/api.js"></script>
+
+<script>
+const API = "https://api.sikkmixx.com"
+const token = localStorage.getItem("token")
+
+// ── Auth ─────────────────────────────────────────────────────────
+async function checkAuth() {
+  if (!token) { window.location.href = '/login.html'; return false }
+  try {
+    const res = await fetch(`${API}/me`, { headers: { "Authorization": `Bearer ${token}` } })
+    if (!res.ok) { localStorage.removeItem("token"); window.location.href = '/login.html'; return false }
+    const me = await res.json()
+    document.getElementById("profileBtn").textContent = `@${me.username}`
+    document.getElementById("profileBtn").style.display = "inline-block"
+    document.getElementById("logoutBtn").style.display = "inline-block"
+    document.getElementById("auth-gate").style.display = "none"
+    return true
+  } catch {
+    window.location.href = '/login.html'
+    return false
+  }
+}
+
+document.getElementById("logoutBtn").addEventListener("click", e => {
+  e.preventDefault()
+  localStorage.removeItem("token")
+  window.location.href = '/'
+})
+
+// ── Deck state ────────────────────────────────────────────────────
+const DECKS = {
+  a: {
+    id: 'a',
+    widget: null,
+    isPlaying: false,
+    isReady: false,
+    volume: 80,
+    xfadeGain: 1.0,
+    discAngle: 0,
+    canvasCtx: null,
+    animBass: 0,
+  },
+  b: {
+    id: 'b',
+    widget: null,
+    isPlaying: false,
+    isReady: false,
+    volume: 80,
+    xfadeGain: 1.0,
+    discAngle: 0,
+    canvasCtx: null,
+    animBass: 0,
+  }
+}
+
+// ── Load track via Widget API ─────────────────────────────────────
+function loadURL(id) {
+  const urlInput = document.getElementById(`url-${id}`)
+  const rawURL = urlInput.value.trim()
+  if (!rawURL) return
+
+  // Validate it looks like a SoundCloud URL
+  if (!rawURL.includes('soundcloud.com')) {
+    setStatus(id, 'invalid url', 'error')
+    return
+  }
+
+  setStatus(id, 'loading...', '')
+
+  const iframe = document.getElementById(`sc-iframe-${id}`)
+  const widgetURL = `https://w.soundcloud.com/player/?url=${encodeURIComponent(rawURL)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`
+
+  iframe.src = widgetURL
+
+  // Wait for iframe to load, then bind widget
+  iframe.onload = () => {
+    const deck = DECKS[id]
+    deck.widget = SC.Widget(iframe)
+
+    deck.widget.bind(SC.Widget.Events.READY, () => {
+      deck.isReady = true
+      setStatus(id, 'ready', 'ready')
+      // Get track info
+      deck.widget.getCurrentSound(sound => {
+        if (sound) {
+          document.getElementById(`title-${id}`).textContent = sound.title || 'Unknown track'
+          document.getElementById(`artist-${id}`).textContent = sound.user?.username || ''
+        }
+      })
+      // Apply current volume
+      applyVolume(id)
+    })
+
+    deck.widget.bind(SC.Widget.Events.PLAY, () => {
+      deck.isPlaying = true
+      setStatus(id, 'playing', 'playing')
+      document.getElementById(`play-${id}`).textContent = '⏸'
+      document.getElementById(`play-${id}`).classList.add('is-playing')
+    })
+
+    deck.widget.bind(SC.Widget.Events.PAUSE, () => {
+      deck.isPlaying = false
+      setStatus(id, 'paused', 'ready')
+      document.getElementById(`play-${id}`).textContent = '▶'
+      document.getElementById(`play-${id}`).classList.remove('is-playing')
+    })
+
+    deck.widget.bind(SC.Widget.Events.FINISH, () => {
+      deck.isPlaying = false
+      setStatus(id, 'finished', 'ready')
+      document.getElementById(`play-${id}`).textContent = '▶'
+      document.getElementById(`play-${id}`).classList.remove('is-playing')
+    })
+
+    deck.widget.bind(SC.Widget.Events.ERROR, () => {
+      setStatus(id, 'error / restricted', 'error')
+      document.getElementById(`title-${id}`).textContent = 'Track unavailable or restricted'
+    })
+  }
+}
+
+// ── Play / Pause ──────────────────────────────────────────────────
+function togglePlay(id) {
+  const deck = DECKS[id]
+  if (!deck.widget || !deck.isReady) return
+  if (deck.isPlaying) {
+    deck.widget.pause()
+  } else {
+    deck.widget.play()
+  }
+}
+
+document.getElementById('play-a').addEventListener('click', () => togglePlay('a'))
+document.getElementById('play-b').addEventListener('click', () => togglePlay('b'))
+
+// ── Volume ────────────────────────────────────────────────────────
+function applyVolume(id) {
+  const deck = DECKS[id]
+  if (!deck.widget || !deck.isReady) return
+  const effective = Math.round(deck.volume * deck.xfadeGain)
+  deck.widget.setVolume(effective)
+}
+
+document.getElementById('vol-a').addEventListener('input', e => {
+  DECKS.a.volume = parseInt(e.target.value)
+  document.getElementById('vol-val-a').textContent = `${DECKS.a.volume}%`
+  applyVolume('a')
+})
+document.getElementById('vol-b').addEventListener('input', e => {
+  DECKS.b.volume = parseInt(e.target.value)
+  document.getElementById('vol-val-b').textContent = `${DECKS.b.volume}%`
+  applyVolume('b')
+})
+
+// ── Crossfader ────────────────────────────────────────────────────
+document.getElementById('crossfader').addEventListener('input', e => {
+  const pos = parseInt(e.target.value)
+  // Equal-power crossfade
+  const angle = (pos / 100) * Math.PI / 2
+  DECKS.a.xfadeGain = Math.cos(angle)
+  DECKS.b.xfadeGain = Math.sin(angle)
+  applyVolume('a')
+  applyVolume('b')
+})
+
+// ── Status helper ─────────────────────────────────────────────────
+function setStatus(id, text, cls) {
+  const el = document.getElementById(`status-${id}`)
+  el.textContent = text
+  el.className = 'sc-status' + (cls ? ` ${cls}` : '')
+}
+
+// ── Disc animation (visual only — no audio analysis with Widget API) ──
+const ACCENT_A = { r: 255, g: 102, b: 0 }
+const ACCENT_B = { r: 255, g: 153, b: 0 }
+const RPM = 33.33
+const RAD_PER_MS = (RPM / 60) * 2 * Math.PI / 1000
+
+function initCanvases() {
+  for (const [id, deck] of Object.entries(DECKS)) {
+    const canvas = document.getElementById(`vis-${id}`)
+    canvas.width = canvas.offsetWidth || 300
+    canvas.height = canvas.offsetHeight || 36
+    deck.canvasCtx = canvas.getContext('2d')
+  }
+}
+
+function drawDisc(id, dt) {
+  const deck = DECKS[id]
+  const canvas = document.getElementById(`disc-${id}`)
+  const ctx = canvas.getContext('2d')
+  const accent = id === 'a' ? ACCENT_A : ACCENT_B
+  const accentStr = `rgb(${accent.r},${accent.g},${accent.b})`
+  const accentDim = `rgba(${accent.r},${accent.g},${accent.b},0.3)`
+
+  if (deck.isPlaying) {
+    deck.discAngle += RAD_PER_MS * dt
+    // Fake bass pulse
+    deck.animBass = deck.animBass * 0.85 + 0.15 * (0.3 + 0.7 * Math.abs(Math.sin(Date.now() / 300)))
+  } else {
+    deck.animBass *= 0.9
+  }
+
+  const w = canvas.width, h = canvas.height
+  const cx = w / 2, cy = h / 2
+  const r = Math.min(cx, cy) - 2
+
+  ctx.clearRect(0, 0, w, h)
+
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate(deck.discAngle)
+
+  // Vinyl body
+  const vinylGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r)
+  vinylGrad.addColorStop(0, '#222')
+  vinylGrad.addColorStop(0.3, '#111')
+  vinylGrad.addColorStop(1, '#050505')
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fillStyle = vinylGrad
+  ctx.fill()
+
+  // Grooves
+  for (let gr = 0.35; gr <= 0.9; gr += 0.045) {
+    ctx.beginPath()
+    ctx.arc(0, 0, r * gr, 0, Math.PI * 2)
+    ctx.strokeStyle = `rgba(255,255,255,0.03)`
+    ctx.lineWidth = 1
+    ctx.stroke()
+  }
+
+  // Accent ring glow
+  const glowIntensity = deck.isPlaying ? (0.4 + deck.animBass * 0.6) : 0.15
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.92, 0, Math.PI * 2)
+  ctx.strokeStyle = `rgba(${accent.r},${accent.g},${accent.b},${glowIntensity})`
+  ctx.lineWidth = 2
+  ctx.shadowBlur = deck.isPlaying ? 16 : 4
+  ctx.shadowColor = accentStr
+  ctx.stroke()
+  ctx.shadowBlur = 0
+
+  // Label
+  const lr = r * 0.28
+  const lg = ctx.createRadialGradient(0, 0, 0, 0, 0, lr)
+  lg.addColorStop(0, `rgba(${accent.r},${accent.g},${accent.b},0.3)`)
+  lg.addColorStop(1, `rgba(${accent.r},${accent.g},${accent.b},0.08)`)
+  ctx.beginPath()
+  ctx.arc(0, 0, lr, 0, Math.PI * 2)
+  ctx.fillStyle = lg
+  ctx.fill()
+
+  ctx.fillStyle = 'rgba(255,255,255,0.7)'
+  ctx.font = `bold ${Math.round(lr * 0.28)}px Segoe UI`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('SIKKMIXX', 0, 0)
+
+  // Center hole
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.038, 0, Math.PI * 2)
+  ctx.fillStyle = '#000'
+  ctx.fill()
+
+  ctx.restore()
+
+  // Outer glow ring when playing
+  if (deck.isPlaying) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(cx, cy, r + 1, 0, Math.PI * 2)
+    ctx.strokeStyle = accentStr
+    ctx.lineWidth = 1.5
+    ctx.shadowBlur = 12 + deck.animBass * 10
+    ctx.shadowColor = accentStr
+    ctx.globalAlpha = 0.5 + deck.animBass * 0.5
+    ctx.stroke()
+    ctx.restore()
+  }
+}
+
+function drawVisualizer(id) {
+  const deck = DECKS[id]
+  if (!deck.canvasCtx) return
+  const canvas = document.getElementById(`vis-${id}`)
+  if (canvas.offsetWidth > 0 && canvas.width !== canvas.offsetWidth) {
+    canvas.width = canvas.offsetWidth
+    canvas.height = canvas.offsetHeight
+  }
+  const ctx = deck.canvasCtx
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  if (!deck.isPlaying) return
+
+  // Animated fake visualizer (no Web Audio access to Widget API audio)
+  const bars = 28
+  const bw = canvas.width / bars
+  const t = Date.now() / 1000
+  const accent = id === 'a' ? ACCENT_A : ACCENT_B
+
+  for (let i = 0; i < bars; i++) {
+    const wave1 = Math.sin(t * 2.1 + i * 0.4) * 0.5 + 0.5
+    const wave2 = Math.sin(t * 3.7 + i * 0.7) * 0.3 + 0.3
+    const norm = (wave1 * 0.6 + wave2 * 0.4) * (0.4 + deck.animBass * 0.6)
+    const h = norm * canvas.height
+    const bright = 45 + norm * 55
+    ctx.fillStyle = `rgba(${accent.r},${accent.g},${accent.b},${0.5 + norm * 0.5})`
+    ctx.shadowBlur = 8
+    ctx.shadowColor = `rgb(${accent.r},${accent.g},${accent.b})`
+    ctx.fillRect(i * bw, canvas.height - h, bw - 2, h)
+  }
+}
+
+// ── Background pulse ──────────────────────────────────────────────
+function updateBG() {
+  const bg = document.getElementById('visual-bg')
+  const aPlaying = DECKS.a.isPlaying
+  const bPlaying = DECKS.b.isPlaying
+  if (!aPlaying && !bPlaying) {
+    bg.style.background = 'radial-gradient(circle at center, #111 0%, #000 80%)'
+    return
+  }
+  const t = Date.now() / 2000
+  const pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 2)
+  const ia = aPlaying ? (0.04 + pulse * 0.03) : 0
+  const ib = bPlaying ? (0.04 + pulse * 0.03) : 0
+  bg.style.background =
+    `radial-gradient(circle at 30% 50%, rgba(255,102,0,${ia}) 0%, transparent 60%),
+     radial-gradient(circle at 70% 50%, rgba(255,153,0,${ib}) 0%, transparent 60%),
+     radial-gradient(circle at center, #111 0%, #000 80%)`
+}
+
+// ── Render loop ───────────────────────────────────────────────────
+let lastFrame = performance.now()
+function renderLoop(now) {
+  requestAnimationFrame(renderLoop)
+  const dt = Math.min(now - lastFrame, 100)
+  lastFrame = now
+  drawDisc('a', dt)
+  drawDisc('b', dt)
+  drawVisualizer('a')
+  drawVisualizer('b')
+  updateBG()
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  // Space = play/pause focused deck (or A by default)
+  if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+    e.preventDefault()
+    togglePlay('a')
+  }
+  if (e.code === 'Enter' && e.target.tagName !== 'INPUT') {
+    e.preventDefault()
+    togglePlay('b')
+  }
+})
+
+// Also allow Enter in URL inputs to trigger load
+document.getElementById('url-a').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadURL('a')
+})
+document.getElementById('url-b').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadURL('b')
+})
+
+// ── Boot ──────────────────────────────────────────────────────────
+async function init() {
+  const ok = await checkAuth()
+  if (!ok) return
+  initCanvases()
+  requestAnimationFrame(renderLoop)
+}
+
+init()
+</script>
+
+</body>
+</html>
