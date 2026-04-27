@@ -639,6 +639,16 @@ border: 1px solid rgba(255,255,255,0.1);
   text-transform: uppercase;
 }
 
+#track-bitrate {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: rgba(255, 0, 204, 0.5);
+  margin-top: 2px;
+  min-height: 14px;
+  text-transform: uppercase;
+}
+
   </style>
 <!---------------------------------END   STYLE -->
 
@@ -669,6 +679,7 @@ border: 1px solid rgba(255,255,255,0.1);
     <div class="track-title" id="trackTitle">Loading...</div>
     <div id="track-bpm"></div>
     <div id="track-key"></div>
+    <div id="track-bitrate"></div>
     <div id="up-next">Up next: <span id="up-next-title"></span></div>
     <button id="vote-btn" disabled>♥ <span id="vote-count">0</span></button>
     <audio id="player" controls crossorigin="anonymous"></audio>
@@ -1154,6 +1165,12 @@ function showKey(key) {
   el.textContent = key || ''
 }
 
+function showBitrate(kbps) {
+  const el = document.getElementById('track-bitrate')
+  if (!el) return
+  el.textContent = kbps ? `${kbps} kbps` : ''
+}
+
 function fft(re, im) {
   const n = re.length
   for (let i = 1, j = 0; i < n; i++) {
@@ -1237,6 +1254,12 @@ async function analyzeBPMForTrack(track) {
     const audioBuffer = await decodeCtx.decodeAudioData(arrayBuffer)
     await decodeCtx.close()
     if (bpmAnalysisId !== analysisId) return
+
+    // Bitrate from file size and duration
+    if (audioBuffer.duration > 0) {
+      const kbps = Math.round((arrayBuffer.byteLength * 8) / audioBuffer.duration / 1000)
+      if (bpmAnalysisId === analysisId && currentTrack?.id === track.id) showBitrate(kbps)
+    }
     const bpm = detectBPM(audioBuffer)
     if (bpm > 0) {
       saveBPMToCache(track.id, bpm)
@@ -1292,6 +1315,7 @@ document.getElementById("trackTitle").innerText =
   showBPM(knownBPM)
   const knownKey = track.key || getKeyCache()[track.id] || null
   showKey(knownKey)
+  showBitrate(null)
   if (!knownBPM || !knownKey) analyzeBPMForTrack(track)
 }
 
