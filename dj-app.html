@@ -566,19 +566,19 @@
       }
       .deck-panel {
         flex: 1 1 0;
-        height: 132px;
+        height: 211px;
         padding: 5px 8px;
         gap: 3px;
         border-radius: 10px;
       }
       .disc-canvas {
-        width: 62px;
-        height: 62px;
+        width: 92px;
+        height: 92px;
       }
       .deck-body { gap: 7px; }
-      .controls-col { gap: 2px; }
-      .deck-waveform,
-      .deck-visualizer { height: 19px; }
+      .controls-col { gap: 4px; }
+      .deck-waveform { height: 34px; }
+      .deck-visualizer { height: 38px; }
       .deck-track-title {
         min-height: 12px;
         font-size: 10px;
@@ -600,8 +600,8 @@
         left: 1px;
         gap: 4px;
       }
-      .ctrl-btn.play-btn { width: 30px; height: 30px; font-size: 12px; }
-      .ctrl-btn.skip-btn { width: 22px; height: 22px; font-size: 9px; }
+      .ctrl-btn.play-btn { width: 36px; height: 36px; font-size: 14px; }
+      .ctrl-btn.skip-btn { width: 26px; height: 26px; font-size: 10px; }
       .slider-section {
         gap: 1px;
         justify-content: flex-start;
@@ -646,18 +646,18 @@
 
     @media (max-height: 380px) and (orientation: landscape) {
       .deck-panel {
-        height: 116px;
+        height: 186px;
         padding: 4px 7px;
       }
       .disc-canvas {
-        width: 54px;
-        height: 54px;
+        width: 78px;
+        height: 78px;
       }
-      .deck-waveform,
-      .deck-visualizer { height: 15px; }
+      .deck-waveform { height: 28px; }
+      .deck-visualizer { height: 30px; }
       .deck-track-title { min-height: 11px; }
-      .ctrl-btn.play-btn { width: 27px; height: 27px; }
-      .ctrl-btn.skip-btn { width: 20px; height: 20px; }
+      .ctrl-btn.play-btn { width: 32px; height: 32px; }
+      .ctrl-btn.skip-btn { width: 23px; height: 23px; }
       .slider-label,
       .slider-val { font-size: 7px; }
       .library-row { min-height: 68px; }
@@ -919,7 +919,7 @@ document.getElementById('crossfader').addEventListener('input', e => {
 function drawDeck(deck, accentHue) {
   const canvas = document.getElementById(`vis-${deck.id}`)
   if (!deck.canvasCtx) return 0
-  if (canvas.offsetWidth > 0 && canvas.width !== canvas.offsetWidth) {
+  if (canvas.offsetWidth > 0 && (canvas.width !== canvas.offsetWidth || canvas.height !== canvas.offsetHeight)) {
     canvas.width = canvas.offsetWidth
     canvas.height = canvas.offsetHeight
   }
@@ -927,27 +927,60 @@ function drawDeck(deck, accentHue) {
   const ctx = deck.canvasCtx
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-  const bars = 32
-  const step = Math.floor(deck.dataArray.length / bars)
-  const barWidth = canvas.width / bars
-
-  let bassSum = 0
-  for (let i = 0; i < 8; i++) bassSum += deck.dataArray[i]
-  deck.bassSmoothed = deck.bassSmoothed * 0.8 + (bassSum / 8) * 0.2
-
-  for (let i = 0; i < bars; i++) {
-    let sum = 0
-    for (let j = 0; j < step; j++) sum += deck.dataArray[i * step + j]
-    const norm = (sum / step) / 255
-    const scaled = Math.pow(norm, 1.5) * canvas.height
-    const hue = accentHue - norm * 60
-    const bright = 50 + norm * 50
-    ctx.fillStyle = `hsl(${hue}, 100%, ${bright}%)`
-    ctx.shadowBlur = 14
-    ctx.shadowColor = `hsl(${hue}, 100%, 65%)`
-    ctx.fillRect(i * barWidth, canvas.height - scaled, barWidth - 2, scaled)
+  let sumSquares = 0
+  for (const value of deck.dataArray) {
+    const norm = value / 255
+    sumSquares += norm * norm
   }
-  return deck.bassSmoothed / 255
+  const rms = Math.sqrt(sumSquares / deck.dataArray.length)
+  const level = Math.min(1, Math.pow(rms * 1.65, 0.85))
+  deck.outputSmoothed = (deck.outputSmoothed || 0) * 0.74 + level * 0.26
+
+  const width = canvas.width
+  const height = canvas.height
+  const meterWidth = Math.max(12, Math.min(28, Math.floor(width * 0.1)))
+  const gap = Math.max(5, Math.floor(meterWidth * 0.45))
+  const center = width / 2
+  const leftX = center - meterWidth - gap / 2
+  const rightX = center + gap / 2
+  const filledHeight = Math.round(height * deck.outputSmoothed)
+  const floorY = height - 2
+  const segments = [
+    { from: 0, to: 0.68, color: '#25f06a' },
+    { from: 0.68, to: 0.86, color: '#ffe34f' },
+    { from: 0.86, to: 1, color: '#ff3b3b' }
+  ]
+
+  ctx.fillStyle = 'rgba(255,255,255,0.06)'
+  ctx.fillRect(leftX, 1, meterWidth, height - 3)
+  ctx.fillRect(rightX, 1, meterWidth, height - 3)
+
+  for (const segment of segments) {
+    const segTop = floorY - Math.round(height * segment.to)
+    const segBottom = floorY - Math.round(height * segment.from)
+    const activeTop = Math.max(segTop, floorY - filledHeight)
+    if (activeTop < segBottom) {
+      ctx.fillStyle = segment.color
+      ctx.shadowBlur = 8
+      ctx.shadowColor = segment.color
+      ctx.fillRect(leftX, activeTop, meterWidth, segBottom - activeTop)
+      ctx.fillRect(rightX, activeTop, meterWidth, segBottom - activeTop)
+    }
+  }
+
+  ctx.shadowBlur = 0
+  ctx.fillStyle = 'rgba(255,255,255,0.18)'
+  for (let y = height - 8; y > 2; y -= 7) {
+    ctx.fillRect(leftX, y, meterWidth, 1)
+    ctx.fillRect(rightX, y, meterWidth, 1)
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.22)'
+  ctx.font = '8px Segoe UI, sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText('OUT', center, 9)
+
+  return deck.outputSmoothed
 }
 
 function startVisualizerLoop() {
