@@ -975,45 +975,13 @@ setupSliders('a')
 setupSliders('b')
 
 // ── Votes ─────────────────────────────────────────────────────────
-async function fetchMyVotes() {
-  if (!token) return
-  try {
-    const res = await fetch(`${API}/my-votes`, { headers: { "Authorization": `Bearer ${token}` } })
-    if (res.ok) { myVotes = new Set(await res.json()); updateVoteBtn('a'); updateVoteBtn('b') }
-  } catch {}
-}
+async function fetchMyVotes() { /* removed in app version */ }
 
-function updateVoteBtn(deckId) {
-  const deck = DECKS[deckId]
-  const btn = document.getElementById(`vote-${deckId}`)
-  const countEl = document.getElementById(`vcount-${deckId}`)
-  if (!deck.currentTrack) return
-  countEl.textContent = deck.currentTrack.vote_count || 0
-  if (!currentUser) { btn.disabled = true; btn.classList.remove('voted'); return }
-  btn.disabled = false
-  btn.classList.toggle('voted', myVotes.has(deck.currentTrack.id))
-}
+function updateVoteBtn(deckId) { /* removed in app version */ }
 
-async function voteDeck(deckId) {
-  const deck = DECKS[deckId]
-  if (!deck.currentTrack || !currentUser) return
-  try {
-    const res = await fetch(`${API}/vote`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ track_id: deck.currentTrack.id })
-    })
-    if (!res.ok) return
-    const data = await res.json()
-    if (data.voted) { myVotes.add(deck.currentTrack.id); deck.currentTrack.vote_count = (deck.currentTrack.vote_count || 0) + 1 }
-    else { myVotes.delete(deck.currentTrack.id); deck.currentTrack.vote_count = Math.max(0, (deck.currentTrack.vote_count || 0) - 1) }
-    updateVoteBtn(deckId)
-    buildLibrary(document.getElementById('library-search').value)
-  } catch {}
-}
+async function voteDeck(deckId) { /* removed in app version */ }
 
-document.getElementById('vote-a').addEventListener('click', () => voteDeck('a'))
-document.getElementById('vote-b').addEventListener('click', () => voteDeck('b'))
+// vote-a and vote-b buttons don't exist in app version
 
 // ── Library ───────────────────────────────────────────────────────
 function buildLibrary(filter = '') {
