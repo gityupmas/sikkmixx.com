@@ -416,11 +416,137 @@
 
     /* ── Portrait phone: stack decks vertically ── */
     @media (max-width: 700px) and (orientation: portrait) {
-      .decks-row { flex-direction: column; }
-      .disc-canvas { width: 100px; height: 100px; }
-      .deck-panel { padding: 8px 10px; }
-      #main { gap: 4px; padding: 42px 6px 6px; }
-      .library-row { height: 110px; }
+      body {
+        height: 100dvh;
+      }
+      #main {
+        height: 100dvh;
+        gap: 4px;
+        padding: 38px 6px 6px;
+      }
+      .decks-row {
+        flex: 0 0 auto;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .deck-panel {
+        flex: 0 0 auto;
+        padding: 6px 8px;
+        gap: 3px;
+        border-radius: 10px;
+      }
+      .deck-header-row { gap: 5px; }
+      .deck-label { font-size: 8px; letter-spacing: 2px; }
+      .deck-bpm,
+      .deck-key { font-size: 9px; }
+      .sync-btn {
+        padding: 2px 7px;
+        font-size: 7px;
+        border-radius: 8px;
+      }
+      .deck-track-title {
+        min-height: 13px;
+        font-size: 10px;
+        line-height: 1.2;
+      }
+      .deck-body {
+        flex: 0 0 auto;
+        gap: 7px;
+      }
+      .disc-canvas {
+        width: 78px;
+        height: 78px;
+      }
+      .controls-col { gap: 3px; }
+      .deck-waveform,
+      .deck-visualizer {
+        height: 24px;
+      }
+      .deck-controls {
+        bottom: 1px;
+        left: 1px;
+        gap: 4px;
+      }
+      .ctrl-btn.play-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 14px;
+      }
+      .ctrl-btn.skip-btn {
+        width: 25px;
+        height: 25px;
+        font-size: 10px;
+      }
+      .slider-section {
+        gap: 1px;
+        justify-content: flex-start;
+      }
+      .slider-row { gap: 2px; }
+      .slider-label {
+        width: 32px;
+        font-size: 7px;
+      }
+      .slider-val {
+        width: 27px;
+        font-size: 7px;
+      }
+      input[type="range"] { height: 2px; }
+      input[type="range"]::-webkit-slider-thumb {
+        width: 11px;
+        height: 11px;
+      }
+      .nudge-btn {
+        padding: 1px 4px;
+        font-size: 8px;
+      }
+      .crossfader-row {
+        padding: 4px 10px;
+        gap: 9px;
+      }
+      .library-row {
+        flex: 1 1 auto;
+        min-height: 150px;
+        height: auto;
+        padding: 6px 9px;
+      }
+      .library-header {
+        gap: 7px;
+        margin-bottom: 4px;
+      }
+      #library-search {
+        flex: 1;
+        min-width: 0;
+        width: auto;
+      }
+    }
+
+    @media (max-width: 700px) and (max-height: 620px) and (orientation: portrait) {
+      #main { padding-top: 30px; }
+      .deck-panel { padding: 5px 7px; }
+      .deck-track-title { min-height: 12px; }
+      .disc-canvas {
+        width: 68px;
+        height: 68px;
+      }
+      .deck-waveform,
+      .deck-visualizer {
+        height: 20px;
+      }
+      .ctrl-btn.play-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+      }
+      .ctrl-btn.skip-btn {
+        width: 22px;
+        height: 22px;
+        font-size: 9px;
+      }
+      .slider-label,
+      .slider-val {
+        font-size: 6px;
+      }
+      .library-row { min-height: 120px; }
     }
 
     /* ── Landscape phone: side-by-side decks, compact everything ── */
