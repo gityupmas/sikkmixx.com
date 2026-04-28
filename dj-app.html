@@ -37,8 +37,6 @@
       border-color: #ff00cc;
       box-shadow: 0 0 10px #ff00cc;
     }
-    #backBtn  { left: 15px; }
-    #backBtn:hover { color: #00e0ff; border-color: #00e0ff; box-shadow: 0 0 10px #00e0ff; }
     #spotifyBtn { right: 100px; color: rgba(30,215,96,0.8); border-color: rgba(30,215,96,0.4); }
     #spotifyBtn:hover { color: #1ed760; border-color: #1ed760; box-shadow: 0 0 10px rgba(30,215,96,0.5); }
 
@@ -137,7 +135,7 @@
 
     /* ── Waveform ── */
     .deck-waveform {
-      width: 100%; height: 80px; flex-shrink: 0; border-radius: 6px;
+      width: 100%; height: 36px; flex-shrink: 0; border-radius: 6px;
       display: block; cursor: crosshair;
     }
     .deck-a .deck-waveform { border: 1px solid rgba(255,0,204,0.12); }
@@ -457,9 +455,6 @@
       .lib-track-name { font-size: 11px; }
       /* Hide header buttons in landscape to save space */
       .header-btn { font-size: 11px; padding: 4px 8px; top: 4px; }
-      #backBtn { left: 6px; }
-      #profileBtn { left: 80px; }
-      #logoutBtn { right: 6px; }
       #spotifyBtn { right: 90px; }
       #soundcloudBtn { right: 185px; }
     }
@@ -471,7 +466,6 @@
 <div id="visual-bg"></div>
 
 <!-- Header -->
-<a href="/" id="backBtn" class="header-btn">← Back</a>
 
 <!-- Hidden audio elements -->
 <audio id="player-a" crossorigin="anonymous" preload="none"></audio>
@@ -964,7 +958,6 @@ setupSliders('b')
 async function fetchMyVotes() { /* removed in app version */ }
 function updateVoteBtn(deckId) { /* removed in app version */ }
 async function voteDeck(deckId) { /* removed in app version */ }
-// vote-a and vote-b buttons don't exist in app version
 
 // ── Library ───────────────────────────────────────────────────────
 function buildLibrary(filter = '') {
@@ -1026,9 +1019,8 @@ async function sendHeartbeat() {
   } catch {}
 }
 
-async function pollListeners() { /* removed in app version */ }
-
-function startPresence() { /* removed in app version */ }
+async function pollListeners() { /* removed */ }
+function startPresence() { /* removed */ }
 
 // ── BPM Detection (offline, runs on decoded AudioBuffer) ─────────
 function detectBPM(audioBuffer) {
@@ -1232,7 +1224,7 @@ async function decodeAndRenderWaveform(deckId, url) {
         if (s > max) max = s
       }
       oc.fillStyle = dimColor
-      oc.fillRect(x, mid + min * mid * 0.95, 1, Math.max(1, (max - min) * mid * 0.95))
+      oc.fillRect(x, mid + min * mid * 0.5, 1, Math.max(1, (max - min) * mid * 0.5))
     }
 
     deck.waveOffscreen = offscreen
