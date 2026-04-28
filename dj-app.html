@@ -1052,6 +1052,9 @@ function loadTrackToDeck(deckId, trackIndex) {
   deck.currentTrack = track
   deck.playCountedId = null
   deck.waveOffscreen = null  // clear old waveform
+  deck.audioBuffer = null
+  deck.reverseAudioBuffer = null
+  stopScratchGrain(deck)
 
   // BPM — DB value first, then localStorage cache, then wait for analysis
   const knownBPM = track.bpm || getBPMCache()[track.id] || null
@@ -1402,6 +1405,7 @@ async function decodeAndRenderWaveform(deckId, url) {
     // Use a temp AudioContext for decoding if main one not ready yet
     const ctx2 = audioContext || new (window.AudioContext || window.webkitAudioContext)()
     const audioBuffer = await ctx2.decodeAudioData(arrayBuffer)
+    DECKS[deckId].audioBuffer = audioBuffer
 
     // Offline BPM + Key analysis — skip if already cached
     const deck = DECKS[deckId]
@@ -1659,11 +1663,66 @@ function drawDisc(deckId) {
 // ── Scratch ────────────────────────────────────────────────────────
 // Normal vinyl: 33.33 RPM = (33.33/60)*2π rad/s ≈ 0.003491 rad/ms
 const NORMAL_RADS_PER_MS = (33.33 / 60) * 2 * Math.PI / 1000
+const SCRATCH_SECONDS_PER_REV = 1.8
+const SCRATCH_GRAIN_SECONDS = 0.09
 
 function getScratchAngle(e, canvas) {
   const rect = canvas.getBoundingClientRect()
   return Math.atan2(e.clientY - (rect.top + rect.height / 2),
                     e.clientX - (rect.left + rect.width  / 2))
+}
+
+function getReverseAudioBuffer(deck) {
+  if (!deck.audioBuffer || !audioContext) return null
+  if (deck.reverseAudioBuffer) return deck.reverseAudioBuffer
+
+  const src = deck.audioBuffer
+  const reversed = audioContext.createBuffer(src.numberOfChannels, src.length, src.sampleRate)
+  for (let ch = 0; ch < src.numberOfChannels; ch++) {
+    const input = src.getChannelData(ch)
+    const output = reversed.getChannelData(ch)
+    for (let i = 0, j = input.length - 1; i < input.length; i++, j--) output[i] = input[j]
+  }
+  deck.reverseAudioBuffer = reversed
+  return reversed
+}
+
+function stopScratchGrain(deck) {
+  if (deck.scratchSource) {
+    try { deck.scratchSource.stop() } catch {}
+    deck.scratchSource = null
+  }
+}
+
+function playScratchGrain(deck, direction, speedRatio) {
+  if (!audioContext || !deck.audioBuffer || !deck.bassFilter || !deck.el.duration) return
+
+  const buffer = direction < 0 ? getReverseAudioBuffer(deck) : deck.audioBuffer
+  if (!buffer) return
+
+  const source = audioContext.createBufferSource()
+  const gain = audioContext.createGain()
+  const absSpeed = Math.max(0.25, Math.min(3.2, Math.abs(speedRatio)))
+  const currentTime = Math.max(0, Math.min(deck.el.duration, deck.el.currentTime))
+  const offset = direction < 0
+    ? Math.max(0, Math.min(buffer.duration - SCRATCH_GRAIN_SECONDS, buffer.duration - currentTime))
+    : Math.max(0, Math.min(buffer.duration - SCRATCH_GRAIN_SECONDS, currentTime))
+  const now = audioContext.currentTime
+
+  stopScratchGrain(deck)
+
+  source.buffer = buffer
+  source.playbackRate.value = absSpeed
+  gain.gain.setValueAtTime(0.0001, now)
+  gain.gain.exponentialRampToValueAtTime(0.95, now + 0.012)
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + SCRATCH_GRAIN_SECONDS)
+  source.connect(gain).connect(deck.bassFilter)
+  source.start(now, offset, SCRATCH_GRAIN_SECONDS)
+  source.stop(now + SCRATCH_GRAIN_SECONDS + 0.015)
+  source.onended = () => {
+    if (deck.scratchSource === source) deck.scratchSource = null
+  }
+  deck.scratchSource = source
 }
 
 ;['a', 'b'].forEach(id => {
@@ -1673,14 +1732,14 @@ function getScratchAngle(e, canvas) {
   canvas.addEventListener('pointerdown', e => {
     e.preventDefault()
     if (!audioContext) initAudio()
+    if (audioContext.state === 'suspended') audioContext.resume()
     canvas.setPointerCapture(e.pointerId)
     deck.scratching = true
     deck.scratchWasPlaying = !deck.el.paused
     deck.scratchLastAngle = getScratchAngle(e, canvas)
     deck.scratchLastTime  = performance.now()
-    // Start playing at near-zero rate so audio is ready to scratch immediately
-    if (deck.el.paused) deck.el.play().catch(() => {})
-    deck.el.playbackRate = 0.01
+    deck.scratchBaseRate = parseFloat(document.getElementById(`tempo-${id}`).value) / 100
+    if (!deck.el.paused) deck.el.pause()
     canvas.classList.add('scratching')
   })
 
@@ -1701,6 +1760,15 @@ function getScratchAngle(e, canvas) {
     const angVel    = delta / dt                       // rad/ms (signed)
     const speedRatio = angVel / NORMAL_RADS_PER_MS     // 1.0 = normal vinyl speed
 
+    if (deck.el.duration) {
+      deck.el.currentTime = Math.max(0, Math.min(
+        deck.el.duration,
+        deck.el.currentTime + (delta / (2 * Math.PI)) * SCRATCH_SECONDS_PER_REV
+      ))
+    }
+    if (Math.abs(speedRatio) > 0.08) playScratchGrain(deck, Math.sign(delta) || 1, speedRatio)
+    if (deck.audioBuffer) return
+
     if (speedRatio >= 0) {
       // Forward scratch — let audio play at scratch speed (the pitch shift IS the scratch sound)
       deck.el.playbackRate = Math.max(0.01, Math.min(4, speedRatio))
@@ -1719,10 +1787,12 @@ function getScratchAngle(e, canvas) {
   function endScratch() {
     if (!deck.scratching) return
     deck.scratching = false
+    stopScratchGrain(deck)
     canvas.classList.remove('scratching')
     // Restore rate from tempo slider
-    deck.el.playbackRate = parseFloat(document.getElementById(`tempo-${id}`).value) / 100
-    if (!deck.scratchWasPlaying) deck.el.pause()
+    deck.el.playbackRate = deck.scratchBaseRate || parseFloat(document.getElementById(`tempo-${id}`).value) / 100
+    if (deck.scratchWasPlaying) deck.el.play().catch(() => {})
+    else deck.el.pause()
   }
 
   canvas.addEventListener('pointerup',     endScratch)
