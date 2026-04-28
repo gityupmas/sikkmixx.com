@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SiKKMiXX — DJ Booth</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: white;
+      overflow: hidden;
+      height: 100vh;
+      transition: transform 0.1s linear;
+    }
+
+    /* ── Header buttons ── */
+    .header-btn {
+      position: fixed;
+      top: 10px;
+      opacity: 0.5;
+      font-size: 14px;
+      text-decoration: none;
+      color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 6px 12px;
+      border-radius: 20px;
+      backdrop-filter: blur(6px);
+      transition: all 0.3s ease;
+      z-index: 20;
+    }
+    .header-btn:hover {
+      color: #ff00cc;
+      opacity: 1;
+      border-color: #ff00cc;
+      box-shadow: 0 0 10px #ff00cc;
+    }
+    #backBtn  { left: 15px; }
+    #backBtn:hover { color: #00e0ff; border-color: #00e0ff; box-shadow: 0 0 10px #00e0ff; }
+    #spotifyBtn { right: 100px; color: rgba(30,215,96,0.8); border-color: rgba(30,215,96,0.4); }
+    #spotifyBtn:hover { color: #1ed760; border-color: #1ed760; box-shadow: 0 0 10px rgba(30,215,96,0.5); }
+
+    /* ── Sync / Nudge ── */
+    .sync-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.4);
+      border-radius: 10px; padding: 2px 9px;
+      font-size: 8px; letter-spacing: 1.5px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease; flex-shrink: 0;
+    }
+    .deck-a .sync-btn:hover, .deck-a .sync-btn.synced {
+      border-color: #ff00cc; color: #ff00cc; box-shadow: 0 0 8px rgba(255,0,204,0.4);
+    }
+    .deck-b .sync-btn:hover, .deck-b .sync-btn.synced {
+      border-color: #00e0ff; color: #00e0ff; box-shadow: 0 0 8px rgba(0,224,255,0.4);
+    }
+    .nudge-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.3);
+      border-radius: 4px; padding: 1px 5px;
+      font-size: 9px; cursor: pointer; transition: all 0.15s ease;
+      flex-shrink: 0; line-height: 1;
+    }
+    .nudge-btn:hover { border-color: rgba(255,255,255,0.35); color: rgba(255,255,255,0.65); }
+
+    /* ── Backgrounds ── */
+    #bg-image {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: url("omnia.webp") center center / cover no-repeat;
+      z-index: -2; filter: brightness(0.5) contrast(1.4);
+    }
+    #visual-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1;
+      background: radial-gradient(circle at center, #111 0%, #000 80%);
+      transition: background 0.2s ease;
+    }
+
+    /* ── Main layout ── */
+    #main {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 46px 10px 8px;
+      gap: 6px;
+    }
+
+    /* ── Decks row ── */
+    .decks-row {
+      display: flex;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .deck-panel {
+      flex: 1;
+      background: rgba(18, 18, 18, 0.6);
+      backdrop-filter: blur(20px);
+      border-radius: 14px;
+      padding: 11px 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+    .deck-panel.deck-a {
+      border: 1px solid rgba(255, 0, 204, 0.35);
+      box-shadow: 0 0 24px rgba(255,0,204,0.08);
+    }
+    .deck-panel.deck-b {
+      border: 1px solid rgba(0, 224, 255, 0.35);
+      box-shadow: 0 0 24px rgba(0,224,255,0.08);
+    }
+
+    .deck-label {
+      font-size: 9px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700;
+    }
+    .deck-a .deck-label { color: #ff00cc; text-shadow: 0 0 8px rgba(255,0,204,0.7); }
+    .deck-b .deck-label { color: #00e0ff; text-shadow: 0 0 8px rgba(0,224,255,0.7); }
+
+    .deck-track-title {
+      font-size: 12px;
+      color: rgba(255,255,255,0.85);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-height: 16px;
+    }
+
+    .deck-visualizer {
+      width: 100%; height: 36px; flex-shrink: 0; border-radius: 6px;
+      display: block;
+    }
+
+    /* ── Waveform ── */
+    .deck-waveform {
+      width: 100%; height: 80px; flex-shrink: 0; border-radius: 6px;
+      display: block; cursor: crosshair;
+    }
+    .deck-a .deck-waveform { border: 1px solid rgba(255,0,204,0.12); }
+    .deck-b .deck-waveform { border: 1px solid rgba(0,224,255,0.12); }
+
+    /* ── BPM ── */
+    .deck-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .deck-bpm {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      transition: color 0.3s;
+    }
+    .deck-a .deck-bpm { color: #ff00cc; text-shadow: 0 0 6px rgba(255,0,204,0.7); }
+    .deck-b .deck-bpm { color: #00e0ff; text-shadow: 0 0 6px rgba(0,224,255,0.7); }
+    .deck-key {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      opacity: 0.75;
+    }
+    .deck-a .deck-key { color: #ff00cc; }
+    .deck-b .deck-key { color: #00e0ff; }
+    .deck-a .deck-bpm.beat { color: #ff00cc; text-shadow: 0 0 14px #ff00cc, 0 0 4px #fff; }
+    .deck-b .deck-bpm.beat { color: #00e0ff; text-shadow: 0 0 14px #00e0ff, 0 0 4px #fff; }
+
+    .deck-controls {
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .ctrl-btn {
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(8px);
+      color: rgba(255,255,255,0.85); cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; padding: 0;
+    }
+
+    /* Skip buttons */
+    .ctrl-btn.skip-btn {
+      width: 36px; height: 36px; font-size: 14px;
+      letter-spacing: -1px;
+    }
+    .deck-a .ctrl-btn.skip-btn:hover {
+      border-color: #ff00cc; color: #ff00cc;
+      box-shadow: 0 0 10px rgba(255,0,204,0.45);
+      transform: scale(1.1);
+    }
+    .deck-b .ctrl-btn.skip-btn:hover {
+      border-color: #00e0ff; color: #00e0ff;
+      box-shadow: 0 0 10px rgba(0,224,255,0.45);
+      transform: scale(1.1);
+    }
+
+    /* Play button — larger, accent-tinted */
+    .ctrl-btn.play-btn {
+      width: 52px; height: 52px; font-size: 20px;
+    }
+    .deck-a .ctrl-btn.play-btn {
+      background: rgba(255,0,204,0.15);
+      border: 1.5px solid rgba(255,0,204,0.55);
+      color: #ff00cc;
+      box-shadow: 0 0 12px rgba(255,0,204,0.25);
+    }
+    .deck-b .ctrl-btn.play-btn {
+      background: rgba(0,224,255,0.15);
+      border: 1.5px solid rgba(0,224,255,0.55);
+      color: #00e0ff;
+      box-shadow: 0 0 12px rgba(0,224,255,0.25);
+    }
+    .deck-a .ctrl-btn.play-btn:hover {
+      background: rgba(255,0,204,0.28);
+      border-color: #ff00cc;
+      box-shadow: 0 0 22px rgba(255,0,204,0.6);
+      transform: scale(1.08);
+    }
+    .deck-b .ctrl-btn.play-btn:hover {
+      background: rgba(0,224,255,0.28);
+      border-color: #00e0ff;
+      box-shadow: 0 0 22px rgba(0,224,255,0.6);
+      transform: scale(1.08);
+    }
+
+    /* Playing state — pulsing glow ring */
+    .deck-a .ctrl-btn.play-btn.is-playing {
+      background: rgba(255,0,204,0.22);
+      border-color: #ff00cc;
+      animation: pulse-a 1.8s ease-in-out infinite;
+    }
+    .deck-b .ctrl-btn.play-btn.is-playing {
+      background: rgba(0,224,255,0.22);
+      border-color: #00e0ff;
+      animation: pulse-b 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse-a {
+      0%, 100% { box-shadow: 0 0 10px rgba(255,0,204,0.4); }
+      50%       { box-shadow: 0 0 28px rgba(255,0,204,0.85), 0 0 6px rgba(255,0,204,0.4) inset; }
+    }
+    @keyframes pulse-b {
+      0%, 100% { box-shadow: 0 0 10px rgba(0,224,255,0.4); }
+      50%       { box-shadow: 0 0 28px rgba(0,224,255,0.85), 0 0 6px rgba(0,224,255,0.4) inset; }
+    }
+
+    .vote-btn {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.6);
+      border-radius: 14px; padding: 3px 10px;
+      font-size: 11px; cursor: pointer; transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .deck-a .vote-btn:hover, .deck-a .vote-btn.voted {
+      border-color: #ff00cc; color: #ff00cc; box-shadow: 0 0 8px rgba(255,0,204,0.4);
+    }
+    .deck-b .vote-btn:hover, .deck-b .vote-btn.voted {
+      border-color: #00e0ff; color: #00e0ff; box-shadow: 0 0 8px rgba(0,224,255,0.4);
+    }
+    .vote-btn:disabled { cursor: default; opacity: 0.5; }
+
+    /* ── Sliders ── */
+    .slider-section {
+      display: flex; flex-direction: column; gap: 3px;
+      flex: 1; min-height: 0; justify-content: center;
+    }
+    .slider-row {
+      display: flex; align-items: center; gap: 7px;
+    }
+    .slider-label {
+      font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+      color: rgba(255,255,255,0.3); width: 40px; flex-shrink: 0; text-align: right;
+    }
+    .slider-val {
+      font-size: 9px; color: rgba(255,255,255,0.35);
+      width: 36px; flex-shrink: 0; text-align: left;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      flex: 1; height: 3px; border-radius: 2px;
+      background: rgba(255,255,255,0.12);
+      outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px; height: 13px; border-radius: 50%;
+      cursor: pointer; transition: box-shadow 0.2s ease;
+    }
+    .deck-a input[type="range"]::-webkit-slider-thumb {
+      background: #ff00cc; box-shadow: 0 0 6px rgba(255,0,204,0.7);
+    }
+    .deck-b input[type="range"]::-webkit-slider-thumb {
+      background: #00e0ff; box-shadow: 0 0 6px rgba(0,224,255,0.7);
+    }
+
+    /* ── Crossfader ── */
+    .crossfader-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 5px 14px;
+      background: rgba(15,15,15,0.5);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .xf-label {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      font-weight: 700; flex-shrink: 0;
+    }
+    .xf-label.a { color: rgba(255,0,204,0.8); }
+    .xf-label.b { color: rgba(0,224,255,0.8); }
+    .xf-label.center {
+      font-size: 8px; letter-spacing: 1px;
+      color: rgba(255,255,255,0.2);
+    }
+    #crossfader {
+      flex: 1;
+      background: linear-gradient(to right, rgba(255,0,204,0.3), rgba(255,255,255,0.1) 50%, rgba(0,224,255,0.3));
+    }
+    #crossfader::-webkit-slider-thumb {
+      background: white;
+      box-shadow: 0 0 10px rgba(255,255,255,0.8);
+      width: 16px; height: 16px;
+    }
+
+    /* ── Library ── */
+    .library-row {
+      background: rgba(12,12,12,0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 7px 12px;
+      flex-shrink: 0;
+      height: 130px;
+      display: flex;
+      flex-direction: column;
+    }
+    .library-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 5px; flex-shrink: 0;
+    }
+    .library-title {
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(255,255,255,0.25); flex-shrink: 0;
+    }
+    #library-search {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: white; font-size: 11px;
+      padding: 3px 8px; outline: none;
+      width: 160px;
+    }
+    #library-search::placeholder { color: rgba(255,255,255,0.2); }
+    #library-search:focus { border-color: rgba(255,0,204,0.4); }
+
+    #listeners-compact {
+      font-size: 11px; color: rgba(255,255,255,0.3);
+      margin-left: auto; white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; max-width: 260px;
+    }
+    .live-dot {
+      display: inline-block; width: 6px; height: 6px;
+      background: #ff00cc; border-radius: 50%; margin-right: 5px;
+      box-shadow: 0 0 6px #ff00cc; animation: blink-dot 1.5s infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+    #library-list { overflow-y: auto; flex: 1; }
+    #library-list::-webkit-scrollbar { width: 3px; }
+    #library-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+    .lib-track {
+      display: flex; align-items: center; gap: 8px;
+      padding: 3px 2px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+    .lib-track:hover { background: rgba(255,255,255,0.03); border-radius: 4px; }
+    .lib-track-name {
+      flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: 12px; color: rgba(255,255,255,0.7);
+    }
+    .lib-track-meta {
+      font-size: 10px; color: rgba(255,255,255,0.25); flex-shrink: 0;
+    }
+    .lib-key {
+      font-size: 11px; color: rgba(0,224,255,0.85); flex-shrink: 0;
+      letter-spacing: 0.5px; font-weight: 600;
+    }
+    .lib-bpm {
+      font-size: 11px; color: rgba(255,255,255,0.75); flex-shrink: 0;
+      font-variant-numeric: tabular-nums; letter-spacing: 0.3px;
+    }
+    .lib-btn {
+      font-size: 10px; padding: 2px 8px; border-radius: 7px; cursor: pointer;
+      border: 1px solid; background: transparent; letter-spacing: 0.5px;
+      transition: all 0.15s ease; flex-shrink: 0;
+    }
+    .lib-btn.load-a { border-color: rgba(255,0,204,0.35); color: rgba(255,0,204,0.6); }
+    .lib-btn.load-a:hover { border-color: #ff00cc; color: #ff00cc; box-shadow: 0 0 6px rgba(255,0,204,0.4); }
+    .lib-btn.load-b { border-color: rgba(0,224,255,0.35); color: rgba(0,224,255,0.6); }
+    .lib-btn.load-b:hover { border-color: #00e0ff; color: #00e0ff; box-shadow: 0 0 6px rgba(0,224,255,0.4); }
+    .lib-btn.active-a { border-color: #ff00cc; color: #ff00cc; }
+    .lib-btn.active-b { border-color: #00e0ff; color: #00e0ff; }
+
+    /* ── Disc layout ── */
+    .deck-body {
+      display: flex;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .disc-col {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .disc-canvas {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      cursor: grab;
+      flex-shrink: 0;
+      display: block;
+    }
+    .disc-canvas:active { cursor: grabbing; }
+    .disc-canvas.scratching { cursor: grabbing; }
+
+    .controls-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    /* ── Portrait phone: stack decks vertically ── */
+    @media (max-width: 700px) and (orientation: portrait) {
+      .decks-row { flex-direction: column; }
+      .disc-canvas { width: 100px; height: 100px; }
+      .deck-panel { padding: 8px 10px; }
+      #main { gap: 4px; padding: 42px 6px 6px; }
+      .library-row { height: 110px; }
+    }
+
+    /* ── Landscape phone: side-by-side decks, compact everything ── */
+    @media (max-height: 500px) and (orientation: landscape) {
+      #main {
+        padding: 4px 6px 4px;
+        gap: 3px;
+      }
+      .decks-row {
+        flex-direction: row;
+        flex: 1;
+      }
+      .deck-panel {
+        padding: 5px 8px;
+        gap: 3px;
+      }
+      .disc-canvas {
+        width: 72px;
+        height: 72px;
+      }
+      .deck-track-title { font-size: 10px; }
+      .deck-track-artist { font-size: 9px; }
+      .deck-header-row { gap: 4px; }
+      .deck-label { font-size: 8px; }
+      .deck-bpm { font-size: 9px; }
+      .deck-key { font-size: 9px; }
+      .deck-bitrate { font-size: 8px; }
+      .ctrl-btn.play-btn { width: 38px; height: 38px; font-size: 15px; }
+      .ctrl-btn.skip-btn { width: 28px; height: 28px; font-size: 11px; }
+      .slider-label { font-size: 8px; width: 32px; }
+      .slider-val { font-size: 8px; width: 28px; }
+      .crossfader-row { padding: 3px 10px; }
+      .xf-label { font-size: 9px; }
+      .library-row { height: 80px; }
+      .library-title { font-size: 8px; }
+      .lib-track-name { font-size: 11px; }
+      /* Hide header buttons in landscape to save space */
+      .header-btn { font-size: 11px; padding: 4px 8px; top: 4px; }
+      #backBtn { left: 6px; }
+      #spotifyBtn { right: 90px; }
+      #soundcloudBtn { right: 185px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="bg-image"></div>
+<div id="visual-bg"></div>
+
+<!-- Header -->
+<a href="/" id="backBtn" class="header-btn">← Back</a>
+<a href="#" id="spotifyBtn" class="header-btn" style="display:none;">🎵 Spotify</a>
+
+<!-- Hidden audio elements -->
+<audio id="player-a" crossorigin="anonymous" preload="none"></audio>
+<audio id="player-b" crossorigin="anonymous" preload="none"></audio>
+
+<!-- DJ Layout -->
+<div id="main">
+
+  <div class="decks-row">
+
+    <!-- DECK A -->
+    <div class="deck-panel deck-a">
+      <div class="deck-header-row">
+        <div class="deck-label">Deck A</div>
+        <span class="deck-key" id="key-a"></span>
+        <span class="deck-bpm" id="bpm-a">-- BPM</span>
+        <button class="sync-btn" id="sync-a">SYNC</button>
+      </div>
+      <div class="deck-track-title" id="title-a">No track loaded</div>
+      <div class="deck-body">
+        <div class="disc-col">
+          <canvas class="disc-canvas" id="disc-a" width="150" height="150"></canvas>
+        </div>
+        <div class="controls-col">
+          <canvas class="deck-waveform" id="wave-a"></canvas>
+          <canvas class="deck-visualizer" id="vis-a"></canvas>
+          <div class="deck-controls">
+            <button class="ctrl-btn skip-btn" id="prev-a" title="Previous">⏮</button>
+            <button class="ctrl-btn play-btn" id="play-a" title="Play / Pause">▶</button>
+            <button class="ctrl-btn skip-btn" id="next-a" title="Next">⏭</button>
+            <button class="vote-btn" id="vote-a" disabled>♥ <span id="vcount-a">0</span></button>
+          </div>
+          <div class="slider-section">
+            <div class="slider-row">
+              <span class="slider-label">Tempo</span>
+              <button class="nudge-btn" id="nudge-l-a" title="Nudge slow">◄</button>
+              <input type="range" id="tempo-a" min="85" max="115" value="100" step="0.1">
+              <button class="nudge-btn" id="nudge-r-a" title="Nudge fast">►</button>
+              <span class="slider-val" id="tempo-val-a">0%</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Volume</span>
+              <input type="range" id="vol-a" min="0" max="100" value="80" step="1">
+              <span class="slider-val" id="vol-val-a">80%</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Bass</span>
+              <input type="range" id="bass-a" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="bass-val-a">0 dB</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Mid</span>
+              <input type="range" id="mid-a" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="mid-val-a">0 dB</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Treble</span>
+              <input type="range" id="treble-a" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="treble-val-a">0 dB</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DECK B -->
+    <div class="deck-panel deck-b">
+      <div class="deck-header-row">
+        <div class="deck-label">Deck B</div>
+        <span class="deck-key" id="key-b"></span>
+        <span class="deck-bpm" id="bpm-b">-- BPM</span>
+        <button class="sync-btn" id="sync-b">SYNC</button>
+      </div>
+      <div class="deck-track-title" id="title-b">No track loaded</div>
+      <div class="deck-body">
+        <div class="disc-col">
+          <canvas class="disc-canvas" id="disc-b" width="150" height="150"></canvas>
+        </div>
+        <div class="controls-col">
+          <canvas class="deck-waveform" id="wave-b"></canvas>
+          <canvas class="deck-visualizer" id="vis-b"></canvas>
+          <div class="deck-controls">
+            <button class="ctrl-btn skip-btn" id="prev-b" title="Previous">⏮</button>
+            <button class="ctrl-btn play-btn" id="play-b" title="Play / Pause">▶</button>
+            <button class="ctrl-btn skip-btn" id="next-b" title="Next">⏭</button>
+            <button class="vote-btn" id="vote-b" disabled>♥ <span id="vcount-b">0</span></button>
+          </div>
+          <div class="slider-section">
+            <div class="slider-row">
+              <span class="slider-label">Tempo</span>
+              <button class="nudge-btn" id="nudge-l-b" title="Nudge slow">◄</button>
+              <input type="range" id="tempo-b" min="85" max="115" value="100" step="0.1">
+              <button class="nudge-btn" id="nudge-r-b" title="Nudge fast">►</button>
+              <span class="slider-val" id="tempo-val-b">0%</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Volume</span>
+              <input type="range" id="vol-b" min="0" max="100" value="80" step="1">
+              <span class="slider-val" id="vol-val-b">80%</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Bass</span>
+              <input type="range" id="bass-b" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="bass-val-b">0 dB</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Mid</span>
+              <input type="range" id="mid-b" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="mid-val-b">0 dB</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-label">Treble</span>
+              <input type="range" id="treble-b" min="-12" max="12" value="0" step="0.5">
+              <span class="slider-val" id="treble-val-b">0 dB</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.decks-row -->
+
+  <!-- Crossfader -->
+  <div class="crossfader-row">
+    <span class="xf-label a">A</span>
+    <input type="range" id="crossfader" min="0" max="100" value="50" step="1">
+    <span class="xf-label b">B</span>
+  </div>
+
+  <!-- Track Library -->
+  <div class="library-row">
+    <div class="library-header">
+      <span class="library-title">Track Library</span>
+      <input type="text" id="library-search" placeholder="Search...">
+      <span id="listeners-compact"></span>
+    </div>
+    <div id="library-list"></div>
+  </div>
+
+</div><!-- /#main -->
+
+<script>
+const API = "https://api.sikkmixx.com"
+const BPM_CACHE_KEY = 'sikkmixx_bpm_cache'
+function getBPMCache() { try { return JSON.parse(localStorage.getItem(BPM_CACHE_KEY) || '{}') } catch { return {} } }
+function saveBPMToCache(trackId, bpm) { const c = getBPMCache(); c[trackId] = bpm; localStorage.setItem(BPM_CACHE_KEY, JSON.stringify(c)) }
+const token = localStorage.getItem("token")
+let playlist = []
+let audioContext = null
+let currentUser = null
+let myVotes = new Set()
+let heartbeatInterval = null
+let pollInterval = null
+
+// Per-deck state
+const DECKS = {
+  a: {
+    id: 'a', el: null,
+    source: null, bassFilter: null, midFilter: null, trebleFilter: null,
+    gainVol: null, gainXfade: null, analyser: null, dataArray: null, canvasCtx: null,
+    currentIndex: -1, currentTrack: null, playCountedId: null, bassSmoothed: 0,
+    discAngle: 0, scratching: false, scratchLastAngle: 0, scratchWasPlaying: false
+  },
+  b: {
+    id: 'b', el: null,
+    source: null, bassFilter: null, midFilter: null, trebleFilter: null,
+    gainVol: null, gainXfade: null, analyser: null, dataArray: null, canvasCtx: null,
+    currentIndex: -1, currentTrack: null, playCountedId: null, bassSmoothed: 0,
+    discAngle: 0, scratching: false, scratchLastAngle: 0, scratchWasPlaying: false
+  }
+}
+
+// Wire up audio elements immediately so src can be set before context is created
+DECKS.a.el = document.getElementById('player-a')
+DECKS.b.el = document.getElementById('player-b')
+
+// ── Auth check ──────────────────────────────────────────────────
+async function checkAuth() {
+  // App version — no auth required
+  return true
+}
+
+// ── Audio init ───────────────────────────────────────────────────
+function initAudio() {
+  if (audioContext) return
+  audioContext = new (window.AudioContext || window.webkitAudioContext)()
+
+  for (const deck of Object.values(DECKS)) {
+    deck.source = audioContext.createMediaElementSource(deck.el)
+
+    deck.bassFilter = audioContext.createBiquadFilter()
+    deck.bassFilter.type = 'lowshelf'
+    deck.bassFilter.frequency.value = 100
+    deck.bassFilter.gain.value = 0
+
+    deck.midFilter = audioContext.createBiquadFilter()
+    deck.midFilter.type = 'peaking'
+    deck.midFilter.frequency.value = 1000
+    deck.midFilter.Q.value = 1
+    deck.midFilter.gain.value = 0
+
+    deck.trebleFilter = audioContext.createBiquadFilter()
+    deck.trebleFilter.type = 'highshelf'
+    deck.trebleFilter.frequency.value = 8000
+    deck.trebleFilter.gain.value = 0
+
+    deck.gainVol = audioContext.createGain()
+    deck.gainVol.gain.value = 0.8
+
+    deck.gainXfade = audioContext.createGain()
+    deck.gainXfade.gain.value = 1.0
+
+    deck.analyser = audioContext.createAnalyser()
+    deck.analyser.fftSize = 256
+    deck.analyser.smoothingTimeConstant = 0.8
+
+    deck.source
+      .connect(deck.bassFilter)
+      .connect(deck.midFilter)
+      .connect(deck.trebleFilter)
+      .connect(deck.gainVol)
+      .connect(deck.gainXfade)
+      .connect(deck.analyser)
+      .connect(audioContext.destination)
+
+    deck.dataArray = new Uint8Array(deck.analyser.frequencyBinCount)
+
+    const canvas = document.getElementById(`vis-${deck.id}`)
+    canvas.width = canvas.offsetWidth || 300
+    canvas.height = canvas.offsetHeight || 52
+    deck.canvasCtx = canvas.getContext('2d')
+  }
+
+  updateCrossfader(50)
+  startVisualizerLoop()
+}
+
+// ── Crossfader ───────────────────────────────────────────────────
+function updateCrossfader(pos) {
+  const angle = (pos / 100) * Math.PI / 2
+  if (DECKS.a.gainXfade) DECKS.a.gainXfade.gain.setTargetAtTime(Math.cos(angle), audioContext.currentTime, 0.05)
+  if (DECKS.b.gainXfade) DECKS.b.gainXfade.gain.setTargetAtTime(Math.sin(angle), audioContext.currentTime, 0.05)
+}
+
+document.getElementById('crossfader').addEventListener('input', e => {
+  if (audioContext) updateCrossfader(parseInt(e.target.value))
+})
+
+// ── Visualizer ───────────────────────────────────────────────────
+function drawDeck(deck, accentHue) {
+  const canvas = document.getElementById(`vis-${deck.id}`)
+  if (!deck.canvasCtx) return 0
+  if (canvas.offsetWidth > 0 && canvas.width !== canvas.offsetWidth) {
+    canvas.width = canvas.offsetWidth
+    canvas.height = canvas.offsetHeight
+  }
+  deck.analyser.getByteFrequencyData(deck.dataArray)
+  const ctx = deck.canvasCtx
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  const bars = 32
+  const step = Math.floor(deck.dataArray.length / bars)
+  const barWidth = canvas.width / bars
+
+  let bassSum = 0
+  for (let i = 0; i < 8; i++) bassSum += deck.dataArray[i]
+  deck.bassSmoothed = deck.bassSmoothed * 0.8 + (bassSum / 8) * 0.2
+
+  for (let i = 0; i < bars; i++) {
+    let sum = 0
+    for (let j = 0; j < step; j++) sum += deck.dataArray[i * step + j]
+    const norm = (sum / step) / 255
+    const scaled = Math.pow(norm, 1.5) * canvas.height
+    const hue = accentHue - norm * 60
+    const bright = 50 + norm * 50
+    ctx.fillStyle = `hsl(${hue}, 100%, ${bright}%)`
+    ctx.shadowBlur = 14
+    ctx.shadowColor = `hsl(${hue}, 100%, 65%)`
+    ctx.fillRect(i * barWidth, canvas.height - scaled, barWidth - 2, scaled)
+  }
+  return deck.bassSmoothed / 255
+}
+
+function startVisualizerLoop() {
+  const bg = document.getElementById('visual-bg')
+  const RPM = 33.33
+  const RAD_PER_SEC = (RPM / 60) * 2 * Math.PI  // ~3.49 rad/s
+  let lastFrameTime = performance.now()
+
+  function frame(now) {
+    requestAnimationFrame(frame)
+    const dt = Math.min(now - lastFrameTime, 100) // cap at 100ms to avoid jumps
+    lastFrameTime = now
+
+    // Advance disc rotation for non-scratching, playing decks
+    for (const id of ['a', 'b']) {
+      const deck = DECKS[id]
+      if (!deck.scratching && deck.el && !deck.el.paused) {
+        deck.discAngle += RAD_PER_SEC * (deck.el.playbackRate || 1) * (dt / 1000)
+      }
+      drawDisc(id)
+    }
+
+    const bA = drawDeck(DECKS.a, 300)
+    const bB = drawDeck(DECKS.b, 185)
+    const combined = Math.max(bA, bB)
+    document.body.style.transform = `scale(${1 + combined * 0.015})`
+    const hue = 280 - combined * 90
+    const bright = 6 + combined * 28
+    bg.style.background = `radial-gradient(circle at center, hsla(${hue},100%,${bright}%,0.5), rgba(0,0,0,0.85))`
+
+    // Waveforms
+    drawWaveform('a')
+    drawWaveform('b')
+
+    // Beat flash (visual only — BPM comes from offline analysis on track load)
+    for (const id of ['a', 'b']) {
+      const deck = DECKS[id]
+      if (!deck.dataArray) continue
+      deck.analyser.getByteFrequencyData(deck.dataArray)
+      let energy = 0
+      for (let i = 0; i < 6; i++) energy += deck.dataArray[i] ** 2
+      energy = Math.sqrt(energy / 6)
+      if (!deck.energyAvg) deck.energyAvg = energy
+      deck.energyAvg = deck.energyAvg * 0.94 + energy * 0.06
+      if (energy > deck.energyAvg * 1.45 && !deck.beatFlashing) {
+        const bpmEl = document.getElementById(`bpm-${id}`)
+        bpmEl.classList.add('beat')
+        deck.beatFlashing = true
+        setTimeout(() => { bpmEl.classList.remove('beat'); deck.beatFlashing = false }, 100)
+      }
+    }
+  }
+  frame(performance.now())
+}
+
+// ── Track loading & playback ─────────────────────────────────────
+function getTrackLabel(track) {
+  if (!track) return ""
+  const title = (track.original_name || "").replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/i, "")
+  const artist = (track.artist || "").trim()
+  return artist ? `${artist} — ${title}` : title
+}
+
+function loadTrackToDeck(deckId, trackIndex) {
+  const deck = DECKS[deckId]
+  const track = playlist[trackIndex]
+  if (!track || !deck.el) return
+  deck.currentIndex = trackIndex
+  deck.currentTrack = track
+  deck.playCountedId = null
+  deck.waveOffscreen = null  // clear old waveform
+
+  // BPM — DB value first, then localStorage cache, then wait for analysis
+  const knownBPM = track.bpm || getBPMCache()[track.id] || null
+  deck.detectedBPM = knownBPM
+  document.getElementById(`bpm-${deckId}`).textContent = knownBPM ? `${knownBPM} BPM` : '-- BPM'
+
+  // Key — same priority
+  const knownKey = track.key || getKeyCache()[track.id] || null
+  deck.detectedKey = knownKey
+  document.getElementById(`key-${deckId}`).textContent = knownKey || ''
+  deck.energyAvg = 0
+  deck.beatFlashing = false
+
+  const url = `${API}/file/${encodeURIComponent(track.filename)}`
+  deck.el.src = url
+  document.getElementById(`title-${deckId}`).textContent = getTrackLabel(track)
+  updateVoteBtn(deckId)
+  buildLibrary(document.getElementById('library-search').value)
+  sendHeartbeat()
+
+  // Decode waveform in background
+  decodeAndRenderWaveform(deckId, url)
+}
+
+function playDeck(deckId) {
+  const deck = DECKS[deckId]
+  if (!deck.el) return
+  if (audioContext && audioContext.state === 'suspended') audioContext.resume()
+  deck.el.play().catch(() => {})
+}
+
+function pauseDeck(deckId) { DECKS[deckId].el?.pause() }
+
+function toggleDeck(deckId) {
+  const el = DECKS[deckId].el
+  if (!el) return
+  // Init audio on first interaction
+  if (!audioContext) initAudio()
+  if (el.paused) playDeck(deckId)
+  else pauseDeck(deckId)
+}
+
+function nextTrack(deckId) {
+  const deck = DECKS[deckId]
+  if (!playlist.length) return
+  loadTrackToDeck(deckId, (deck.currentIndex + 1) % playlist.length)
+  playDeck(deckId)
+}
+
+function prevTrack(deckId) {
+  const deck = DECKS[deckId]
+  if (!playlist.length) return
+  const idx = deck.currentIndex <= 0 ? playlist.length - 1 : deck.currentIndex - 1
+  loadTrackToDeck(deckId, idx)
+  playDeck(deckId)
+}
+
+function updatePlayBtn(deckId) {
+  const btn = document.getElementById(`play-${deckId}`)
+  const playing = DECKS[deckId].el?.paused === false
+  btn.textContent = playing ? '⏸' : '▶'
+  btn.classList.toggle('is-playing', playing)
+}
+
+// ── Transport event listeners ─────────────────────────────────────
+;['a', 'b'].forEach(id => {
+  document.getElementById(`prev-${id}`).addEventListener('click', () => prevTrack(id))
+  document.getElementById(`play-${id}`).addEventListener('click', () => toggleDeck(id))
+  document.getElementById(`next-${id}`).addEventListener('click', () => nextTrack(id))
+
+  const el = DECKS[id].el
+  el.addEventListener('play',  () => updatePlayBtn(id))
+  el.addEventListener('pause', () => updatePlayBtn(id))
+  el.addEventListener('ended', () => nextTrack(id))
+
+  el.addEventListener('timeupdate', () => {
+    const deck = DECKS[id]
+    if (!el.duration || !deck.currentTrack) return
+    if ((el.duration - el.currentTime) <= 60 && deck.playCountedId !== deck.currentTrack.id) {
+      deck.playCountedId = deck.currentTrack.id
+      fetch(`${API}/track-played`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: deck.currentTrack.id })
+      }).catch(() => {})
+    }
+  })
+})
+
+// ── Sliders ───────────────────────────────────────────────────────
+function setupSliders(id) {
+  const deck = DECKS[id]
+
+  const tempo = document.getElementById(`tempo-${id}`)
+  const tempoVal = document.getElementById(`tempo-val-${id}`)
+  tempo.addEventListener('input', () => {
+    const rate = parseFloat(tempo.value) / 100
+    const pct  = parseFloat(tempo.value) - 100
+    tempoVal.textContent = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`
+    if (deck.el) deck.el.playbackRate = rate
+    if (deck.detectedBPM) document.getElementById(`bpm-${id}`).textContent = `${Math.round(deck.detectedBPM * rate)} BPM`
+  })
+
+  const vol = document.getElementById(`vol-${id}`)
+  const volVal = document.getElementById(`vol-val-${id}`)
+  vol.addEventListener('input', () => {
+    const v = parseInt(vol.value)
+    volVal.textContent = `${v}%`
+    if (deck.gainVol) deck.gainVol.gain.setTargetAtTime(v / 100, audioContext.currentTime, 0.02)
+  })
+
+  const bass = document.getElementById(`bass-${id}`)
+  const bassVal = document.getElementById(`bass-val-${id}`)
+  bass.addEventListener('input', () => {
+    const db = parseFloat(bass.value)
+    bassVal.textContent = `${db > 0 ? '+' : ''}${db} dB`
+    if (deck.bassFilter) deck.bassFilter.gain.setTargetAtTime(db, audioContext.currentTime, 0.02)
+  })
+
+  const mid = document.getElementById(`mid-${id}`)
+  const midVal = document.getElementById(`mid-val-${id}`)
+  mid.addEventListener('input', () => {
+    const db = parseFloat(mid.value)
+    midVal.textContent = `${db > 0 ? '+' : ''}${db} dB`
+    if (deck.midFilter) deck.midFilter.gain.setTargetAtTime(db, audioContext.currentTime, 0.02)
+  })
+
+  const treble = document.getElementById(`treble-${id}`)
+  const trebleVal = document.getElementById(`treble-val-${id}`)
+  treble.addEventListener('input', () => {
+    const db = parseFloat(treble.value)
+    trebleVal.textContent = `${db > 0 ? '+' : ''}${db} dB`
+    if (deck.trebleFilter) deck.trebleFilter.gain.setTargetAtTime(db, audioContext.currentTime, 0.02)
+  })
+}
+
+setupSliders('a')
+setupSliders('b')
+
+// ── Votes ─────────────────────────────────────────────────────────
+async function fetchMyVotes() {
+  if (!token) return
+  try {
+    const res = await fetch(`${API}/my-votes`, { headers: { "Authorization": `Bearer ${token}` } })
+    if (res.ok) { myVotes = new Set(await res.json()); updateVoteBtn('a'); updateVoteBtn('b') }
+  } catch {}
+}
+
+function updateVoteBtn(deckId) {
+  const deck = DECKS[deckId]
+  const btn = document.getElementById(`vote-${deckId}`)
+  const countEl = document.getElementById(`vcount-${deckId}`)
+  if (!deck.currentTrack) return
+  countEl.textContent = deck.currentTrack.vote_count || 0
+  if (!currentUser) { btn.disabled = true; btn.classList.remove('voted'); return }
+  btn.disabled = false
+  btn.classList.toggle('voted', myVotes.has(deck.currentTrack.id))
+}
+
+async function voteDeck(deckId) {
+  const deck = DECKS[deckId]
+  if (!deck.currentTrack || !currentUser) return
+  try {
+    const res = await fetch(`${API}/vote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ track_id: deck.currentTrack.id })
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    if (data.voted) { myVotes.add(deck.currentTrack.id); deck.currentTrack.vote_count = (deck.currentTrack.vote_count || 0) + 1 }
+    else { myVotes.delete(deck.currentTrack.id); deck.currentTrack.vote_count = Math.max(0, (deck.currentTrack.vote_count || 0) - 1) }
+    updateVoteBtn(deckId)
+    buildLibrary(document.getElementById('library-search').value)
+  } catch {}
+}
+
+document.getElementById('vote-a').addEventListener('click', () => voteDeck('a'))
+document.getElementById('vote-b').addEventListener('click', () => voteDeck('b'))
+
+// ── Library ───────────────────────────────────────────────────────
+function buildLibrary(filter = '') {
+  const q = filter.toLowerCase()
+  const tracks = q ? playlist.filter(t => getTrackLabel(t).toLowerCase().includes(q)) : playlist
+  const bpmCache = getBPMCache()
+  const keyCache = getKeyCache()
+
+  document.getElementById('library-list').innerHTML = tracks.map(track => {
+    const idx = playlist.indexOf(track)
+    const label = getTrackLabel(track)
+    const onA = DECKS.a.currentIndex === idx
+    const onB = DECKS.b.currentIndex === idx
+    const nameColor = onA ? 'color:#ff00cc;' : onB ? 'color:#00e0ff;' : ''
+    const bpmVal = track.bpm || bpmCache[track.id]
+    const bpmStr = bpmVal ? `<span class="lib-bpm">${bpmVal}</span>` : ''
+    const keyVal = track.key || keyCache[track.id]
+    const keyStr = keyVal ? `<span class="lib-key">${keyVal}</span>` : ''
+    return `
+      <div class="lib-track">
+        <span class="lib-track-name" style="${nameColor}">${label}</span>
+        ${keyStr}
+        ${bpmStr}
+        <span class="lib-track-meta">♥${track.vote_count||0} ▶${track.play_count||0}</span>
+        <button class="lib-btn load-a${onA?' active-a':''}" data-index="${idx}">▶ A</button>
+        <button class="lib-btn load-b${onB?' active-b':''}" data-index="${idx}">▶ B</button>
+      </div>`
+  }).join('')
+
+  document.getElementById('library-list').querySelectorAll('.load-a').forEach(btn =>
+    btn.addEventListener('click', () => loadTrackToDeck('a', parseInt(btn.dataset.index)))
+  )
+  document.getElementById('library-list').querySelectorAll('.load-b').forEach(btn =>
+    btn.addEventListener('click', () => loadTrackToDeck('b', parseInt(btn.dataset.index)))
+  )
+}
+
+document.getElementById('library-search').addEventListener('input', e => buildLibrary(e.target.value))
+
+// ── Presence ──────────────────────────────────────────────────────
+let sessionId = sessionStorage.getItem("session_id")
+if (!sessionId) { sessionId = crypto.randomUUID(); sessionStorage.setItem("session_id", sessionId) }
+
+async function sendHeartbeat() {
+  const xf = parseInt(document.getElementById('crossfader').value)
+  const deckId = xf <= 50 ? 'a' : 'b'
+  const deck = DECKS[deckId]
+  if (!deck.currentTrack) return
+  try {
+    await fetch(`${API}/listening`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: currentUser ? `user_${currentUser.id}` : sessionId,
+        username: currentUser ? `@${currentUser.username}` : 'Guest',
+        track_name: getTrackLabel(deck.currentTrack)
+      })
+    })
+  } catch {}
+}
+
+async function pollListeners() {
+  try {
+    const res = await fetch(`${API}/listeners`)
+    if (!res.ok) return
+    const listeners = await res.json()
+    const el = document.getElementById('listeners-compact')
+    if (!listeners.length) { el.textContent = ''; return }
+    el.innerHTML = `<span class="live-dot"></span>${listeners.map(l => l.username).join(', ')}`
+  } catch {}
+}
+
+function startPresence() {
+  if (heartbeatInterval) return
+  sendHeartbeat(); pollListeners()
+  heartbeatInterval = setInterval(sendHeartbeat, 15000)
+  pollInterval = setInterval(pollListeners, 15000)
+}
+
+// ── BPM Detection (offline, runs on decoded AudioBuffer) ─────────
+function detectBPM(audioBuffer) {
+  const data = audioBuffer.getChannelData(0)
+  const sr = audioBuffer.sampleRate
+  const hopSize = Math.round(sr / 100)        // 10ms hops → 100 frames/sec
+  const frameRate = sr / hopSize
+  const maxFrames = Math.min(
+    Math.floor(data.length / hopSize),
+    Math.round(frameRate * 90)                // analyse up to 90s
+  )
+
+  // 1. RMS energy per hop
+  const energy = new Float32Array(maxFrames)
+  for (let i = 0; i < maxFrames; i++) {
+    let sum = 0
+    const base = i * hopSize
+    for (let j = 0; j < hopSize; j++) sum += data[base + j] ** 2
+    energy[i] = Math.sqrt(sum / hopSize)
+  }
+
+  // 2. Onset strength: half-wave-rectified first difference
+  const onset = new Float32Array(maxFrames)
+  for (let i = 1; i < maxFrames; i++) {
+    onset[i] = Math.max(0, energy[i] - energy[i - 1])
+  }
+
+  // 3. Autocorrelation over 60–200 BPM lag range
+  const minLag = Math.ceil(frameRate * 60 / 200)   // 200 BPM → shortest lag
+  const maxLag = Math.floor(frameRate * 60 / 60)   // 60 BPM  → longest lag
+  let bestLag = minLag, bestScore = 0
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let score = 0
+    for (let i = lag; i < maxFrames; i++) score += onset[i] * onset[i - lag]
+    score /= (maxFrames - lag)   // normalise by window length
+    if (score > bestScore) { bestScore = score; bestLag = lag }
+  }
+
+  let bpm = frameRate * 60 / bestLag
+
+  // Resolve half/double tempo: nudge toward the dance-music centre (128 BPM)
+  if (bpm > 160 && bpm / 2 >= 60) bpm /= 2
+  else if (bpm < 70 && bpm * 2 <= 200) bpm *= 2
+
+  return Math.round(bpm)
+}
+
+// ── Key Detection ────────────────────────────────────────────────
+const KEY_CACHE_KEY = 'sikkmixx_key_cache'
+function getKeyCache() { try { return JSON.parse(localStorage.getItem(KEY_CACHE_KEY) || '{}') } catch { return {} } }
+function saveKeyToCache(trackId, key) { const c = getKeyCache(); c[trackId] = key; localStorage.setItem(KEY_CACHE_KEY, JSON.stringify(c)) }
+
+function fft(re, im) {
+  const n = re.length
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1
+    for (; j & bit; bit >>= 1) j ^= bit
+    j ^= bit
+    if (i < j) { ;[re[i],re[j]]=[re[j],re[i]]; [im[i],im[j]]=[im[j],im[i]] }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -2 * Math.PI / len
+    const wRe = Math.cos(ang), wIm = Math.sin(ang)
+    for (let i = 0; i < n; i += len) {
+      let cRe = 1, cIm = 0
+      for (let j = 0; j < len >> 1; j++) {
+        const uRe = re[i+j], uIm = im[i+j]
+        const h = i+j+(len>>1)
+        const vRe = re[h]*cRe - im[h]*cIm, vIm = re[h]*cIm + im[h]*cRe
+        re[i+j] = uRe+vRe; im[i+j] = uIm+vIm
+        re[h] = uRe-vRe; im[h] = uIm-vIm
+        const nr = cRe*wRe - cIm*wIm; cIm = cRe*wIm + cIm*wRe; cRe = nr
+      }
+    }
+  }
+}
+
+function detectKey(audioBuffer) {
+  const data = audioBuffer.getChannelData(0)
+  const sr = audioBuffer.sampleRate
+  const frameSize = 4096, hopSize = 2048
+  const chroma = new Float32Array(12)
+  const maxSamples = Math.min(data.length, sr * 60)
+  const hann = new Float32Array(frameSize)
+  for (let i = 0; i < frameSize; i++) hann[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / frameSize)
+  const re = new Float32Array(frameSize), im = new Float32Array(frameSize)
+  for (let start = 0; start + frameSize <= maxSamples; start += hopSize) {
+    for (let i = 0; i < frameSize; i++) { re[i] = data[start+i] * hann[i]; im[i] = 0 }
+    fft(re, im)
+    for (let bin = 1; bin < frameSize >> 1; bin++) {
+      const freq = bin * sr / frameSize
+      if (freq < 65 || freq > 2093) continue
+      const pc = ((Math.round(12 * Math.log2(freq / 261.63)) % 12) + 12) % 12
+      chroma[pc] += Math.sqrt(re[bin]*re[bin] + im[bin]*im[bin])
+    }
+  }
+  const maxC = Math.max(...chroma)
+  if (maxC === 0) return null
+  for (let i = 0; i < 12; i++) chroma[i] /= maxC
+  const MAJ = [6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88]
+  const MIN = [6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17]
+  const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+  function corr(profile, shift) {
+    let sx=0,sy=0,sxy=0,sx2=0,sy2=0
+    for (let i = 0; i < 12; i++) {
+      const x = chroma[i], y = profile[(i-shift+12)%12]
+      sx+=x; sy+=y; sxy+=x*y; sx2+=x*x; sy2+=y*y
+    }
+    const d = Math.sqrt((12*sx2-sx*sx)*(12*sy2-sy*sy))
+    return d > 0 ? (12*sxy-sx*sy)/d : 0
+  }
+  let bestKey = 'C', bestMode = 'maj', bestScore = -Infinity
+  for (let s = 0; s < 12; s++) {
+    const mj = corr(MAJ, s), mn = corr(MIN, s)
+    if (mj > bestScore) { bestScore=mj; bestKey=NOTES[s]; bestMode='maj' }
+    if (mn > bestScore) { bestScore=mn; bestKey=NOTES[s]; bestMode='min' }
+  }
+  return `${bestKey} ${bestMode}`
+}
+
+// ── Waveform ──────────────────────────────────────────────────────
+// Each deck stores an offscreen canvas with the static waveform drawn once
+async function decodeAndRenderWaveform(deckId, url) {
+  const deck = DECKS[deckId]
+  const canvas = document.getElementById(`wave-${deckId}`)
+  const accentColor = deckId === 'a' ? '#ff00cc' : '#00e0ff'
+  const dimColor   = deckId === 'a' ? 'rgba(255,0,204,0.55)' : 'rgba(0,224,255,0.55)'
+
+  // Clear to loading state
+  const ctx = canvas.getContext('2d')
+  canvas.width = canvas.offsetWidth || 400
+  canvas.height = canvas.offsetHeight || 52
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.fillStyle = 'rgba(255,255,255,0.08)'
+  ctx.font = '10px Segoe UI'
+  ctx.textAlign = 'center'
+  ctx.fillText('loading waveform...', canvas.width / 2, canvas.height / 2 + 4)
+
+  try {
+    const response = await fetch(url)
+    const arrayBuffer = await response.arrayBuffer()
+    // Use a temp AudioContext for decoding if main one not ready yet
+    const ctx2 = audioContext || new (window.AudioContext || window.webkitAudioContext)()
+    const audioBuffer = await ctx2.decodeAudioData(arrayBuffer)
+
+    // Offline BPM + Key analysis — skip if already cached
+    const deck = DECKS[deckId]
+    if (!deck.detectedBPM) {
+      const bpm = detectBPM(audioBuffer)
+      if (bpm > 0) {
+        document.getElementById(`bpm-${deckId}`).textContent = `${bpm} BPM`
+        deck.detectedBPM = bpm
+        document.getElementById(`sync-${deckId}`).classList.remove('synced')
+        if (deck.currentTrack) {
+          saveBPMToCache(deck.currentTrack.id, bpm)
+          deck.currentTrack.bpm = bpm
+          fetch(`${API}/track-bpm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ id: deck.currentTrack.id, bpm })
+          }).catch(() => {})
+        }
+      }
+    }
+    if (!deck.detectedKey) {
+      const key = detectKey(audioBuffer)
+      if (key) {
+        document.getElementById(`key-${deckId}`).textContent = key
+        deck.detectedKey = key
+        if (deck.currentTrack) {
+          saveKeyToCache(deck.currentTrack.id, key)
+          deck.currentTrack.key = key
+          fetch(`${API}/track-key`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ id: deck.currentTrack.id, key })
+          }).catch(() => {})
+          buildLibrary(document.getElementById('library-search').value)
+        }
+      }
+    }
+
+    // Build offscreen canvas
+    const offscreen = document.createElement('canvas')
+    offscreen.width  = canvas.offsetWidth  || 400
+    offscreen.height = canvas.offsetHeight || 52
+    const oc = offscreen.getContext('2d')
+    const data = audioBuffer.getChannelData(0)
+    const w = offscreen.width, h = offscreen.height
+    const mid = h / 2
+    const step = Math.ceil(data.length / w)
+
+    oc.clearRect(0, 0, w, h)
+
+    // Draw waveform bars (dim by default, bright played portion drawn each frame)
+    for (let x = 0; x < w; x++) {
+      let min = 0, max = 0
+      for (let i = 0; i < step; i++) {
+        const s = data[x * step + i] || 0
+        if (s < min) min = s
+        if (s > max) max = s
+      }
+      oc.fillStyle = dimColor
+      oc.fillRect(x, mid + min * mid * 0.95, 1, Math.max(1, (max - min) * mid * 0.95))
+    }
+
+    deck.waveOffscreen = offscreen
+    deck.waveColor = accentColor
+    deck.waveDim = dimColor
+  } catch (e) {
+    // Waveform failed — draw placeholder
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    deck.waveOffscreen = null
+  }
+}
+
+function drawWaveform(deckId) {
+  const deck = DECKS[deckId]
+  const canvas = document.getElementById(`wave-${deckId}`)
+  const ctx = canvas.getContext('2d')
+  if (canvas.offsetWidth > 0 && (canvas.width !== canvas.offsetWidth || canvas.height !== canvas.offsetHeight)) {
+    canvas.width = canvas.offsetWidth
+    canvas.height = canvas.offsetHeight
+  }
+
+  const w = canvas.width, h = canvas.height
+
+  ctx.clearRect(0, 0, w, h)
+
+  if (!deck.waveOffscreen) return
+
+  // Draw dim full waveform
+  ctx.drawImage(deck.waveOffscreen, 0, 0, w, h)
+
+  const el = deck.el
+  if (!el || !el.duration) return
+
+  const progress = el.currentTime / el.duration
+  const playedX = Math.floor(progress * w)
+
+  // Tint played region with accent color
+  ctx.save()
+  ctx.globalCompositeOperation = 'source-atop'
+  ctx.fillStyle = deck.id === 'a' ? 'rgba(255,0,204,0.75)' : 'rgba(0,224,255,0.75)'
+  ctx.fillRect(0, 0, playedX, h)
+  ctx.restore()
+
+  // Playhead line
+  ctx.fillStyle = deck.id === 'a' ? '#ff00cc' : '#00e0ff'
+  ctx.shadowBlur = 18
+  ctx.shadowColor = deck.id === 'a' ? '#ff00cc' : '#00e0ff'
+  ctx.fillRect(playedX - 1, 0, 2, h)
+  ctx.shadowBlur = 0
+
+  // Time remaining label
+  const remaining = el.duration - el.currentTime
+  const mins = Math.floor(remaining / 60)
+  const secs = Math.floor(remaining % 60).toString().padStart(2, '0')
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'
+  ctx.font = '9px Segoe UI'
+  ctx.textAlign = 'right'
+  ctx.fillText(`-${mins}:${secs}`, w - 4, h - 3)
+}
+
+// Seeking by click or drag on waveform
+;['a', 'b'].forEach(id => {
+  const canvas = document.getElementById(`wave-${id}`)
+  let seeking = false
+
+  function seekTo(e) {
+    const deck = DECKS[id]
+    if (!deck.el || !deck.el.duration) return
+    const rect = canvas.getBoundingClientRect()
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left
+    deck.el.currentTime = Math.max(0, Math.min(1, x / rect.width)) * deck.el.duration
+  }
+
+  canvas.addEventListener('mousedown',  e => { seeking = true; seekTo(e) })
+  canvas.addEventListener('mousemove',  e => { if (seeking) seekTo(e) })
+  canvas.addEventListener('mouseup',    () => { seeking = false })
+  canvas.addEventListener('mouseleave', () => { seeking = false })
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); seekTo(e) }, { passive: false })
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); seekTo(e) }, { passive: false })
+})
+
+// ── Disc drawing ─────────────────────────────────────────────────
+function drawDisc(deckId) {
+  const deck = DECKS[deckId]
+  const canvas = document.getElementById(`disc-${deckId}`)
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  const w = canvas.width, h = canvas.height
+  const cx = w / 2, cy = h / 2
+  const r = Math.min(w, h) / 2 - 2
+  const accent = deckId === 'a' ? '#ff00cc' : '#00e0ff'
+  const accentDim = deckId === 'a' ? 'rgba(255,0,204,0.35)' : 'rgba(0,224,255,0.35)'
+
+  ctx.clearRect(0, 0, w, h)
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate(deck.discAngle)
+
+  // Vinyl body
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fillStyle = '#0e0e0e'
+  ctx.fill()
+
+  // Grooves
+  for (let i = 4; i <= 22; i++) {
+    const gr = r * (0.32 + i * 0.031)
+    if (gr >= r) break
+    ctx.beginPath()
+    ctx.arc(0, 0, gr, 0, Math.PI * 2)
+    ctx.strokeStyle = `rgba(255,255,255,${0.025 + i * 0.004})`
+    ctx.lineWidth = 0.6
+    ctx.stroke()
+  }
+
+  // Sheen highlight (stays relative to canvas, not rotation — but for simplicity rotate with disc)
+  const sheen = ctx.createRadialGradient(-r * 0.25, -r * 0.25, 0, 0, 0, r)
+  sheen.addColorStop(0,   'rgba(255,255,255,0.09)')
+  sheen.addColorStop(0.4, 'rgba(255,255,255,0.02)')
+  sheen.addColorStop(1,   'rgba(0,0,0,0.35)')
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fillStyle = sheen
+  ctx.fill()
+
+  // Center label
+  const lr = r * 0.30
+  ctx.beginPath()
+  ctx.arc(0, 0, lr, 0, Math.PI * 2)
+  ctx.fillStyle = accent
+  ctx.fill()
+
+  // Label inner gradient
+  const lg = ctx.createRadialGradient(-lr * 0.3, -lr * 0.3, 0, 0, 0, lr)
+  lg.addColorStop(0, 'rgba(255,255,255,0.25)')
+  lg.addColorStop(1, 'rgba(0,0,0,0.4)')
+  ctx.beginPath()
+  ctx.arc(0, 0, lr, 0, Math.PI * 2)
+  ctx.fillStyle = lg
+  ctx.fill()
+
+  // Label text
+  ctx.fillStyle = 'rgba(0,0,0,0.75)'
+  ctx.font = `bold ${Math.round(lr * 0.32)}px Segoe UI`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('SIKKMIXX', 0, 0)
+
+  // Center hole
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.038, 0, Math.PI * 2)
+  ctx.fillStyle = '#000'
+  ctx.fill()
+
+  ctx.restore()
+
+  // Outer ring glow when scratching
+  if (deck.scratching) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(cx, cy, r + 1, 0, Math.PI * 2)
+    ctx.strokeStyle = accent
+    ctx.lineWidth = 2
+    ctx.shadowBlur = 14
+    ctx.shadowColor = accent
+    ctx.stroke()
+    ctx.restore()
+  }
+
+  // Tonearm indicator (static, not rotating) — small dot at 4 o'clock
+  ctx.save()
+  ctx.translate(cx, cy)
+  const taDist = r * 0.72
+  const taAngle = Math.PI * 0.22
+  ctx.beginPath()
+  ctx.arc(Math.cos(taAngle) * taDist, Math.sin(taAngle) * taDist, 3, 0, Math.PI * 2)
+  ctx.fillStyle = accentDim
+  ctx.fill()
+  ctx.restore()
+}
+
+// ── Scratch ────────────────────────────────────────────────────────
+// Normal vinyl: 33.33 RPM = (33.33/60)*2π rad/s ≈ 0.003491 rad/ms
+const NORMAL_RADS_PER_MS = (33.33 / 60) * 2 * Math.PI / 1000
+
+function getScratchAngle(e, canvas) {
+  const rect = canvas.getBoundingClientRect()
+  return Math.atan2(e.clientY - (rect.top + rect.height / 2),
+                    e.clientX - (rect.left + rect.width  / 2))
+}
+
+;['a', 'b'].forEach(id => {
+  const canvas = document.getElementById(`disc-${id}`)
+  const deck   = DECKS[id]
+
+  canvas.addEventListener('pointerdown', e => {
+    e.preventDefault()
+    if (!audioContext) initAudio()
+    canvas.setPointerCapture(e.pointerId)
+    deck.scratching = true
+    deck.scratchWasPlaying = !deck.el.paused
+    deck.scratchLastAngle = getScratchAngle(e, canvas)
+    deck.scratchLastTime  = performance.now()
+    // Start playing at near-zero rate so audio is ready to scratch immediately
+    if (deck.el.paused) deck.el.play().catch(() => {})
+    deck.el.playbackRate = 0.01
+    canvas.classList.add('scratching')
+  })
+
+  canvas.addEventListener('pointermove', e => {
+    if (!deck.scratching) return
+    e.preventDefault()
+    const now = performance.now()
+    const dt  = Math.max(4, now - deck.scratchLastTime)  // min 4ms to avoid /0 noise
+    deck.scratchLastTime = now
+
+    const angle = getScratchAngle(e, canvas)
+    let delta = angle - deck.scratchLastAngle
+    if (delta >  Math.PI) delta -= 2 * Math.PI
+    if (delta < -Math.PI) delta += 2 * Math.PI
+    deck.scratchLastAngle = angle
+    deck.discAngle += delta
+
+    const angVel    = delta / dt                       // rad/ms (signed)
+    const speedRatio = angVel / NORMAL_RADS_PER_MS     // 1.0 = normal vinyl speed
+
+    if (speedRatio >= 0) {
+      // Forward scratch — let audio play at scratch speed (the pitch shift IS the scratch sound)
+      deck.el.playbackRate = Math.max(0.01, Math.min(4, speedRatio))
+    } else {
+      // Backward — HTMLMediaElement can't reverse; scrub position manually + near-silence
+      deck.el.playbackRate = 0.01
+      if (deck.el.duration) {
+        deck.el.currentTime = Math.max(0, Math.min(
+          deck.el.duration,
+          deck.el.currentTime + (delta / (2 * Math.PI)) * 1.8
+        ))
+      }
+    }
+  })
+
+  function endScratch() {
+    if (!deck.scratching) return
+    deck.scratching = false
+    canvas.classList.remove('scratching')
+    // Restore rate from tempo slider
+    deck.el.playbackRate = parseFloat(document.getElementById(`tempo-${id}`).value) / 100
+    if (!deck.scratchWasPlaying) deck.el.pause()
+  }
+
+  canvas.addEventListener('pointerup',     endScratch)
+  canvas.addEventListener('pointercancel', endScratch)
+})
+
+// ── Beat Match ────────────────────────────────────────────────────
+function applyTempo(deckId, sliderVal) {
+  const v      = Math.round(sliderVal * 10) / 10
+  const rate   = v / 100
+  const slider = document.getElementById(`tempo-${deckId}`)
+  const valEl  = document.getElementById(`tempo-val-${deckId}`)
+  slider.value = v
+  const pct = v - 100
+  valEl.textContent = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`
+  DECKS[deckId].el.playbackRate = rate
+  const bpm = DECKS[deckId].detectedBPM
+  if (bpm) document.getElementById(`bpm-${deckId}`).textContent = `${Math.round(bpm * rate)} BPM`
+}
+
+function syncDeckTempo(deckId) {
+  const otherId = deckId === 'a' ? 'b' : 'a'
+  const myBPM    = DECKS[deckId].detectedBPM
+  const otherBPM = DECKS[otherId].detectedBPM
+  if (!myBPM || !otherBPM) return
+
+  // Find the playback-rate multiplier that makes my BPM match the other deck
+  let ratio = otherBPM / myBPM
+  // Collapse obvious double/half-time (±10% of 2:1 or 1:2)
+  if (ratio > 1.8 && ratio < 2.2) ratio = 2
+  if (ratio > 0.45 && ratio < 0.55) ratio = 0.5
+
+  const sliderVal = Math.round(Math.max(85, Math.min(115, ratio * 100)) * 10) / 10
+  applyTempo(deckId, sliderVal)
+  document.getElementById(`sync-${deckId}`).classList.add('synced')
+}
+
+function nudgeTempo(deckId, dir) {
+  const slider = document.getElementById(`tempo-${deckId}`)
+  applyTempo(deckId, Math.max(85, Math.min(115, parseFloat(slider.value) + dir)))
+  document.getElementById(`sync-${deckId}`).classList.remove('synced')
+}
+
+;['a', 'b'].forEach(id => {
+  document.getElementById(`sync-${id}`).addEventListener('click', () => syncDeckTempo(id))
+  document.getElementById(`nudge-l-${id}`).addEventListener('click', () => nudgeTempo(id, -0.1))
+  document.getElementById(`nudge-r-${id}`).addEventListener('click', () => nudgeTempo(id, +0.1))
+})
+
+// ── Bootstrap ─────────────────────────────────────────────────────
+async function init() {
+  const ok = await checkAuth()
+  if (!ok) return
+
+  try {
+    const res = await fetch(`${API}/public-tracks`)
+    playlist = await res.json()
+  } catch { return }
+
+  if (!playlist.length) return
+
+  buildLibrary()
+
+  // Load random tracks to each deck (different ones if possible)
+  const idxA = Math.floor(Math.random() * playlist.length)
+  let idxB = Math.floor(Math.random() * playlist.length)
+  if (playlist.length > 1) while (idxB === idxA) idxB = Math.floor(Math.random() * playlist.length)
+
+  loadTrackToDeck('a', idxA)
+  loadTrackToDeck('b', idxB)
+
+  // Init audio on first user gesture (play button or load-to-deck click)
+  // Also start audio on first library click
+  document.getElementById('library-list').addEventListener('click', () => {
+    if (!audioContext) initAudio()
+  }, { once: true })
+
+  startPresence()
+
+  // Show Spotify button once authenticated
+  const spBtn = document.getElementById('spotifyBtn')
+  spBtn.style.display = 'inline-block'
+  if (localStorage.getItem('sp_token') || localStorage.getItem('sp_refresh')) {
+    spBtn.textContent = '🎵 Spotify Decks →'
+    spBtn.href = '/dj-spotify.html'
+  } else {
+    spBtn.textContent = '🎵 Connect Spotify'
+    spBtn.onclick = e => { e.preventDefault(); connectSpotify() }
+  }
+}
+
+init()
+
+// ── Spotify Connect ───────────────────────────────────────────────
+const SPOTIFY_CLIENT_ID = 'a03f77c61e2e4f8cabfb957532080a0a'
+const SPOTIFY_REDIRECT_URI = window.location.origin + '/dj-spotify.html'
+const SPOTIFY_SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state'
+
+function generateCodeVerifier() {
+  const arr = new Uint8Array(32)
+  crypto.getRandomValues(arr)
+  return btoa(String.fromCharCode(...arr)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+async function generateCodeChallenge(verifier) {
+  const data = new TextEncoder().encode(verifier)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+async function connectSpotify() {
+  const verifier = generateCodeVerifier()
+  const challenge = await generateCodeChallenge(verifier)
+  localStorage.setItem('sp_verifier', verifier)
+  const params = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: SPOTIFY_REDIRECT_URI,
+    scope: SPOTIFY_SCOPES,
+    code_challenge_method: 'S256',
+    code_challenge: challenge
+  })
+  window.location.href = `https://accounts.spotify.com/authorize?${params}`
+}
+</script>
+
+</body>
+</html>
