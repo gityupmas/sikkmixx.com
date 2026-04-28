@@ -164,6 +164,7 @@
 
     .deck-controls {
       display: flex; align-items: center; gap: 6px;
+      margin-top: -75px;
     }
 
     .ctrl-btn {
@@ -241,23 +242,6 @@
       0%, 100% { box-shadow: 0 0 10px rgba(0,224,255,0.4); }
       50%       { box-shadow: 0 0 28px rgba(0,224,255,0.85), 0 0 6px rgba(0,224,255,0.4) inset; }
     }
-
-    .vote-btn {
-      margin-left: auto;
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.25);
-      color: rgba(255,255,255,0.6);
-      border-radius: 14px; padding: 3px 10px;
-      font-size: 11px; cursor: pointer; transition: all 0.2s ease;
-      flex-shrink: 0;
-    }
-    .deck-a .vote-btn:hover, .deck-a .vote-btn.voted {
-      border-color: #ff00cc; color: #ff00cc; box-shadow: 0 0 8px rgba(255,0,204,0.4);
-    }
-    .deck-b .vote-btn:hover, .deck-b .vote-btn.voted {
-      border-color: #00e0ff; color: #00e0ff; box-shadow: 0 0 8px rgba(0,224,255,0.4);
-    }
-    .vote-btn:disabled { cursor: default; opacity: 0.5; }
 
     /* ── Sliders ── */
     .slider-section {
@@ -487,6 +471,8 @@
       /* Hide header buttons in landscape to save space */
       .header-btn { font-size: 11px; padding: 4px 8px; top: 4px; }
       #backBtn { left: 6px; }
+      #profileBtn { left: 80px; }
+      #logoutBtn { right: 6px; }
       #spotifyBtn { right: 90px; }
       #soundcloudBtn { right: 185px; }
     }
@@ -499,7 +485,6 @@
 
 <!-- Header -->
 <a href="/" id="backBtn" class="header-btn">← Back</a>
-<a href="#" id="spotifyBtn" class="header-btn" style="display:none;">🎵 Spotify</a>
 
 <!-- Hidden audio elements -->
 <audio id="player-a" crossorigin="anonymous" preload="none"></audio>
@@ -530,7 +515,6 @@
             <button class="ctrl-btn skip-btn" id="prev-a" title="Previous">⏮</button>
             <button class="ctrl-btn play-btn" id="play-a" title="Play / Pause">▶</button>
             <button class="ctrl-btn skip-btn" id="next-a" title="Next">⏭</button>
-            <button class="vote-btn" id="vote-a" disabled>♥ <span id="vcount-a">0</span></button>
           </div>
           <div class="slider-section">
             <div class="slider-row">
@@ -585,7 +569,6 @@
             <button class="ctrl-btn skip-btn" id="prev-b" title="Previous">⏮</button>
             <button class="ctrl-btn play-btn" id="play-b" title="Play / Pause">▶</button>
             <button class="ctrl-btn skip-btn" id="next-b" title="Next">⏭</button>
-            <button class="vote-btn" id="vote-b" disabled>♥ <span id="vcount-b">0</span></button>
           </div>
           <div class="slider-section">
             <div class="slider-row">
@@ -1640,17 +1623,6 @@ async function init() {
   }, { once: true })
 
   startPresence()
-
-  // Show Spotify button once authenticated
-  const spBtn = document.getElementById('spotifyBtn')
-  spBtn.style.display = 'inline-block'
-  if (localStorage.getItem('sp_token') || localStorage.getItem('sp_refresh')) {
-    spBtn.textContent = '🎵 Spotify Decks →'
-    spBtn.href = '/dj-spotify.html'
-  } else {
-    spBtn.textContent = '🎵 Connect Spotify'
-    spBtn.onclick = e => { e.preventDefault(); connectSpotify() }
-  }
 }
 
 init()
