@@ -1445,23 +1445,35 @@ async function decodeAndRenderWaveform(deckId, url) {
     offscreen.width  = canvas.offsetWidth  || 400
     offscreen.height = canvas.offsetHeight || 52
     const oc = offscreen.getContext('2d')
-    const data = audioBuffer.getChannelData(0)
+    const channels = []
+    for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+      channels.push(audioBuffer.getChannelData(ch))
+    }
     const w = offscreen.width, h = offscreen.height
     const mid = h / 2
-    const step = Math.ceil(data.length / w)
+    const step = Math.ceil(audioBuffer.length / w)
+    const waveformGain = 0.72
 
     oc.clearRect(0, 0, w, h)
 
-    // Draw waveform bars (dim by default, bright played portion drawn each frame)
+    // Draw RMS waveform bars so mastered tracks keep visible dynamics instead of peak-maxing.
     for (let x = 0; x < w; x++) {
-      let min = 0, max = 0
+      let sumSquares = 0
+      let count = 0
+      const start = x * step
       for (let i = 0; i < step; i++) {
-        const s = data[x * step + i] || 0
-        if (s < min) min = s
-        if (s > max) max = s
+        const sampleIndex = start + i
+        for (const channel of channels) {
+          const s = channel[sampleIndex] || 0
+          sumSquares += s * s
+          count++
+        }
       }
+      const rms = count ? Math.sqrt(sumSquares / count) : 0
+      const shaped = Math.min(0.86, Math.pow(rms, 0.82) * waveformGain)
+      const barHeight = Math.max(1, shaped * mid)
       oc.fillStyle = dimColor
-      oc.fillRect(x, mid + min * mid * 0.5, 1, Math.max(1, (max - min) * mid * 0.5))
+      oc.fillRect(x, mid - barHeight, 1, barHeight * 2)
     }
 
     deck.waveOffscreen = offscreen
