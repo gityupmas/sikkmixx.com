@@ -339,19 +339,6 @@
     #library-search::placeholder { color: rgba(255,255,255,0.2); }
     #library-search:focus { border-color: rgba(255,0,204,0.4); }
 
-    #listeners-compact {
-      font-size: 11px; color: rgba(255,255,255,0.3);
-      margin-left: auto; white-space: nowrap; overflow: hidden;
-      text-overflow: ellipsis; max-width: 260px;
-    }
-    .live-dot {
-      display: inline-block; width: 6px; height: 6px;
-      background: #ff00cc; border-radius: 50%; margin-right: 5px;
-      box-shadow: 0 0 6px #ff00cc; animation: blink-dot 1.5s infinite;
-      vertical-align: middle;
-    }
-    @keyframes blink-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
-
     #library-list { overflow-y: auto; flex: 1; }
     #library-list::-webkit-scrollbar { width: 3px; }
     #library-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
@@ -617,7 +604,6 @@
     <div class="library-header">
       <span class="library-title">Track Library</span>
       <input type="text" id="library-search" placeholder="Search...">
-      <span id="listeners-compact"></span>
     </div>
     <div id="library-list"></div>
   </div>
@@ -976,11 +962,8 @@ setupSliders('b')
 
 // ── Votes ─────────────────────────────────────────────────────────
 async function fetchMyVotes() { /* removed in app version */ }
-
 function updateVoteBtn(deckId) { /* removed in app version */ }
-
 async function voteDeck(deckId) { /* removed in app version */ }
-
 // vote-a and vote-b buttons don't exist in app version
 
 // ── Library ───────────────────────────────────────────────────────
@@ -1043,23 +1026,9 @@ async function sendHeartbeat() {
   } catch {}
 }
 
-async function pollListeners() {
-  try {
-    const res = await fetch(`${API}/listeners`)
-    if (!res.ok) return
-    const listeners = await res.json()
-    const el = document.getElementById('listeners-compact')
-    if (!listeners.length) { el.textContent = ''; return }
-    el.innerHTML = `<span class="live-dot"></span>${listeners.map(l => l.username).join(', ')}`
-  } catch {}
-}
+async function pollListeners() { /* removed in app version */ }
 
-function startPresence() {
-  if (heartbeatInterval) return
-  sendHeartbeat(); pollListeners()
-  heartbeatInterval = setInterval(sendHeartbeat, 15000)
-  pollInterval = setInterval(pollListeners, 15000)
-}
+function startPresence() { /* removed in app version */ }
 
 // ── BPM Detection (offline, runs on decoded AudioBuffer) ─────────
 function detectBPM(audioBuffer) {
