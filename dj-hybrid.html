@@ -935,16 +935,24 @@ async function playSpotifyRecommendation(seedTrackId) {
   if (!token || !spotifyDeviceId) return
   try {
     setStatus('b', 'finding next track...', 'ready')
+    // Build a search query from the current artist name (Spotify's recommendations
+    // endpoint was deprecated in 2024, so we use search instead)
+    const artist = document.getElementById('artist-b').textContent.trim()
+    const query = artist ? `artist:${artist}` : document.getElementById('title-b').textContent.trim()
+    if (!query) { setStatus('b', 'no track info for radio', 'error'); return }
     const res = await fetch(
-      `https://api.spotify.com/v1/recommendations?seed_tracks=${seedTrackId}&limit=1`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
-    if (!res.ok) return
+    if (!res.ok) { setStatus('b', 'radio search failed', 'error'); return }
     const data = await res.json()
-    const next = data.tracks?.[0]
-    if (!next) { setStatus('b', 'no recommendation found', 'error'); return }
+    const tracks = (data.tracks?.items || []).filter(t => t.id !== seedTrackId)
+    if (!tracks.length) { setStatus('b', 'no next track found', 'error'); return }
+    const next = tracks[Math.floor(Math.random() * tracks.length)]
     await playSpotifyTrack(next.uri)
-  } catch {}
+  } catch {
+    setStatus('b', 'radio error', 'error')
+  }
 }
 
 document.getElementById('radio-btn').addEventListener('click', () => {
