@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SiKKMiXX - Hybrid DJ Booth</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: #fff;
+      overflow: hidden;
+      height: 100vh;
+    }
+    #bg-image {
+      position: fixed;
+      inset: 0;
+      background: url("omnia.webp") center center / cover no-repeat;
+      z-index: -2;
+      filter: brightness(0.42) contrast(1.25);
+    }
+    #visual-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 28% 45%, rgba(255,102,0,0.12), transparent 42%),
+        radial-gradient(circle at 72% 45%, rgba(30,215,96,0.12), transparent 42%),
+        radial-gradient(circle at center, #101010 0%, #000 80%);
+    }
+    .header-btn {
+      position: fixed;
+      top: 10px;
+      z-index: 20;
+      opacity: 0.72;
+      font-size: 13px;
+      text-decoration: none;
+      color: rgba(255,255,255,0.72);
+      border: 1px solid rgba(255,255,255,0.26);
+      padding: 6px 11px;
+      border-radius: 20px;
+      backdrop-filter: blur(6px);
+      transition: all 0.2s ease;
+    }
+    .header-btn:hover { opacity: 1; color: #fff; border-color: rgba(255,255,255,0.6); }
+    #backBtn { left: 12px; }
+    #profileBtn { left: 90px; display: none; }
+    #logoutBtn { right: 12px; display: none; color: rgba(255,140,140,0.9); }
+    #regularBtn { right: 92px; color: rgba(255,0,204,0.85); border-color: rgba(255,0,204,0.35); }
+
+    #auth-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+    #auth-gate p { color: rgba(255,255,255,0.75); margin: 0; }
+    #auth-gate a { color: #ff00cc; text-decoration: none; }
+
+    #main {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 46px 10px 8px;
+      gap: 6px;
+    }
+    .decks-row {
+      display: flex;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+    }
+    .deck-panel {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      background: rgba(18,18,18,0.64);
+      backdrop-filter: blur(20px);
+    }
+    .deck-a { border: 1px solid rgba(255,102,0,0.42); box-shadow: 0 0 24px rgba(255,102,0,0.08); }
+    .deck-b { border: 1px solid rgba(30,215,96,0.42); box-shadow: 0 0 24px rgba(30,215,96,0.08); }
+    .deck-header-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .deck-label {
+      font-size: 9px;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .deck-a .deck-label { color: #ff6600; text-shadow: 0 0 8px rgba(255,102,0,0.7); }
+    .deck-b .deck-label { color: #1ed760; text-shadow: 0 0 8px rgba(30,215,96,0.7); }
+    .source-badge {
+      font-size: 8px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-radius: 6px;
+      padding: 2px 6px;
+      flex-shrink: 0;
+    }
+    .deck-a .source-badge { color: #ff8a2a; border: 1px solid rgba(255,102,0,0.35); background: rgba(255,102,0,0.14); }
+    .deck-b .source-badge { color: #1ed760; border: 1px solid rgba(30,215,96,0.35); background: rgba(30,215,96,0.14); }
+    .status {
+      margin-left: auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 10px;
+      color: rgba(255,255,255,0.38);
+    }
+    .status.ready { color: rgba(120,255,170,0.76); }
+    .status.error { color: rgba(255,110,110,0.88); }
+    .track-title {
+      min-height: 19px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.9);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track-artist {
+      min-height: 15px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.45);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .deck-body {
+      display: flex;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+    .disc-col {
+      width: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .disc-canvas {
+      width: 150px;
+      height: 150px;
+      display: block;
+      border-radius: 50%;
+    }
+    .controls-col {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .meter {
+      width: 100%;
+      height: 42px;
+      display: block;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.04);
+    }
+    .deck-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .ctrl-btn {
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.9);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 0;
+    }
+    .play-btn { width: 52px; height: 52px; font-size: 19px; }
+    .skip-btn { width: 36px; height: 36px; font-size: 13px; }
+    .deck-a .ctrl-btn:hover, .deck-a .ctrl-btn.is-playing { border-color: #ff6600; color: #ff6600; box-shadow: 0 0 14px rgba(255,102,0,0.45); }
+    .deck-b .ctrl-btn:hover, .deck-b .ctrl-btn.is-playing { border-color: #1ed760; color: #1ed760; box-shadow: 0 0 14px rgba(30,215,96,0.45); }
+    .url-row, .search-row {
+      display: flex;
+      gap: 6px;
+      min-width: 0;
+      flex-shrink: 0;
+    }
+    .url-row input,
+    .search-row input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      border-radius: 8px;
+      padding: 7px 9px;
+      outline: none;
+      font-size: 12px;
+    }
+    .url-row button,
+    #spotify-connect-btn {
+      border: 1px solid rgba(255,255,255,0.18);
+      background: transparent;
+      color: rgba(255,255,255,0.72);
+      border-radius: 8px;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .deck-a .url-row button:hover { color: #ff6600; border-color: #ff6600; }
+    #spotify-connect-btn { color: #1ed760; border-color: rgba(30,215,96,0.38); }
+    #spotify-connect-btn.connected { background: rgba(30,215,96,0.12); border-color: rgba(30,215,96,0.72); }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .slider-label {
+      width: 42px;
+      text-align: right;
+      font-size: 9px;
+      color: rgba(255,255,255,0.36);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+    .slider-val {
+      width: 34px;
+      font-size: 9px;
+      color: rgba(255,255,255,0.38);
+      flex-shrink: 0;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      flex: 1;
+      height: 3px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.13);
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+    }
+    .deck-a input[type="range"]::-webkit-slider-thumb { background: #ff6600; box-shadow: 0 0 8px rgba(255,102,0,0.65); }
+    .deck-b input[type="range"]::-webkit-slider-thumb { background: #1ed760; box-shadow: 0 0 8px rgba(30,215,96,0.65); }
+    .spotify-panel {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    #spotify-results {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      border: 1px solid rgba(30,215,96,0.12);
+      border-radius: 8px;
+      background: rgba(0,0,0,0.15);
+    }
+    .sp-result {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+    }
+    .sp-result:hover { background: rgba(30,215,96,0.08); }
+    .sp-result-name { font-size: 12px; color: rgba(255,255,255,0.86); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sp-result-artist { font-size: 10px; color: rgba(255,255,255,0.42); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .crossfader-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 14px;
+      background: rgba(15,15,15,0.54);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      flex-shrink: 0;
+      backdrop-filter: blur(10px);
+    }
+    .xf-label {
+      width: 28px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .xf-label.a { color: #ff6600; text-align: right; }
+    .xf-label.b { color: #1ed760; }
+    #crossfader {
+      background: linear-gradient(to right, rgba(255,102,0,0.42), rgba(255,255,255,0.13) 50%, rgba(30,215,96,0.42));
+    }
+    .hint-row {
+      background: rgba(12,12,12,0.62);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 8px 12px;
+      color: rgba(255,255,255,0.34);
+      font-size: 11px;
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+    .sc-iframe {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      left: -9999px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    @media (max-height: 500px) and (orientation: landscape) {
+      #main { height: 100dvh; padding: 38px 6px 5px; gap: 4px; }
+      .decks-row { flex: 0 0 auto; gap: 6px; }
+      .deck-panel { height: 214px; padding: 7px 9px; gap: 5px; border-radius: 10px; }
+      .deck-body { gap: 8px; }
+      .disc-col { width: 92px; }
+      .disc-canvas { width: 92px; height: 92px; }
+      .meter { height: 28px; }
+      .play-btn { width: 36px; height: 36px; font-size: 14px; }
+      .skip-btn { width: 27px; height: 27px; font-size: 10px; }
+      .track-title { min-height: 15px; font-size: 11px; }
+      .track-artist { min-height: 12px; font-size: 9px; }
+      .url-row input, .search-row input, .url-row button, #spotify-connect-btn { padding: 4px 7px; font-size: 10px; }
+      .slider-label { width: 34px; font-size: 7px; }
+      .slider-val { width: 28px; font-size: 7px; }
+      .hint-row { padding: 5px 9px; font-size: 9px; }
+      .header-btn { top: 5px; font-size: 11px; padding: 4px 8px; }
+    }
+    @media (max-width: 760px) and (orientation: portrait) {
+      body { overflow: auto; height: auto; min-height: 100dvh; }
+      #main { height: auto; min-height: 100dvh; padding: 42px 7px 7px; }
+      .decks-row { flex-direction: column; }
+      .deck-panel { min-height: 270px; }
+      .hint-row { margin-bottom: 8px; }
+    }
+  </style>
+</head>
+<body>
+<iframe id="sc-iframe-a" class="sc-iframe" allow="autoplay"></iframe>
+
+<div id="auth-gate">
+  <p>Hybrid DJ Booth is members only</p>
+  <a href="/login.html">Login to Enter</a>
+</div>
+
+<div id="bg-image"></div>
+<div id="visual-bg"></div>
+
+<a href="/" id="backBtn" class="header-btn">Back</a>
+<a href="/profile.html" id="profileBtn" class="header-btn">@user</a>
+<a href="/dj.html" id="regularBtn" class="header-btn">DJ Booth</a>
+<a href="#" id="logoutBtn" class="header-btn">Logout</a>
+
+<div id="main">
+  <div class="decks-row">
+    <div class="deck-panel deck-a">
+      <div class="deck-header-row">
+        <div class="deck-label">Deck A</div>
+        <span class="source-badge">SoundCloud</span>
+        <span class="status" id="status-a">no track</span>
+      </div>
+      <div class="track-title" id="title-a">Paste a public SoundCloud track URL</div>
+      <div class="track-artist" id="artist-a"></div>
+      <div class="deck-body">
+        <div class="disc-col">
+          <canvas class="disc-canvas" id="disc-a" width="150" height="150"></canvas>
+        </div>
+        <div class="controls-col">
+          <canvas class="meter" id="meter-a"></canvas>
+          <div class="deck-controls">
+            <button class="ctrl-btn play-btn" id="play-a" title="Play / Pause">▶</button>
+          </div>
+          <div class="url-row">
+            <input id="url-a" type="text" placeholder="https://soundcloud.com/artist/track">
+            <button id="load-a">Load</button>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">Volume</span>
+            <input type="range" id="vol-a" min="0" max="100" value="80" step="1">
+            <span class="slider-val" id="vol-val-a">80%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="deck-panel deck-b">
+      <div class="deck-header-row">
+        <div class="deck-label">Deck B</div>
+        <span class="source-badge">Spotify</span>
+        <button id="spotify-connect-btn">Connect</button>
+        <span class="status" id="status-b">not connected</span>
+      </div>
+      <div class="track-title" id="title-b">Connect Spotify, then search a track</div>
+      <div class="track-artist" id="artist-b"></div>
+      <div class="deck-body">
+        <div class="disc-col">
+          <canvas class="disc-canvas" id="disc-b" width="150" height="150"></canvas>
+        </div>
+        <div class="controls-col">
+          <canvas class="meter" id="meter-b"></canvas>
+          <div class="deck-controls">
+            <button class="ctrl-btn skip-btn" id="prev-b" title="Previous">⏮</button>
+            <button class="ctrl-btn play-btn" id="play-b" title="Play / Pause">▶</button>
+            <button class="ctrl-btn skip-btn" id="next-b" title="Next">⏭</button>
+          </div>
+          <div class="spotify-panel">
+            <div class="search-row">
+              <input type="text" id="spotify-query" placeholder="Search Spotify tracks..." disabled>
+            </div>
+            <div id="spotify-results"></div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">Volume</span>
+            <input type="range" id="vol-b" min="0" max="100" value="80" step="1">
+            <span class="slider-val" id="vol-val-b">80%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="crossfader-row">
+    <span class="xf-label a">SC</span>
+    <input type="range" id="crossfader" min="0" max="100" value="50" step="1">
+    <span class="xf-label b">SP</span>
+  </div>
+
+  <div class="hint-row">
+    Deck A uses the SoundCloud Widget API. Deck B uses Spotify Web Playback SDK and needs Spotify Premium.
+    The crossfader blends platform volume only; protected platform streams cannot share raw waveform, EQ, or scratch audio.
+  </div>
+</div>
+
+<script src="https://w.soundcloud.com/player/api.js"></script>
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
+
+<script>
+const API = 'https://api.sikkmixx.com'
+const token = localStorage.getItem('token')
+
+const SPOTIFY_CLIENT_ID = 'a03f77c61e2e4f8cabfb957532080a0a'
+const SPOTIFY_REDIRECT_URI = window.location.origin + '/dj-hybrid.html'
+const SPOTIFY_SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state'
+
+const DECKS = {
+  a: { id: 'a', source: 'soundcloud', widget: null, isReady: false, isPlaying: false, volume: 80, xfadeGain: Math.SQRT1_2, discAngle: 0, pulse: 0 },
+  b: { id: 'b', source: 'spotify', isReady: false, isPlaying: false, volume: 80, xfadeGain: Math.SQRT1_2, discAngle: 0, pulse: 0, spotifyState: null }
+}
+
+let spotifyPlayer = null
+let spotifyDeviceId = null
+let spotifyCurrentTrackId = null
+let spotifySDKReady = false
+let spSearchTimer = null
+
+async function checkAuth() {
+  if (!token) { window.location.href = '/login.html'; return false }
+  try {
+    const res = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${token}` } })
+    if (!res.ok) {
+      localStorage.removeItem('token')
+      window.location.href = '/login.html'
+      return false
+    }
+    const me = await res.json()
+    document.getElementById('profileBtn').textContent = `@${me.username}`
+    document.getElementById('profileBtn').style.display = 'inline-block'
+    document.getElementById('logoutBtn').style.display = 'inline-block'
+    document.getElementById('auth-gate').style.display = 'none'
+    return true
+  } catch {
+    window.location.href = '/login.html'
+    return false
+  }
+}
+
+document.getElementById('logoutBtn').addEventListener('click', e => {
+  e.preventDefault()
+  localStorage.removeItem('token')
+  window.location.href = '/'
+})
+
+function setStatus(id, text, cls = '') {
+  const el = document.getElementById(`status-${id}`)
+  el.textContent = text
+  el.className = `status ${cls}`.trim()
+}
+
+function updatePlatformVolumes() {
+  const scVol = Math.round(DECKS.a.volume * DECKS.a.xfadeGain)
+  if (DECKS.a.widget && DECKS.a.isReady) DECKS.a.widget.setVolume(scVol)
+
+  const spVol = Math.max(0, Math.min(1, (DECKS.b.volume * DECKS.b.xfadeGain) / 100))
+  if (spotifyPlayer) spotifyPlayer.setVolume(spVol).catch(() => {})
+}
+
+function loadSoundCloudURL() {
+  const rawURL = document.getElementById('url-a').value.trim()
+  if (!rawURL) return
+  if (!rawURL.includes('soundcloud.com')) {
+    setStatus('a', 'invalid SoundCloud URL', 'error')
+    return
+  }
+
+  setStatus('a', 'loading...')
+  const iframe = document.getElementById('sc-iframe-a')
+  iframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(rawURL)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`
+  iframe.onload = () => {
+    const deck = DECKS.a
+    deck.widget = SC.Widget(iframe)
+    deck.widget.bind(SC.Widget.Events.READY, () => {
+      deck.isReady = true
+      setStatus('a', 'ready', 'ready')
+      deck.widget.getCurrentSound(sound => {
+        document.getElementById('title-a').textContent = sound?.title || 'Unknown SoundCloud track'
+        document.getElementById('artist-a').textContent = sound?.user?.username || ''
+      })
+      updatePlatformVolumes()
+    })
+    deck.widget.bind(SC.Widget.Events.PLAY, () => {
+      deck.isPlaying = true
+      setStatus('a', 'playing', 'ready')
+      document.getElementById('play-a').textContent = '⏸'
+      document.getElementById('play-a').classList.add('is-playing')
+    })
+    deck.widget.bind(SC.Widget.Events.PAUSE, () => {
+      deck.isPlaying = false
+      setStatus('a', 'paused', 'ready')
+      document.getElementById('play-a').textContent = '▶'
+      document.getElementById('play-a').classList.remove('is-playing')
+    })
+    deck.widget.bind(SC.Widget.Events.FINISH, () => {
+      deck.isPlaying = false
+      setStatus('a', 'finished', 'ready')
+      document.getElementById('play-a').textContent = '▶'
+      document.getElementById('play-a').classList.remove('is-playing')
+    })
+    deck.widget.bind(SC.Widget.Events.ERROR, () => {
+      setStatus('a', 'restricted / unavailable', 'error')
+      document.getElementById('title-a').textContent = 'SoundCloud track unavailable'
+    })
+  }
+}
+
+function toggleSoundCloud() {
+  const deck = DECKS.a
+  if (!deck.widget || !deck.isReady) return
+  deck.isPlaying ? deck.widget.pause() : deck.widget.play()
+}
+
+function generateCodeVerifier() {
+  const arr = new Uint8Array(32)
+  crypto.getRandomValues(arr)
+  return btoa(String.fromCharCode(...arr)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+async function generateCodeChallenge(verifier) {
+  const data = new TextEncoder().encode(verifier)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+async function connectSpotify() {
+  const verifier = generateCodeVerifier()
+  const challenge = await generateCodeChallenge(verifier)
+  localStorage.setItem('sp_verifier', verifier)
+  const params = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: SPOTIFY_REDIRECT_URI,
+    scope: SPOTIFY_SCOPES,
+    code_challenge_method: 'S256',
+    code_challenge: challenge
+  })
+  window.location.href = `https://accounts.spotify.com/authorize?${params}`
+}
+
+async function exchangeSpotifyCode(code) {
+  const verifier = localStorage.getItem('sp_verifier')
+  if (!verifier) return null
+  try {
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: SPOTIFY_CLIENT_ID,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: SPOTIFY_REDIRECT_URI,
+        code_verifier: verifier
+      })
+    })
+    const data = await res.json()
+    if (data.access_token) {
+      localStorage.setItem('sp_token', data.access_token)
+      if (data.refresh_token) localStorage.setItem('sp_refresh', data.refresh_token)
+      localStorage.setItem('sp_expiry', Date.now() + data.expires_in * 1000)
+      localStorage.removeItem('sp_verifier')
+      window.history.replaceState({}, '', '/dj-hybrid.html')
+      return data.access_token
+    }
+  } catch {}
+  return null
+}
+
+async function refreshSpotifyToken() {
+  const rt = localStorage.getItem('sp_refresh')
+  if (!rt) return null
+  try {
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: SPOTIFY_CLIENT_ID,
+        grant_type: 'refresh_token',
+        refresh_token: rt
+      })
+    })
+    const data = await res.json()
+    if (data.access_token) {
+      localStorage.setItem('sp_token', data.access_token)
+      localStorage.setItem('sp_expiry', Date.now() + data.expires_in * 1000)
+      if (data.refresh_token) localStorage.setItem('sp_refresh', data.refresh_token)
+      return data.access_token
+    }
+  } catch {}
+  localStorage.removeItem('sp_token')
+  localStorage.removeItem('sp_refresh')
+  return null
+}
+
+async function getSpotifyToken() {
+  const expiry = parseInt(localStorage.getItem('sp_expiry') || '0')
+  if (Date.now() < expiry - 60000) return localStorage.getItem('sp_token')
+  return refreshSpotifyToken()
+}
+
+function setSpotifyConnected(connected, connecting = false) {
+  const btn = document.getElementById('spotify-connect-btn')
+  btn.textContent = connecting ? 'Connecting...' : connected ? 'Connected' : 'Connect'
+  btn.classList.toggle('connected', connected)
+  btn.onclick = connected ? disconnectSpotify : connectSpotify
+  document.getElementById('spotify-query').disabled = !connected
+  DECKS.b.isReady = connected
+  setStatus('b', connected ? 'ready' : 'not connected', connected ? 'ready' : '')
+}
+
+function disconnectSpotify() {
+  if (spotifyPlayer) {
+    spotifyPlayer.disconnect()
+    spotifyPlayer = null
+  }
+  spotifyDeviceId = null
+  spotifyCurrentTrackId = null
+  DECKS.b.isPlaying = false
+  localStorage.removeItem('sp_token')
+  localStorage.removeItem('sp_refresh')
+  localStorage.removeItem('sp_expiry')
+  setSpotifyConnected(false)
+  document.getElementById('title-b').textContent = 'Connect Spotify, then search a track'
+  document.getElementById('artist-b').textContent = ''
+  document.getElementById('play-b').textContent = '▶'
+  document.getElementById('play-b').classList.remove('is-playing')
+  document.getElementById('spotify-results').innerHTML = ''
+}
+
+async function initSpotifyPlayer() {
+  if (spotifyPlayer) return
+  const token = await getSpotifyToken()
+  if (!token) {
+    setStatus('b', 'connect required')
+    return
+  }
+  if (!window.Spotify) {
+    setStatus('b', 'sdk loading...')
+    return
+  }
+  setSpotifyConnected(false, true)
+  spotifyPlayer = new Spotify.Player({
+    name: 'SiKKMiXX Hybrid Deck B',
+    getOAuthToken: async cb => cb(await getSpotifyToken() || ''),
+    volume: 0.8
+  })
+  spotifyPlayer.addListener('ready', ({ device_id }) => {
+    spotifyDeviceId = device_id
+    setSpotifyConnected(true)
+    updatePlatformVolumes()
+  })
+  spotifyPlayer.addListener('not_ready', () => {
+    spotifyDeviceId = null
+    setStatus('b', 'offline', 'error')
+  })
+  spotifyPlayer.addListener('player_state_changed', state => {
+    if (!state) return
+    DECKS.b.spotifyState = state
+    DECKS.b.isPlaying = !state.paused
+    const btn = document.getElementById('play-b')
+    btn.textContent = state.paused ? '▶' : '⏸'
+    btn.classList.toggle('is-playing', !state.paused)
+    setStatus('b', state.paused ? 'paused' : 'playing', 'ready')
+    const track = state.track_window?.current_track
+    if (track && track.id !== spotifyCurrentTrackId) {
+      spotifyCurrentTrackId = track.id
+      document.getElementById('title-b').textContent = track.name || 'Spotify track'
+      document.getElementById('artist-b').textContent = (track.artists || []).map(a => a.name).join(', ')
+    }
+  })
+  spotifyPlayer.addListener('initialization_error', ({ message }) => setStatus('b', `init error: ${message}`, 'error'))
+  spotifyPlayer.addListener('authentication_error', () => setStatus('b', 'auth error', 'error'))
+  spotifyPlayer.addListener('account_error', () => setStatus('b', 'premium required', 'error'))
+  spotifyPlayer.addListener('playback_error', () => setStatus('b', 'playback error', 'error'))
+  const ok = await spotifyPlayer.connect()
+  if (!ok) setStatus('b', 'connection failed', 'error')
+}
+
+window.onSpotifyWebPlaybackSDKReady = () => {
+  spotifySDKReady = true
+  if (localStorage.getItem('sp_token') || localStorage.getItem('sp_refresh')) initSpotifyPlayer()
+}
+
+async function searchSpotify(query) {
+  const resultsEl = document.getElementById('spotify-results')
+  if (!query.trim()) { resultsEl.innerHTML = ''; return }
+  const token = await getSpotifyToken()
+  if (!token) return
+  try {
+    const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    const tracks = data.tracks?.items || []
+    resultsEl.innerHTML = tracks.map(t => `
+      <div class="sp-result" data-uri="${t.uri}">
+        <span class="sp-result-name">${escapeHTML(t.name)}</span>
+        <span class="sp-result-artist">${escapeHTML(t.artists.map(a => a.name).join(', '))}</span>
+      </div>
+    `).join('')
+    resultsEl.querySelectorAll('.sp-result').forEach(el => {
+      el.addEventListener('click', () => {
+        playSpotifyTrack(el.dataset.uri)
+        document.getElementById('spotify-query').value = ''
+        resultsEl.innerHTML = ''
+      })
+    })
+  } catch {}
+}
+
+async function playSpotifyTrack(uri) {
+  const token = await getSpotifyToken()
+  if (!token || !spotifyDeviceId) return
+  try {
+    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${spotifyDeviceId}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uris: [uri] })
+    })
+  } catch {}
+}
+
+function escapeHTML(value) {
+  return String(value || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]))
+}
+
+function drawDisc(id, dt) {
+  const deck = DECKS[id]
+  const canvas = document.getElementById(`disc-${id}`)
+  const ctx = canvas.getContext('2d')
+  const accent = id === 'a' ? { r: 255, g: 102, b: 0 } : { r: 30, g: 215, b: 96 }
+  if (deck.isPlaying) {
+    deck.discAngle += (33.33 / 60) * 2 * Math.PI * (dt / 1000)
+    deck.pulse = deck.pulse * 0.84 + 0.16 * (0.35 + 0.65 * Math.abs(Math.sin(Date.now() / 260)))
+  } else {
+    deck.pulse *= 0.9
+  }
+  const w = canvas.width, h = canvas.height
+  const cx = w / 2, cy = h / 2
+  const r = Math.min(cx, cy) - 2
+  ctx.clearRect(0, 0, w, h)
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate(deck.discAngle)
+  const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r)
+  grad.addColorStop(0, '#262626')
+  grad.addColorStop(0.38, '#111')
+  grad.addColorStop(1, '#030303')
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fillStyle = grad
+  ctx.fill()
+  for (let gr = 0.35; gr <= 0.92; gr += 0.045) {
+    ctx.beginPath()
+    ctx.arc(0, 0, r * gr, 0, Math.PI * 2)
+    ctx.strokeStyle = 'rgba(255,255,255,0.035)'
+    ctx.lineWidth = 1
+    ctx.stroke()
+  }
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.91, 0, Math.PI * 2)
+  ctx.strokeStyle = `rgba(${accent.r},${accent.g},${accent.b},${deck.isPlaying ? 0.42 + deck.pulse * 0.5 : 0.18})`
+  ctx.lineWidth = 2
+  ctx.shadowBlur = deck.isPlaying ? 14 : 3
+  ctx.shadowColor = `rgb(${accent.r},${accent.g},${accent.b})`
+  ctx.stroke()
+  ctx.shadowBlur = 0
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.28, 0, Math.PI * 2)
+  ctx.fillStyle = `rgba(${accent.r},${accent.g},${accent.b},0.22)`
+  ctx.fill()
+  ctx.fillStyle = 'rgba(255,255,255,0.7)'
+  ctx.font = `bold ${Math.round(r * 0.09)}px Segoe UI`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(id === 'a' ? 'SC' : 'SP', 0, 0)
+  ctx.restore()
+}
+
+function drawMeter(id) {
+  const deck = DECKS[id]
+  const canvas = document.getElementById(`meter-${id}`)
+  if (canvas.offsetWidth > 0 && (canvas.width !== canvas.offsetWidth || canvas.height !== canvas.offsetHeight)) {
+    canvas.width = canvas.offsetWidth
+    canvas.height = canvas.offsetHeight
+  }
+  const ctx = canvas.getContext('2d')
+  const accent = id === 'a' ? { r: 255, g: 102, b: 0 } : { r: 30, g: 215, b: 96 }
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  const bars = 24
+  const bw = canvas.width / bars
+  const t = Date.now() / 1000
+  const energy = deck.isPlaying ? 0.35 + deck.pulse * 0.65 : 0.05
+  for (let i = 0; i < bars; i++) {
+    const wave = (Math.sin(t * 2.4 + i * 0.62) * 0.5 + 0.5) * 0.55 + (Math.sin(t * 4.1 + i * 0.27) * 0.5 + 0.5) * 0.45
+    const h = Math.max(2, wave * energy * canvas.height)
+    ctx.fillStyle = `rgba(${accent.r},${accent.g},${accent.b},${0.28 + wave * 0.55})`
+    ctx.fillRect(i * bw, canvas.height - h, Math.max(1, bw - 2), h)
+  }
+}
+
+let lastFrame = performance.now()
+function renderLoop(now) {
+  requestAnimationFrame(renderLoop)
+  const dt = Math.min(100, now - lastFrame)
+  lastFrame = now
+  drawDisc('a', dt)
+  drawDisc('b', dt)
+  drawMeter('a')
+  drawMeter('b')
+}
+
+document.getElementById('load-a').addEventListener('click', loadSoundCloudURL)
+document.getElementById('play-a').addEventListener('click', toggleSoundCloud)
+document.getElementById('url-a').addEventListener('keydown', e => { if (e.key === 'Enter') loadSoundCloudURL() })
+
+document.getElementById('spotify-connect-btn').onclick = connectSpotify
+document.getElementById('spotify-query').addEventListener('input', e => {
+  clearTimeout(spSearchTimer)
+  spSearchTimer = setTimeout(() => searchSpotify(e.target.value), 400)
+})
+document.getElementById('play-b').addEventListener('click', () => spotifyPlayer?.togglePlay().catch(() => {}))
+document.getElementById('prev-b').addEventListener('click', () => spotifyPlayer?.previousTrack().catch(() => {}))
+document.getElementById('next-b').addEventListener('click', () => spotifyPlayer?.nextTrack().catch(() => {}))
+
+document.getElementById('vol-a').addEventListener('input', e => {
+  DECKS.a.volume = parseInt(e.target.value)
+  document.getElementById('vol-val-a').textContent = `${DECKS.a.volume}%`
+  updatePlatformVolumes()
+})
+document.getElementById('vol-b').addEventListener('input', e => {
+  DECKS.b.volume = parseInt(e.target.value)
+  document.getElementById('vol-val-b').textContent = `${DECKS.b.volume}%`
+  updatePlatformVolumes()
+})
+document.getElementById('crossfader').addEventListener('input', e => {
+  const angle = (parseInt(e.target.value) / 100) * Math.PI / 2
+  DECKS.a.xfadeGain = Math.cos(angle)
+  DECKS.b.xfadeGain = Math.sin(angle)
+  updatePlatformVolumes()
+})
+
+async function init() {
+  const params = new URLSearchParams(window.location.search)
+  const spCode = params.get('code')
+  const spError = params.get('error')
+  if (spError) window.history.replaceState({}, '', '/dj-hybrid.html')
+  if (spCode) await exchangeSpotifyCode(spCode)
+
+  const ok = await checkAuth()
+  if (!ok) return
+
+  if ((localStorage.getItem('sp_token') || localStorage.getItem('sp_refresh')) && spotifySDKReady) initSpotifyPlayer()
+  else if (localStorage.getItem('sp_token') || localStorage.getItem('sp_refresh')) setStatus('b', 'sdk loading...')
+  updatePlatformVolumes()
+  requestAnimationFrame(renderLoop)
+}
+
+init()
+</script>
+</body>
+</html>
