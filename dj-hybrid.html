@@ -229,6 +229,7 @@
       flex-shrink: 0;
     }
     .deck-a .url-row button:hover { color: #ff6600; border-color: #ff6600; }
+    .deck-b .url-row button:hover { color: #1ed760; border-color: #1ed760; }
     #spotify-connect-btn { color: #1ed760; border-color: rgba(30,215,96,0.38); }
     #spotify-connect-btn.connected { background: rgba(30,215,96,0.12); border-color: rgba(30,215,96,0.72); }
     .slider-row {
@@ -450,6 +451,10 @@
             <button class="ctrl-btn skip-btn" id="next-b" title="Next">⏭</button>
             <button class="radio-btn" id="radio-btn" title="Auto-play similar tracks when song ends">RADIO</button>
           </div>
+          <div class="url-row">
+            <input id="url-b" type="text" placeholder="open.spotify.com/track/… or /playlist/…" disabled>
+            <button id="load-b" disabled>Load</button>
+          </div>
           <div class="spotify-panel">
             <div class="search-row">
               <input type="text" id="spotify-query" placeholder="Search Spotify tracks..." disabled>
@@ -474,6 +479,7 @@
 
   <div class="hint-row">
     Deck A uses the SoundCloud Widget API. Deck B uses Spotify Web Playback SDK and needs Spotify Premium.
+    Deck B supports track or playlist URLs (open.spotify.com) in addition to search.
     The crossfader blends platform volume only; protected platform streams cannot share raw waveform, EQ, or scratch audio.
   </div>
 </div>
@@ -689,6 +695,8 @@ function setSpotifyConnected(connected, connecting = false) {
   btn.classList.toggle('connected', connected)
   btn.onclick = connected ? disconnectSpotify : connectSpotify
   document.getElementById('spotify-query').disabled = !connected
+  document.getElementById('url-b').disabled = !connected
+  document.getElementById('load-b').disabled = !connected
   DECKS.b.isReady = connected
   setStatus('b', connected ? 'ready' : 'not connected', connected ? 'ready' : '')
 }
@@ -798,16 +806,48 @@ async function searchSpotify(query) {
   } catch {}
 }
 
+function spotifyUrlToUri(url) {
+  // Accept full URLs like https://open.spotify.com/track/ID or spotify:track:ID
+  if (!url) return null
+  url = url.trim()
+  if (url.startsWith('spotify:')) return url  // already a URI
+  try {
+    const u = new URL(url.startsWith('http') ? url : 'https://' + url)
+    const parts = u.pathname.split('/').filter(Boolean)
+    if (parts.length >= 2 && ['track','playlist','album'].includes(parts[0])) {
+      return `spotify:${parts[0]}:${parts[1].split('?')[0]}`
+    }
+  } catch {}
+  return null
+}
+
 async function playSpotifyTrack(uri) {
   const token = await getSpotifyToken()
   if (!token || !spotifyDeviceId) return
   try {
+    const isContext = uri.startsWith('spotify:playlist:') || uri.startsWith('spotify:album:')
+    const body = isContext ? { context_uri: uri } : { uris: [uri] }
     await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${spotifyDeviceId}`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uris: [uri] })
+      body: JSON.stringify(body)
     })
+    if (isContext) {
+      const label = uri.includes(':playlist:') ? 'Spotify Playlist' : 'Spotify Album'
+      setStatus('b', label.toLowerCase() + ' loaded', 'ready')
+      document.getElementById('title-b').textContent = label
+      document.getElementById('artist-b').textContent = ''
+    }
   } catch {}
+}
+
+async function loadSpotifyURL() {
+  const input = document.getElementById('url-b')
+  const uri = spotifyUrlToUri(input.value)
+  if (!uri) { setStatus('b', 'invalid Spotify URL', 'error'); return }
+  setStatus('b', 'loading...', 'ready')
+  await playSpotifyTrack(uri)
+  input.value = ''
 }
 
 function escapeHTML(value) {
@@ -903,6 +943,9 @@ function renderLoop(now) {
 document.getElementById('load-a').addEventListener('click', loadSoundCloudURL)
 document.getElementById('play-a').addEventListener('click', toggleSoundCloud)
 document.getElementById('url-a').addEventListener('keydown', e => { if (e.key === 'Enter') loadSoundCloudURL() })
+
+document.getElementById('load-b').addEventListener('click', loadSpotifyURL)
+document.getElementById('url-b').addEventListener('keydown', e => { if (e.key === 'Enter') loadSpotifyURL() })
 
 document.getElementById('spotify-connect-btn').onclick = connectSpotify
 document.getElementById('spotify-query').addEventListener('input', e => {
