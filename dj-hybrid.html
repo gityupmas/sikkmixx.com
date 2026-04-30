@@ -433,16 +433,16 @@
             <button class="ctrl-btn play-btn" id="play-b" title="Play / Pause">▶</button>
             <button class="ctrl-btn skip-btn" id="next-b" title="Next">⏭</button>
           </div>
+          <div class="slider-row">
+            <span class="slider-label">Volume</span>
+            <input type="range" id="vol-b" min="0" max="100" value="80" step="1">
+            <span class="slider-val" id="vol-val-b">80%</span>
+          </div>
           <div class="spotify-panel">
             <div class="search-row">
               <input type="text" id="spotify-query" placeholder="Search Spotify tracks..." disabled>
             </div>
             <div id="spotify-results"></div>
-          </div>
-          <div class="slider-row">
-            <span class="slider-label">Volume</span>
-            <input type="range" id="vol-b" min="0" max="100" value="80" step="1">
-            <span class="slider-val" id="vol-val-b">80%</span>
           </div>
         </div>
       </div>
