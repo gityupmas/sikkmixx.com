@@ -895,15 +895,66 @@ function drawDisc(id, dt) {
   ctx.shadowColor = `rgb(${accent.r},${accent.g},${accent.b})`
   ctx.stroke()
   ctx.shadowBlur = 0
+  // Centre hub background
   ctx.beginPath()
   ctx.arc(0, 0, r * 0.28, 0, Math.PI * 2)
   ctx.fillStyle = `rgba(${accent.r},${accent.g},${accent.b},0.22)`
   ctx.fill()
-  ctx.fillStyle = 'rgba(255,255,255,0.7)'
-  ctx.font = `bold ${Math.round(r * 0.09)}px Segoe UI`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(id === 'a' ? 'SC' : 'SP', 0, 0)
+
+  // Draw platform logo in the hub (spins with disc)
+  const hubR = r * 0.28
+  ctx.save()
+  ctx.globalAlpha = 0.82
+  if (id === 'a') {
+    // SoundCloud logo — simplified waveform bars silhouette
+    // Drawn centered at 0,0, scaled to fit hub
+    const s = hubR * 0.72
+    ctx.fillStyle = '#ff6600'
+    // Each bar: [xOffset, height] as fractions of s, all bottom-aligned
+    const bars = [
+      [-0.88, 0.38], [-0.66, 0.55], [-0.44, 0.72], [-0.22, 0.90],
+      [0,     1.00],
+      [ 0.22, 0.82], [ 0.44, 0.65], [ 0.66, 0.50], [ 0.88, 0.35]
+    ]
+    const bw = s * 0.16
+    bars.forEach(([x, h]) => {
+      const bh = h * s
+      ctx.beginPath()
+      ctx.roundRect(x * s - bw / 2, -bh / 2, bw, bh, bw * 0.4)
+      ctx.fill()
+    })
+    // Cloud bump on top of bar 4 (center)
+    ctx.beginPath()
+    ctx.arc(0, -s * 0.55, s * 0.28, Math.PI, 0)
+    ctx.arc(s * 0.18, -s * 0.62, s * 0.18, 0, Math.PI, true)
+    ctx.arc(-s * 0.18, -s * 0.58, s * 0.14, 0, Math.PI, true)
+    ctx.closePath()
+    ctx.fill()
+  } else {
+    // Spotify logo — three arcs (the "sound waves") + filled circle
+    const s = hubR * 0.62
+    ctx.fillStyle = '#1ed760'
+    // Centre dot
+    ctx.beginPath()
+    ctx.arc(0, s * 0.42, s * 0.18, 0, Math.PI * 2)
+    ctx.fill()
+    // Three arcs, opening upward, each a bit larger
+    const arcs = [
+      { ry: s * 0.10, rx: s * 0.52, lw: s * 0.13 },
+      { ry: -s * 0.18, rx: s * 0.78, lw: s * 0.13 },
+      { ry: -s * 0.50, rx: s * 1.05, lw: s * 0.14 },
+    ]
+    arcs.forEach(({ ry, rx, lw }) => {
+      ctx.beginPath()
+      ctx.arc(0, ry + s * 0.12, rx, Math.PI + 0.42, -0.42)
+      ctx.strokeStyle = '#1ed760'
+      ctx.lineWidth = lw
+      ctx.lineCap = 'round'
+      ctx.stroke()
+    })
+  }
+  ctx.restore()
+
   ctx.restore()
 }
 
